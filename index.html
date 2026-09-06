@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>斩妖·修仙录</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC",
+                   "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+      background: #f4ecdc;
+      touch-action: manipulation;
+    }
+    #game {
+      position: fixed;
+      inset: 0;
+      display: block;
+      touch-action: none;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <script src="./assets/platform.js?v=45"></script>
+  <script src="./assets/balance.js?v=45"></script>
+  <script src="./assets/draw.js?v=45"></script>
+  <script src="./assets/ui.js?v=45"></script>
+  <script src="./assets/audio.js?v=45"></script>
+  <script src="./assets/main.js?v=45"></script>
+</body>
+</html>

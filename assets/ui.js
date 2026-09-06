@@ -1,0 +1,417 @@
+/* ============================================================
+ * 斩妖·修仙录 · ui.js
+ * Canvas 即时模式 UI 工具（无 DOM，浏览器/微信小游戏通用）
+ * - 点击命中：按下→抬起 距离 < 24px 视为点按
+ * - 滚动区：纵向拖动 / 滚轮
+ * - 弹窗层级：后绘制者命中优先（逆序检测）
+ * 经典脚本，挂 window.XUI
+ * ============================================================ */
+
+'use strict';
+
+var XUI = (function () {
+
+  var ctx = null;
+  var nowT = 0;
+
+  /* ---------- 指针状态 ---------- */
+  var ptr = { x: -1, y: -1, down: false };
+  var downPt = null;          /* {x,y} 按下位置 */
+  var downId = null;          /* 按下时命中的控件 id */
+  var downIsScroll = false;   /* 按下落在滚动区 */
+  var scrolled = false;       /* 本次按下已发生拖动 */
+  var taps = [];              /* 待消费的 tap 事件队列 */
+  var frameTaps = [];         /* 本帧可见的 tap */
+
+  var rects = [];             /* 本帧注册的可点矩形 {id,x,y,w,h,scroll} */
+  var scrollStates = {};      /* id → {off, contentH, dragging, lastY, lastT, v} */
+  var hotId = null;           /* 当前按压中的控件（反馈用） */
+  var pressT = 0;             /* 按下时刻（按压动画） */
+
+  /* ---------- 颜色 ---------- */
+  var C = {
+    paper: '#f4ecdc',
+    paperHi: 'rgba(244,236,220,0.94)',
+    ink: '#2f2a24',
+    ink55: 'rgba(47,42,36,0.55)',
+    ink30: 'rgba(47,42,36,0.30)',
+    ink14: 'rgba(47,42,36,0.14)',
+    cinnabar: '#b03a30',
+    gold: '#c9a05a',
+    goldDeep: '#8a6a30',
+    indigo: '#3d4a5c'
+  };
+
+  /* ---------- 字体 ---------- */
+  var SERIF = '"Songti SC","STSong","Noto Serif SC",serif';
+  var SANS = '"PingFang SC","Microsoft YaHei",sans-serif';
+  function fSerif(size, weight) {
+    return (weight ? weight + ' ' : '') + size + 'px ' + SERIF;
+  }
+  function fSans(size, weight) {
+    return (weight ? weight + ' ' : '') + size + 'px ' + SANS;
+  }
+
+  /* ============================================================
+   * 输入（由 main.js 从 canvas 事件喂入，逻辑坐标 750×1334）
+   * ============================================================ */
+  function hitTest(x, y, wantScroll) {
+    for (var i = rects.length - 1; i >= 0; i--) {
+      var r = rects[i];
+      if (!!r.scroll !== !!wantScroll) continue;
+      if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) return r;
+    }
+    return null;
+  }
+
+  function pointerDown(x, y) {
+    ptr.x = x; ptr.y = y; ptr.down = true;
+    downPt = { x: x, y: y };
+    scrolled = false;
+    var r = hitTest(x, y, false);
+    if (r) {
+      downId = r.id;
+      downIsScroll = false;
+      hotId = r.id;
+      pressT = nowT;
+      return true;
+    }
+    var sc = hitTest(x, y, true);
+    if (sc) {
+      downId = sc.id;
+      downIsScroll = true;
+      var st = _scrollState(sc.id);
+      st.dragging = true;
+      st.lastY = y;
+      st.lastT = nowT;
+      st.v = 0;
+      hotId = null;
+      return true;
+    }
+    downId = null;
+    hotId = null;
+    return false;
+  }
+
+  function pointerMove(x, y) {
+    ptr.x = x; ptr.y = y;
+    if (!ptr.down) return;
+    if (downPt && Math.abs(y - downPt.y) > 10) scrolled = true;
+    if (downIsScroll && downId) {
+      var st = scrollStates[downId];
+      if (st && st.dragging) {
+        var dy = st.lastY - y;
+        st.off = Math.max(0, Math.min(st.contentH, st.off + dy));
+        st.v = dy / Math.max(0.001, nowT - st.lastT);
+        st.lastY = y;
+        st.lastT = nowT;
+      }
+    }
+  }
+
+  function pointerUp(x, y) {
+    ptr.x = x; ptr.y = y;
+    ptr.down = false;
+    if (downIsScroll && downId && scrollStates[downId]) {
+      scrollStates[downId].dragging = false;
+    }
+    if (downId && !downIsScroll && !scrolled && downPt) {
+      var dx = x - downPt.x, dy = y - downPt.y;
+      if (dx * dx + dy * dy < 24 * 24) taps.push(downId);
+    }
+    downId = null;
+    downIsScroll = false;
+    hotId = null;
+  }
+
+  function wheel(x, y, dy) {
+    /* 桌面滚轮：命中滚动区则滚动 */
+    var sc = hitTest(x, y, true);
+    if (sc) {
+      var st = _scrollState(sc.id);
+      st.off = Math.max(0, Math.min(st.contentH, st.off + dy * 3));
+    }
+  }
+
+  /* ============================================================
+   * 帧流程
+   * ============================================================ */
+  function beginFrame(c, dt) {
+    ctx = c;
+    nowT += (typeof dt === 'number' && dt > 0 && dt < 1) ? dt : 0.016;
+    frameTaps = taps.splice(0, taps.length);
+    rects.length = 0;
+  }
+
+  /* 注册一个可点区域（用于非按钮的自绘控件，如页签） */
+  function register(id, x, y, w, h) {
+    rects.push({ id: id, x: x, y: y, w: w, h: h });
+  }
+
+  function tapped(id) { return frameTaps.indexOf(id) >= 0; }
+  function isPressed(id) { return hotId === id && ptr.down; }
+
+  function _scrollState(id) {
+    if (!scrollStates[id]) {
+      scrollStates[id] = { off: 0, contentH: 0, dragging: false, lastY: 0, lastT: 0, v: 0 };
+    }
+    return scrollStates[id];
+  }
+
+  /* ============================================================
+   * 基础绘制
+   * ============================================================ */
+  function panel(x, y, w, h, opt) {
+    opt = opt || {};
+    ctx.save();
+    ctx.shadowColor = 'rgba(47,42,36,0.18)';
+    ctx.shadowBlur = opt.flat ? 0 : 10;
+    ctx.shadowOffsetY = opt.flat ? 0 : 3;
+    XD.roundRectPath(ctx, x, y, w, h, opt.r == null ? 16 : opt.r);
+    ctx.fillStyle = opt.fill || C.paperHi;
+    ctx.fill();
+    ctx.restore();
+    if (!opt.noBorder) {
+      XD.roundRectPath(ctx, x, y, w, h, opt.r == null ? 16 : opt.r);
+      ctx.strokeStyle = opt.border || 'rgba(47,42,36,0.55)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+  }
+
+  function text(str, x, y, opt) {
+    opt = opt || {};
+    ctx.font = opt.serif === false ? fSans(opt.size || 24, opt.weight)
+                                   : fSerif(opt.size || 24, opt.weight);
+    ctx.textAlign = opt.align || 'center';
+    ctx.textBaseline = opt.baseline || 'middle';
+    ctx.fillStyle = opt.color || C.ink;
+    if (opt.maxW) {
+      var lines = wrap(str, opt.maxW, opt.size || 24, opt.serif === false, opt.weight);
+      for (var i = 0; i < lines.length; i++) {
+        ctx.fillText(lines[i], x, y + i * (opt.lineH || (opt.size || 24) * 1.4));
+      }
+      return lines.length;
+    }
+    ctx.fillText(str, x, y);
+    return 1;
+  }
+
+  function textW(str, size, noSerif, weight) {
+    ctx.font = noSerif ? fSans(size, weight) : fSerif(size, weight);
+    return ctx.measureText(str).width;
+  }
+
+  function wrap(str, maxW, size, noSerif, weight) {
+    ctx.font = noSerif ? fSans(size, weight) : fSerif(size, weight);
+    var lines = [];
+    var cur = '';
+    for (var i = 0; i < str.length; i++) {
+      var ch = str[i];
+      if (ch === '\n') { lines.push(cur); cur = ''; continue; }
+      if (ctx.measureText(cur + ch).width > maxW && cur) {
+        lines.push(cur);
+        cur = ch;
+      } else {
+        cur += ch;
+      }
+    }
+    if (cur) lines.push(cur);
+    return lines;
+  }
+
+  function bar(x, y, w, h, frac, opt) {
+    opt = opt || {};
+    XD.roundRectPath(ctx, x, y, w, h, h / 2);
+    ctx.fillStyle = opt.bg || C.ink14;
+    ctx.fill();
+    var f = Math.max(0, Math.min(1, frac));
+    if (f > 0) {
+      XD.roundRectPath(ctx, x + 1.5, y + 1.5, Math.max(h - 3, (w - 3) * f), h - 3, (h - 3) / 2);
+      ctx.fillStyle = opt.fill || C.gold;
+      ctx.fill();
+    }
+    if (opt.border !== false) {
+      XD.roundRectPath(ctx, x, y, w, h, h / 2);
+      ctx.strokeStyle = opt.border || 'rgba(47,42,36,0.5)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+  }
+
+  /* ---------- 按钮 ----------
+   * opt: { label, sub, size, disabled, style: primary|gold|ghost|danger,
+   *        badge, r }  返回是否被点按 */
+  function button(id, x, y, w, h, opt) {
+    opt = opt || {};
+    rects.push({ id: id, x: x, y: y, w: w, h: h });
+    var dis = !!opt.disabled;
+    var pressed = isPressed(id) && !dis;
+    var style = opt.style || 'ghost';
+    var sc = pressed ? 0.96 : 1;
+    var cx = x + w / 2, cy = y + h / 2;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(sc, sc);
+    ctx.translate(-cx, -cy);
+
+    var fills = {
+      primary: ['#c04a3e', '#a83428'],
+      gold: ['#d8b97e', '#c9a05a'],
+      ghost: ['rgba(255,255,255,0.55)', 'rgba(255,255,255,0.55)'],
+      danger: ['#b03a30', '#8f2b23'],
+      dark: ['rgba(47,42,36,0.9)', 'rgba(47,42,36,0.9)']
+    };
+    var pair = fills[style] || fills.ghost;
+    var txtCol = (style === 'ghost') ? C.ink : C.paper;
+
+    ctx.shadowColor = 'rgba(47,42,36,0.22)';
+    ctx.shadowBlur = pressed ? 3 : 8;
+    ctx.shadowOffsetY = pressed ? 1 : 3;
+    XD.roundRectPath(ctx, x, y, w, h, opt.r == null ? Math.min(999, h / 2) : opt.r);
+    if (dis) {
+      ctx.fillStyle = 'rgba(47,42,36,0.26)';
+    } else {
+      var g = ctx.createLinearGradient(x, y, x, y + h);
+      g.addColorStop(0, pair[0]);
+      g.addColorStop(1, pair[1]);
+      ctx.fillStyle = g;
+    }
+    ctx.fill();
+    ctx.shadowColor = 'transparent';
+
+    if (style === 'ghost' || style === 'gold') {
+      XD.roundRectPath(ctx, x, y, w, h, opt.r == null ? Math.min(999, h / 2) : opt.r);
+      ctx.strokeStyle = dis ? 'rgba(47,42,36,0.3)'
+        : (style === 'gold' ? 'rgba(138,106,48,0.7)' : 'rgba(47,42,36,0.55)');
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    var mainSize = opt.size || Math.min(26, h * 0.44);
+    if (opt.sub) {
+      text(opt.label, cx, cy - h * 0.16, { size: mainSize, color: dis ? C.ink30 : txtCol, weight: 700 });
+      text(opt.sub, cx, cy + h * 0.22, { size: Math.max(16, mainSize * 0.62), color: dis ? C.ink30 : txtCol, serif: false });
+    } else {
+      text(opt.label, cx, cy, { size: mainSize, color: dis ? C.ink30 : txtCol, weight: 700 });
+    }
+    ctx.restore();
+
+    if (opt.badge) {
+      ctx.fillStyle = C.cinnabar;
+      ctx.beginPath();
+      ctx.arc(x + w - 6, y + 6, 9, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    return !dis && tapped(id);
+  }
+
+  /* ---------- 状态 chip（轻量信息胶囊） ----------
+   * 返回下一个 x 坐标，便于连续排布 */
+  function chip(x, y, txt, opt) {
+    opt = opt || {};
+    var size = opt.size || 17;
+    var w = textW(txt, size, true, 600) + 24;
+    var h = opt.h || 30;
+    XD.roundRectPath(ctx, x, y, w, h, h / 2);
+    ctx.fillStyle = opt.fill || 'rgba(47,42,36,0.08)';
+    ctx.fill();
+    if (opt.stroke) {
+      XD.roundRectPath(ctx, x, y, w, h, h / 2);
+      ctx.strokeStyle = opt.stroke; ctx.lineWidth = 1.2; ctx.stroke();
+    }
+    text(txt, x + w / 2, y + h / 2 + 1, { size: size, color: opt.color || C.ink55, serif: false, weight: 600 });
+    return x + w + 6;
+  }
+
+  /* ---------- 页内标题行 ---------- */
+  function sectionHeader(px, py, pw, title, rightTxt, titleColor) {
+    text(title, px + 18, py + 24, { size: 22, weight: 700, align: 'left', color: titleColor || C.cinnabar });
+    if (rightTxt) text(rightTxt, px + pw - 18, py + 24, { size: 16, color: C.ink30, align: 'right', serif: false });
+  }
+
+  /* ---------- 滚动区 ----------
+   * contentH：内容总高；返回本帧可视偏移。
+   * 用法：var sc = scrollArea(id,...); ctx.save(); clip; 用 -sc.off 平移绘制; restore */
+  function scrollArea(id, x, y, w, h, contentH) {
+    var st = _scrollState(id);
+    rects.push({ id: id, x: x, y: y, w: w, h: h, scroll: true });
+    st.contentH = Math.max(0, contentH - h);
+    /* 惯性 */
+    if (!st.dragging && Math.abs(st.v) > 30) {
+      st.off = Math.max(0, Math.min(st.contentH, st.off + st.v * 0.016));
+      st.v *= 0.92;
+      if (Math.abs(st.v) < 30) st.v = 0;
+    }
+    /* 橡皮筋回弹 */
+    if (st.off > st.contentH) st.off = st.contentH;
+    return st;
+  }
+
+  /* ---------- 弹窗底幕 + 卡片（w/h 随动态画布传入） ---------- */
+  function modalBackdrop(id, w, h) {
+    var W = w || 750, H = h || 1334;
+    rects.push({ id: id, x: 0, y: 0, w: W, h: H });
+    ctx.fillStyle = 'rgba(47,42,36,0.5)';
+    ctx.fillRect(0, 0, W, H);
+    return tapped(id);
+  }
+
+  /* ---------- Toast（贴底部面板上方，不挡主视野） ---------- */
+  var viewH = 1334;
+  function setViewSize(w, h) { viewH = h; }
+  var toasts = [];   /* {txt, t} */
+  function toast(txt) {
+    toasts.push({ txt: txt, t: 0 });
+    if (toasts.length > 2) toasts.shift();
+  }
+  function drawToasts(dt) {
+    /* dt 防护：任何非数字/非正计时按默认帧步进，并强制淘汰 NaN 残留，
+       否则 toast 会因 t=NaN 永不超时变成常驻贴图 */
+    var step = (typeof dt === 'number' && dt > 0 && dt < 1) ? dt : 0.016;
+    for (var i = toasts.length - 1; i >= 0; i--) {
+      var tt = toasts[i];
+      tt.t += step;
+      if (!(tt.t <= 1.8)) { toasts.splice(i, 1); continue; }
+      var a = tt.t < 0.15 ? tt.t / 0.15 : (tt.t > 1.45 ? (1.8 - tt.t) / 0.35 : 1);
+      var w = Math.min(620, textW(tt.txt, 21, false, 600) + 56);
+      var x = 375 - w / 2;
+      var y = viewH - 500 - i * 54;
+      ctx.save();
+      ctx.globalAlpha = a;
+      XD.roundRectPath(ctx, x, y, w, 44, 22);
+      ctx.fillStyle = 'rgba(47,42,36,0.82)';
+      ctx.fill();
+      text(tt.txt, 375, y + 23, { size: 21, color: C.paper, serif: false, weight: 500 });
+      ctx.restore();
+    }
+  }
+
+  return {
+    C: C,
+    fSerif: fSerif,
+    fSans: fSans,
+    beginFrame: beginFrame,
+    register: register,
+    tapped: tapped,
+    isPressed: isPressed,
+    pointerDown: pointerDown,
+    pointerMove: pointerMove,
+    pointerUp: pointerUp,
+    wheel: wheel,
+    panel: panel,
+    text: text,
+    textW: textW,
+    wrap: wrap,
+    bar: bar,
+    button: button,
+    chip: chip,
+    sectionHeader: sectionHeader,
+    scrollArea: scrollArea,
+    modalBackdrop: modalBackdrop,
+    toast: toast,
+    setViewSize: setViewSize,
+    drawToasts: drawToasts
+  };
+})();
