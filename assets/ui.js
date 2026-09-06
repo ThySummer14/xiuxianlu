@@ -361,19 +361,21 @@ var XUI = (function () {
   /* ---------- Toast（贴底部面板上方，不挡主视野） ---------- */
   var viewH = 1334;
   function setViewSize(w, h) { viewH = h; }
-  var toasts = [];   /* {txt, t} */
+  var toasts = [];   /* {txt, t, born} */
   function toast(txt) {
-    toasts.push({ txt: txt, t: 0 });
+    toasts.push({ txt: txt, t: 0, born: Date.now() });
     if (toasts.length > 2) toasts.shift();
   }
   function drawToasts(dt) {
-    /* dt 防护：任何非数字/非正计时按默认帧步进，并强制淘汰 NaN 残留，
-       否则 toast 会因 t=NaN 永不超时变成常驻贴图 */
+    /* dt 防护：任何非数字/非正计时按默认帧步进 */
     var step = (typeof dt === 'number' && dt > 0 && dt < 1) ? dt : 0.016;
+    var nowMs = Date.now();
     for (var i = toasts.length - 1; i >= 0; i--) {
       var tt = toasts[i];
       tt.t += step;
-      if (!(tt.t <= 1.8)) { toasts.splice(i, 1); continue; }
+      /* 双保险：即使渲染计时被污染，真实时间超 2.4s 一律清除，
+         绝不允许 toast 变成常驻贴图 */
+      if (!(tt.t <= 1.8) || (tt.born && nowMs - tt.born > 2400)) { toasts.splice(i, 1); continue; }
       var a = tt.t < 0.15 ? tt.t / 0.15 : (tt.t > 1.45 ? (1.8 - tt.t) / 0.35 : 1);
       var w = Math.min(620, textW(tt.txt, 21, false, 600) + 56);
       var x = 375 - w / 2;
