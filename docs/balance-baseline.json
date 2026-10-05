@@ -1,0 +1,95 @@
+{
+  "baseCommit": "c8a0af3",
+  "rows": [
+    {
+      "stage": 0,
+      "realm": "炼气·初期",
+      "unassistedStageSeconds": 50,
+      "teaRecipeCost": 800,
+      "teaRecipePaybackSeconds": 202,
+      "rebirthReward": 0
+    },
+    {
+      "stage": 4,
+      "realm": "筑基·初期",
+      "unassistedStageSeconds": 92,
+      "teaRecipeCost": 36558,
+      "teaRecipePaybackSeconds": 1824,
+      "rebirthReward": 0
+    },
+    {
+      "stage": 8,
+      "realm": "金丹·初期",
+      "unassistedStageSeconds": 172,
+      "teaRecipeCost": 1670617,
+      "teaRecipePaybackSeconds": 16461,
+      "rebirthReward": 0
+    },
+    {
+      "stage": 16,
+      "realm": "化神·初期",
+      "unassistedStageSeconds": 589,
+      "teaRecipeCost": 3488699432,
+      "teaRecipePaybackSeconds": 1341245,
+      "rebirthReward": 0
+    },
+    {
+      "stage": 24,
+      "realm": "合体·初期",
+      "unassistedStageSeconds": 2022,
+      "teaRecipeCost": 7285348615630,
+      "teaRecipePaybackSeconds": 109286102,
+      "rebirthReward": 0
+    },
+    {
+      "stage": 32,
+      "realm": "渡劫·初期",
+      "unassistedStageSeconds": 6939,
+      "teaRecipeCost": 15213779658147922,
+      "teaRecipePaybackSeconds": 8904748260,
+      "rebirthReward": 1
+    },
+    {
+      "stage": 40,
+      "realm": "玄仙·初期",
+      "unassistedStageSeconds": 23815,
+      "teaRecipeCost": 31770489471170925000,
+      "teaRecipePaybackSeconds": 725568396038,
+      "rebirthReward": 1
+    },
+    {
+      "stage": 48,
+      "realm": "太乙·初期",
+      "unassistedStageSeconds": 81736,
+      "teaRecipeCost": 6.634538056407341e+22,
+      "teaRecipePaybackSeconds": 59120087613428,
+      "rebirthReward": 3
+    },
+    {
+      "stage": 58,
+      "realm": "道祖·后期",
+      "unassistedStageSeconds": 381842,
+      "teaRecipeCost": 9.365784684248186e+26,
+      "teaRecipePaybackSeconds": 14472913222368866,
+      "rebirthReward": 9
+    }
+  ],
+  "offline": {
+    "expectedReload": {
+      "seconds": 3600,
+      "expGain": 87192855,
+      "stoneGain": 10834139853
+    },
+    "actualResume": {
+      "seconds": 3600,
+      "expGain": 13733753,
+      "stoneGain": 2485341216
+    }
+  },
+  "bonuses": {
+    "onlineMeditation": 19376.190056520012,
+    "expectedEpiphanyAndAllExp": 33908.33259891002,
+    "critRate": 0.135,
+    "critMult": 7.25
+  }
+}

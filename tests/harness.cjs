@@ -1,0 +1,55 @@
+'use strict';
+// Loads the production scripts in a deterministic, browser-shaped Node VM.
+// Canvas is a no-op; this tests game behavior, not browser rendering quality.
+const fs = require('node:fs');
+const vm = require('node:vm');
+const path = require('node:path');
+const root = path.resolve(__dirname, '..');
+const KEY = 'xiuxian_idle_v3';
+function createGame(options = {}) {
+  const storage = new Map();
+  let now = 1800000000000;
+  let seed = options.seed || 42;
+  const math = Object.create(Math);
+  math.random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
+  const noop = () => {};
+  const gradient = { addColorStop: noop };
+  const context = new Proxy({
+    measureText: text => ({ width: String(text).length * 11 }),
+    createLinearGradient: () => gradient, createRadialGradient: () => gradient,
+  }, { get: (o, k) => k in o ? o[k] : noop });
+  const canvas = { style: {}, width: 375, height: 667, getContext: () => context, addEventListener: noop };
+  const FakeDate = class extends Date { static now() { return now; } };
+  const sandbox = {
+    console, Math: math, Date: FakeDate, performance: { now: () => now },
+    setTimeout: noop, clearTimeout: noop, requestAnimationFrame: noop,
+    innerWidth: options.width || 375, innerHeight: options.height || 667, devicePixelRatio: 1,
+    addEventListener: noop, navigator: {}, location: { search: '' },
+    document: { getElementById: () => canvas, createElement: () => canvas, addEventListener: noop },
+    localStorage: { getItem: k => storage.get(k) || null, setItem: (k, v) => storage.set(k, v), removeItem: k => storage.delete(k) },
+  };
+  sandbox.window = sandbox;
+  if (options.save) storage.set(KEY, JSON.stringify({ v: 3, ts: now, ...options.save }));
+  vm.createContext(sandbox);
+  for (const name of ['platform', 'balance', 'draw', 'ui', 'audio', 'main']) {
+    let src = fs.readFileSync(path.join(root, 'assets', name + '.js'), 'utf8');
+    if (options.source) src = options.source(name, src);
+    vm.runInContext(src, sandbox, { filename: name + '.js' });
+  }
+  // Start through the same title button used by the UI, with the save fixture.
+  const button = sandbox.XUI.button;
+  let start = true;
+  sandbox.XUI.button = (id, ...args) => id === 'start' && start ? (start = false, true) : button(id, ...args);
+  sandbox.__test.step(0.001);
+  sandbox.XUI.button = button;
+  const api = sandbox.__test;
+  return {
+    api, XB: sandbox.XB, sandbox, storage,
+    state: () => api.state(),
+    step: sec => { now += sec * 1000; api.step(sec); return api.state(); },
+    save: () => JSON.parse(storage.get(KEY) || '{}'),
+    show: sec => { sandbox.XP._fireHide(); now += sec * 1000; sandbox.XP._fireShow(); return api.state(); },
+    render: () => api.step(0),
+  };
+}
+module.exports = { createGame, KEY };

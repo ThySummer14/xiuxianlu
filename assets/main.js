@@ -238,7 +238,7 @@
   function expAllMult() { return gEff('dao') * daoMult() * XB.bondMult(bond) * sectAllExp(); }
   function medRate() {
     return XB.meditationRate(S, tn, gEff('breath') * gEff('dao') * sectMed(),
-      daoMult(), tideMultMed()) * XB.bondMult(bond) * injPenalty();
+      daoMult(), tideMultMed()) * XB.bondMult(bond) * sectAllExp() * injPenalty();
   }
   function stoneMultAll() {
     return XB.stoneMult(gEff('gold'), daoMult(), tide.left > 0 ? XB.TIDE_STONE_MULT : 1);
@@ -265,9 +265,9 @@
   function critRate() {
     var body = gLv('body');
     return Math.min(XB.CRIT_CAP, XB.CRIT_BASE +
-      XB.beastCrit(ls) + 0.015 * body);
+      XB.beastCrit(ls) + 0.015 * body + sectCritRateBonus());
   }
-  function critMult() { return XB.CRIT_MULT + 0.25 * gLv('body'); }
+  function critMult() { return XB.CRIT_MULT + 0.25 * gLv('body') + sectCritDmgBonus(); }
   function totalPower() { return Math.round(clickDamage() + curDps() * 5); }
   function marketUnlocked() { return level >= XB.MARKET_UNLOCK_LEVEL; }
 
@@ -489,7 +489,7 @@
     var c = monsterCenter();
     var roll = Math.random();
     if (roll < 0.3) {
-      var gift = XB.fateExpGift(S, tn, gEff('breath') * gEff('dao'), daoMult()) * expAllMult();
+      var gift = XB.fateExpGift(S, tn, gEff('breath') * sectMed(), 1) * expAllMult();
       exp += gift;
       addFloat(c.x, c.y - 190, '仙人传功 · +' + XB.fmt(gift) + ' 修为', '#b03a30', 38, 1.4);
     } else if (roll < 0.6) {
@@ -553,7 +553,7 @@
       tide.left = XB.TIDE_DUR;
       XUI.toast('剑心 +1 · 且引发灵气潮汐！');
     } else if (key === 'exp') {
-      gift = XB.fateExpGift(S, tn, gEff('breath') * gEff('dao'), daoMult()) * expAllMult();
+      gift = XB.fateExpGift(S, tn, gEff('breath') * sectMed(), 1) * expAllMult();
       exp += gift;
       addFloat(c.x, c.y - 190, ' +' + XB.fmt(gift) + ' 修为', '#b03a30', 36, 1.6);
     } else if (key === 'stones') {
@@ -570,7 +570,7 @@
       addFloat(c.x, c.y - 190, '仙缘 +1 · ' + (er2.got ? '获赠 ' + er2.got : '谢礼已收'), '#3d4a5c', 34, 1.8);
     } else if (key === 'stones-exp') {
       st = XB.fateStones(S, level) * 0.6 * stoneMultAll();
-      gift = XB.fateExpGift(S, tn, gEff('breath') * gEff('dao'), daoMult()) * expAllMult() * 0.5;
+      gift = XB.fateExpGift(S, tn, gEff('breath') * sectMed(), 1) * expAllMult() * 0.5;
       stones += st; accStones += st; exp += gift;
       addFloat(c.x, c.y - 190, '因果回报 · 灵石与修为双得', '#8a6a30', 34, 1.6);
     } else if (key === 'big-stones-exp') {
@@ -580,7 +580,7 @@
         addFloat(c.x, c.y - 190, '窟中空空 · 只得 +' + XB.fmt(st) + ' 灵石', 'rgba(47,42,36,0.62)', 32, 1.6);
       } else {
         st = XB.fateStones(S, level) * 2.5 * stoneMultAll();
-        gift = XB.fateExpGift(S, tn, gEff('breath') * gEff('dao'), daoMult()) * expAllMult() * 1.2;
+        gift = XB.fateExpGift(S, tn, gEff('breath') * sectMed(), 1) * expAllMult() * 1.2;
         stones += st; accStones += st; exp += gift;
         addFloat(c.x, c.y - 190, '满载而归 · 大机缘！', '#8a6a30', 38, 1.8);
       }
@@ -731,7 +731,7 @@
   }
 
   /* ---------- 突破 ---------- */
-  function canBreakthrough() { return exp >= expNeed(); }
+  function canBreakthrough() { return S < XB.MAX_STAGE && exp >= expNeed(); }
   function atRealmGate() { return XB.isRealmGate(S); }
 
   /* 小境界：修为满自动突破（动画进行中不重复触发） */
@@ -758,6 +758,7 @@
   }
 
   function finishBreak() {
+    if (S >= XB.MAX_STAGE) return;
     var need = expNeed();
     exp = Math.max(0, exp - need);
     var prevRealm = XB.realmIdx(S);
@@ -806,7 +807,7 @@
     combo.n = 0;
     tide.left = 0;
     tide.next = nowSec + 40;
-    bt = { t: 0, big: false, name: '轮回·一世',
+    bt = { t: 0, big: false, transitionOnly: true, name: '轮回·一世',
            cy: MON_BASE_Y - 210 };
     modal = null;
     rebirthArmed = false;
@@ -865,6 +866,7 @@
 
   function buyMarketProfit(idx) {
     if (!marketUnlocked()) return;
+    if (!XB.MARKET_SHOPS[idx] || XB.MARKET_PROFIT_UP[mp[idx] + 1] == null) return;
     if (mk[idx] < XB.MARKET_PROFIT_UP[mp[idx] + 1]) {
       XUI.toast('需先拥有 ' + XB.MARKET_PROFIT_UP[mp[idx] + 1] + ' 间 ' + XB.MARKET_SHOPS[idx].name);
       XAudio.deny(); return;
@@ -1027,6 +1029,7 @@
       if (g.id === 'map') mapG *= g.eff(gfs[j]) * ins;
     }
     medG *= 1 + 0.12 * (sLv.dt1 | 0);             /* 丹霞镇宗功法 */
+    medG *= 1 + 0.08 * (sLv.dt2 | 0);             /* 全部修为：线上线下一致 */
     medG *= XB.epiphanyMult(epSaved);            /* 生死顿悟 */
     var med = XB.meditationRate(sSaved, Math.max(0, Number(d.tn) || 0),
                                 medG, daojiG, 1);
@@ -1178,7 +1181,7 @@
     /* 行1：境界名 + 序号 */
     XUI.text(XB.realmName(S) + (rb > 0 ? ' · ' + rb + '世' : ''),
              cx0 + 20, cy0 + 24, { size: 25, weight: 700, align: 'left' });
-    XUI.text(S + 1 >= XB.MAX_STAGE ? '道之尽头' : (S + 1) + '/' + (XB.MAX_STAGE + 1),
+    XUI.text(S >= XB.MAX_STAGE ? '道之尽头' : (S + 1) + '/' + (XB.MAX_STAGE + 1),
              cx0 + cw0 - 168, cy0 + 24, { size: 18, color: IC.ink30, align: 'right', serif: false });
 
     /* 行2：修为条 + 气血条（双条定高，不再按模式增删） */
@@ -1197,10 +1200,10 @@
 
     /* 右侧：渡劫/突破按钮（固定锈定，跨双条高度） */
     var ready = canBreakthrough(), gate = atRealmGate();
-    var bLabel = gate
+    var bLabel = S >= XB.MAX_STAGE ? '圆满' : gate
       ? (ready ? '渡劫' : Math.floor(Math.min(100, exp / need * 100)) + '%')
       : Math.floor(Math.min(100, exp / need * 100)) + '%';
-    var bSub = gate ? (ready ? '冲关' : '未圆') : (ready ? '静极' : '积累');
+    var bSub = S >= XB.MAX_STAGE ? '道祖' : gate ? (ready ? '冲关' : '未圆') : (ready ? '静极' : '积累');
     if (XUI.button('bt-break', cx0 + cw0 - 146, cy0 + 44, 126, 80, {
       label: bLabel, sub: bSub,
       style: (gate && ready) ? 'primary' : 'ghost', size: 26,
@@ -1863,7 +1866,7 @@
       bt.t += dt;
       if (bt.t >= (bt.big ? 2.4 : 0.8)) {
         var wasBig = bt.big;
-        finishBreak();
+        if (!bt.transitionOnly) finishBreak();
         bt = null;
         if (!wasBig) checkBreakthroughAuto();
       }
@@ -2191,9 +2194,10 @@
       var info = computeOffline(currentSnapshot(), gap);
       if (info) {
         exp += info.expGain;
-        stones += info.stoneGain;
+        stones += info.stoneGain; accStones += info.stoneGain;
         showOfflineModal(info);
         checkBreakthroughAuto();
+        saveGame();
       }
     }
   });
@@ -2204,7 +2208,10 @@
   function currentSnapshot() {
     return {
       ts: Date.now() - 0,
-      S: S, tn: tn, gf: gf.slice(), dj: dj, mk: mk.slice()
+      S: S, tn: tn, gf: gf.slice(), dj: dj, mk: mk.slice(),
+      cmp: cmp.slice(), mp: mp.slice(), bond: bond, epip: epip,
+      sectId: sectId, sectLv: Object.assign({}, sectLv),
+      injuryT: injuryT, ph: ph
     };
   }
 
@@ -2228,7 +2235,8 @@
           scene: scene,
           stones: stones, exp: exp, S: S, level: level,
           sj: sj, ss: ss, ls: ls, tn: tn, gf: gf.slice(),
-          dj: dj, rb: rb, bond: bond, sgn: sgn,
+          dj: dj, rb: rb, bond: bond, sgn: sgn, best: best,
+          mk: mk.slice(), accStones: accStones,
           mode: mode, ph: Math.round(ph), phMax: playerHpMax(),
           towerBest: towerBest, injuryT: injuryT, epip: epip,
           contrib: contrib, sectId: sectId, sectLv: JSON.parse(JSON.stringify(sectLv || {})),
@@ -2264,6 +2272,9 @@
         var c = monsterCenter();
         return attackAt(c.x + (XD.srand(nowSec * 71) - 0.5) * 80, c.y);
       },
+      rebirth: doRebirth,
+      snapshot: currentSnapshot,
+      computeOffline: computeOffline,
       buy: buyUpgrade,
       buyGongfa: buyGongfa,
       buyMarket: buyMarket,
@@ -2301,7 +2312,7 @@
         if (!monster) return null;
         var c = monsterCenter();
         if (kind === 0) {
-          var gift = XB.fateExpGift(S, tn, gEff('breath') * gEff('dao'), daoMult()) * expAllMult();
+          var gift = XB.fateExpGift(S, tn, gEff('breath') * sectMed(), 1) * expAllMult();
           exp += gift;
           return { exp: gift };
         }
@@ -2331,7 +2342,7 @@
         var info = computeOffline(currentSnapshot(), secAgo);
         if (!info) return null;
         exp += info.expGain;
-        stones += info.stoneGain;
+        stones += info.stoneGain; accStones += info.stoneGain;
         showOfflineModal(info);
         return info;
       },
