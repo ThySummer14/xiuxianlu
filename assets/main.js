@@ -141,6 +141,9 @@
 
   /* ---------- v4：魔窟妖塔 / 血量 / 宗门 ---------- */
   var mode = 'home';         /* 'home' 日常打坐 | 'tower' 魔窟历练 */
+  var temperFloor = 1;
+  var towerPlan = 'advance';
+  var epipFrontier = 1;       /* 同一阻碍不能反复刷生死顿悟 */
   var towerFloor = 1;        /* 当前塔层（level 与其同步） */
   var towerBest = 1;         /* 历史最深 */
   var ph = 0;                /* 主角当前血量 */
@@ -269,17 +272,18 @@
   }
   function critMult() { return XB.CRIT_MULT + 0.25 * gLv('body') + sectCritDmgBonus(); }
   function totalPower() { return Math.round(clickDamage() + curDps() * 5); }
-  function marketUnlocked() { return level >= XB.MARKET_UNLOCK_LEVEL; }
+  function marketUnlocked() { return towerBest >= XB.MARKET_UNLOCK_LEVEL || S >= 4; }
 
   /* ---------- 存档 ---------- */
   function saveGame() {
     try {
       XP.storageSet(STORE_KEY, JSON.stringify({
-        v: 3, stones: stones, exp: exp, S: S, level: level,
+        v: 3, balanceVersion: XB.BALANCE_VERSION, stones: stones, exp: exp, S: S, level: level,
         sj: sj, ss: ss, ls: ls, tn: tn, gf: gf,
         eq: eq, mk: mk, mp: mp, dj: dj, rb: rb, best: best,
         bond: bond, sgn: sgn, storySeen: storySeen,
-        towerFloor: towerFloor, towerBest: towerBest, ph: ph, injuryT: injuryT,
+        towerFloor: towerFloor, towerBest: towerBest, towerPlan: towerPlan,
+        epipFrontier: epipFrontier, ph: ph, injuryT: injuryT,
         epip: epip, cmp: cmp, sectId: sectId, sectLv: sectLv,
         contrib: contrib, missions: missions, accStones: accStones,
         kills: totalKills, muted: muted, questClaimed: questClaimed, ts: Date.now()
@@ -330,6 +334,7 @@
     stones = Math.max(0, Number(d.stones) || 0);
     exp = Math.max(0, Number(d.exp) || 0);
     S = Math.min(XB.MAX_STAGE, Math.max(0, Number(d.S) || 0));
+    if (!d.balanceVersion) exp *= XB.expNeed(S) / XB.legacyExpNeed(S);
     level = Math.max(1, Number(d.level) || 1);
     sj = Math.max(0, Number(d.sj) || 0);
     ss = Math.max(0, Number(d.ss) || 0);
@@ -363,6 +368,9 @@
     towerFloor = Math.max(1, Number(d.towerFloor) || 1);
     level = Math.max(level, towerFloor);
     towerBest = Math.max(towerFloor, Number(d.towerBest) || 1);
+    towerFloor = towerBest; level = towerFloor;
+    towerPlan = d.towerPlan === 'temper' ? 'temper' : 'advance';
+    epipFrontier = Math.max(1, Number(d.epipFrontier) || towerBest);
     epip = Math.max(0, Math.min(XB.EPIPHANY_MAX, Number(d.epip) || 0));
     sectId = typeof d.sectId === 'string' && XB.getSect(d.sectId) ? d.sectId : '';
     sectLv = (d.sectLv && typeof d.sectLv === 'object') ? d.sectLv : {};
@@ -391,6 +399,7 @@
 
   /* ---------- 妖兽（v4：只存在于魔窟塔内） ---------- */
   function spawnMonster() {
+    monAtkT = 0;  /* 每只妖兽都有完整起手，上一只的计时不偷袭下一层 */
     var boss = XB.isBoss(level);
     var types = XB.MONSTER_TYPES;
     var idx = Math.floor(XD.srand(level * 13 + 7) * types.length) % types.length;
@@ -480,6 +489,11 @@
     }
   }
 
+  function fateExpReward() {
+    var steadyRate = medRate() / tideMultMed() / injPenalty();
+    return XB.fateExpReward(S, steadyRate);
+  }
+
   /* ---------- 奇遇（即时小奖 + 选择型机缘） ---------- */
   function tryFate() {
     if (nowSec < fateCd) return;
@@ -489,7 +503,7 @@
     var c = monsterCenter();
     var roll = Math.random();
     if (roll < 0.3) {
-      var gift = XB.fateExpGift(S, tn, gEff('breath') * sectMed(), 1) * expAllMult();
+      var gift = fateExpReward();
       exp += gift;
       addFloat(c.x, c.y - 190, '仙人传功 · +' + XB.fmt(gift) + ' 修为', '#b03a30', 38, 1.4);
     } else if (roll < 0.6) {
@@ -553,7 +567,7 @@
       tide.left = XB.TIDE_DUR;
       XUI.toast('剑心 +1 · 且引发灵气潮汐！');
     } else if (key === 'exp') {
-      gift = XB.fateExpGift(S, tn, gEff('breath') * sectMed(), 1) * expAllMult();
+      gift = fateExpReward();
       exp += gift;
       addFloat(c.x, c.y - 190, ' +' + XB.fmt(gift) + ' 修为', '#b03a30', 36, 1.6);
     } else if (key === 'stones') {
@@ -570,7 +584,7 @@
       addFloat(c.x, c.y - 190, '仙缘 +1 · ' + (er2.got ? '获赠 ' + er2.got : '谢礼已收'), '#3d4a5c', 34, 1.8);
     } else if (key === 'stones-exp') {
       st = XB.fateStones(S, level) * 0.6 * stoneMultAll();
-      gift = XB.fateExpGift(S, tn, gEff('breath') * sectMed(), 1) * expAllMult() * 0.5;
+      gift = fateExpReward() * 0.5;
       stones += st; accStones += st; exp += gift;
       addFloat(c.x, c.y - 190, '因果回报 · 灵石与修为双得', '#8a6a30', 34, 1.6);
     } else if (key === 'big-stones-exp') {
@@ -580,7 +594,7 @@
         addFloat(c.x, c.y - 190, '窟中空空 · 只得 +' + XB.fmt(st) + ' 灵石', 'rgba(47,42,36,0.62)', 32, 1.6);
       } else {
         st = XB.fateStones(S, level) * 2.5 * stoneMultAll();
-        gift = XB.fateExpGift(S, tn, gEff('breath') * sectMed(), 1) * expAllMult() * 1.2;
+        gift = fateExpReward() * 1.2;
         stones += st; accStones += st; exp += gift;
         addFloat(c.x, c.y - 190, '满载而归 · 大机缘！', '#8a6a30', 38, 1.8);
       }
@@ -654,6 +668,12 @@
   }
 
   function advanceLevel() {
+    if (towerPlan === 'temper') {
+      var start = temperFloor;
+      level = start + ((level - start + 1) % 5);
+      spawnMonster();
+      return;
+    }
     level += 1;
     towerFloor = level;
     if (level > towerBest) towerBest = level;
@@ -680,20 +700,25 @@
 
   /* ---------- 魔窟出入 / 重伤 / 顿悟 ---------- */
   function towerUnlocked() { return level >= XB.TOWER_UNLOCK_LEVEL || towerBest >= XB.TOWER_UNLOCK_LEVEL; }
-  function enterTower() {
+  function enterTower(plan) {
     if (mode === 'tower') return;
+    if (plan === 'temper' && towerBest >= 6) towerPlan = 'temper';
+    else if (plan === 'advance') towerPlan = 'advance';
     if (injured()) { XUI.toast('道体受创，先养好伤再入魔窟'); XAudio.deny(); return; }
     if (bt && bt.big) return;
     if (ph <= 0) ph = playerHpMax();
     mode = 'tower';
+    temperFloor = XB.temperStart(towerBest, curDps(), playerHpMax());
+    level = towerPlan === 'temper' ? temperFloor : towerFloor;
     monAtkT = 0;
     spawnMonster();
-    XUI.toast('入魔窟·第 ' + level + ' 层');
+    XUI.toast((towerPlan === 'temper' ? '温养历练·' : '入魔窟·') + '第 ' + level + ' 层');
     saveGame();
   }
   function leaveTower() {
     if (mode !== 'tower') return;
     mode = 'home';
+    level = towerFloor;
     monster = null;
     combo.n = 0;
     XUI.toast('归山闭关');
@@ -707,15 +732,22 @@
     addFloat(c.x - 120, MON_BASE_Y - 60, '-' + XB.fmt(dmg) + ' 气血', '#8f2b23', 30);
     shakeT = Math.max(shakeT, 0.06);
     if (ph <= 0) severeInjury();
+    else if (towerPlan === 'temper' && ph < playerHpMax() * XB.BALANCE.recoveryReserve) {
+      leaveTower();
+      XUI.toast('温养收功 · 气血不足，先归山调息');
+    }
   }
   function severeInjury() {
     ph = 0;
     mode = 'home';
+    level = towerFloor;
     monster = null;
     combo.n = 0;
     injuryT = XB.INJURE_DUR * (sectId === 'dantang' ? 0.7 : 1);
     var c = { x: 375, y: MON_BASE_Y - 260 };
-    if (epip < XB.EPIPHANY_MAX && Math.random() < XB.EPIPHANY_CHANCE) {
+    var newTrial = towerBest >= epipFrontier + 5;
+    if (newTrial) epipFrontier = towerBest;
+    if (newTrial && epip < XB.EPIPHANY_MAX && Math.random() < XB.EPIPHANY_CHANCE) {
       epip += 1;
       addFloat(c.x, c.y - 60, '生死之间，忽有所得！', '#b03a30', 44, 2.2);
       addFloat(c.x, c.y, '顿悟·战力与修行永久 +5% ×' + epip, '#c9a05a', 32, 2.2);
@@ -763,9 +795,15 @@
     exp = Math.max(0, exp - need);
     var prevRealm = XB.realmIdx(S);
     S += 1;
+    // Breakthrough visibly breaks the old combat wall, with a fresh body for exploration.
+    if (XB.realmIdx(S) > prevRealm) ph = playerHpMax();
     if (S > best) best = S;
     var nowRealm = XB.realmIdx(S);
     if (nowRealm > prevRealm) {
+      if (nowRealm === 1 && mk[0] === 0) {
+        mk[0] = 1;
+        XUI.toast('筑基立业 · 获赠一间茶摊，闭关也有灵石入账');
+      }
       bgTrans = 0;
       /* 新大境界：境界剧情入队（首遇弹窗） */
       if (!storySeen[nowRealm]) storyQueue.push(nowRealm);
@@ -800,7 +838,7 @@
     /* 宗门、贡献、顿悟、仙缘剑心不随轮回洗去 */
     questClaimed = {};
     storySeen = {}; storyQueue.length = 0;
-    towerFloor = 1; level = 1;
+    towerFloor = 1; level = 1; towerPlan = 'advance'; epipFrontier = 1;
     monster = null; mode = 'home';
     ph = playerHpMax(); injuryT = 0;
     for (var ci3 = 0; ci3 < cmp.length; ci3++) cmp[ci3] = 0;
@@ -853,7 +891,7 @@
 
   function buyMarket(idx) {
     if (!marketUnlocked()) {
-      XUI.toast('第 ' + XB.MARKET_UNLOCK_LEVEL + ' 关解锁坊市');
+      XUI.toast('魔窟第 ' + XB.MARKET_UNLOCK_LEVEL + ' 层或筑基解锁坊市');
       return;
     }
     var cost = XB.marketCost(idx, mk[idx]);
@@ -1092,7 +1130,7 @@
     combo.n = 0; tide.left = 0; tide.next = 0;
     monster = null;
     mode = 'home';
-    towerFloor = 1; towerBest = 1; ph = playerHpMax();
+    towerFloor = 1; towerBest = 1; towerPlan = 'advance'; epipFrontier = 1; ph = playerHpMax();
     injuryT = 0; epip = 0;
     for (var ci2 = 0; ci2 < cmp.length; ci2++) cmp[ci2] = 0;
     for (var mi2 = 0; mi2 < mp.length; mi2++) mp[mi2] = 0;
@@ -1159,7 +1197,7 @@
 
     /* 场景 pill */
     var lvlTxt = mode === 'tower'
-      ? '魔窟第 ' + level + ' 层' + (XB.isBoss(level) ? ' · 大妖' : '')
+      ? (towerPlan === 'temper' ? '温养第 ' : '魔窟第 ') + level + ' 层' + (XB.isBoss(level) ? ' · 大妖' : '')
       : (injured() ? '山门 · 将养' : '山门 · 闭关');
     var lw = XUI.textW(lvlTxt, 24, false, 700) + 44;
     XUI.panel(20, y, lw, 48, { r: 24, flat: true });
@@ -1203,7 +1241,7 @@
     var bLabel = S >= XB.MAX_STAGE ? '圆满' : gate
       ? (ready ? '渡劫' : Math.floor(Math.min(100, exp / need * 100)) + '%')
       : Math.floor(Math.min(100, exp / need * 100)) + '%';
-    var bSub = S >= XB.MAX_STAGE ? '道祖' : gate ? (ready ? '冲关' : '未圆') : (ready ? '静极' : '积累');
+    var bSub = S >= XB.MAX_STAGE ? '道祖' : gate ? (ready ? '战力×' + XB.REALM_GATE_MULT : '未圆') : (ready ? '静极' : '积累');
     if (XUI.button('bt-break', cx0 + cw0 - 146, cy0 + 44, 126, 80, {
       label: bLabel, sub: bSub,
       style: (gate && ready) ? 'primary' : 'ghost', size: 26,
@@ -1287,7 +1325,7 @@
       rectsTab(tx, py, tabW, tabH, t.id);
       if (XUI.tapped('tab-' + t.id)) {
         if (t.id === 'market' && !marketUnlocked()) {
-          XUI.toast('魔窟推到第 ' + XB.MARKET_UNLOCK_LEVEL + ' 层解锁坊市');
+          XUI.toast('魔窟第 ' + XB.MARKET_UNLOCK_LEVEL + ' 层或筑基解锁坊市');
         } else {
           activeTab = t.id;
         }
@@ -1324,13 +1362,13 @@
 
   function drawCultPanel(px, py, pw, ph) {
     var cards = [
-      { key: 'sj', name: '剑诀',   lv: sj, desc: '挥剑伤害提升',
+      { key: 'sj', name: '剑诀',   lv: sj, desc: '剑诀基础伤害 +16%',
         cost: XB.costSwordJue(sj) },
-      { key: 'ss', name: '剑侍',   lv: ss, desc: '自动出剑 · 每秒',
+      { key: 'ss', name: '剑侍',   lv: ss, desc: '剑侍基础秒伤 +18%',
         cost: XB.costSwordShi(ss) },
       { key: 'ls', name: '灵兽',   lv: ls, desc: '点击伤害+25% · 暴击+0.4%/级',
         cost: XB.costBeast(ls) },
-      { key: 'tn', name: '吐纳术', lv: tn, desc: '打坐修为 +6%/级',
+      { key: 'tn', name: '吐纳术', lv: tn, desc: '当前修为 +' + (6 / (1 + .06 * tn)).toFixed(1) + '% · 闭关生效',
         cost: XB.costTuna(tn) }
     ];
     var cw = (pw - 12 * 3) / 2;
@@ -1384,7 +1422,7 @@
         color: locked ? IC.ink30 : IC.ink
       });
       XUI.text(locked ? XB.REALM_LIST[g.unlock] + '期解锁 · ' + g.desc
-                      : g.desc + (id0 === 'body' || !cmp[i] ? '' : ' · 领悟+' + Math.round(Math.min(cmp[i], XB.INSIGHT_CAP) * 2) + '%'),
+                      : g.desc + (id0 === 'body' || !cmp[i] ? '' : ' · 领悟+' + Math.round(Math.min(cmp[i], XB.INSIGHT_CAP) * XB.BALANCE.insightPerPoint * 100) + '%'),
                px + 100, ry + 60, { size: 17, color: IC.ink55, align: 'left', serif: false });
       if (!locked) {
         if (XUI.button('gf-' + i, px + pw - 174, ry + 18, 150, 56, {
@@ -1401,35 +1439,36 @@
 
   function drawMarketPanel(px, py, pw, ph) {
     if (!marketUnlocked()) {
-      XUI.text('魔窟推到第 ' + XB.MARKET_UNLOCK_LEVEL + ' 层解锁坊市', px + pw / 2, py + ph / 2,
+      XUI.text('魔窟第 ' + XB.MARKET_UNLOCK_LEVEL + ' 层或筑基解锁坊市', px + pw / 2, py + ph / 2,
                { size: 26, color: IC.ink55 });
       return;
     }
     XUI.text('坊市 · 灵石主产线 · 每秒 +' + XB.fmtRate(curMarketRate()) + ' 灵石',
              px + 18, py + 22, { size: 21, color: '#8a6a30', align: 'left', weight: 700 });
-    XUI.text('置办扩店 · 升级利润配方', px + pw - 18, py + 22,
+    XUI.text('回本按当前产出估算', px + pw - 18, py + 22,
              { size: 17, color: IC.ink30, align: 'right', serif: false });
     var rowH = 56;
     for (var i = 0; i < XB.MARKET_SHOPS.length; i++) {
       var shop = XB.MARKET_SHOPS[i];
       var ry = py + 38 + i * (rowH + 3);
       var cost = XB.marketCost(i, mk[i]);
-      var perShop = shop.rate * Math.pow(XB.MARKET_PROFIT_R, mp[i]);
+      var single = [0, 0, 0, 0, 0]; single[i] = 1;
+      var perShop = XB.marketRate(single, S, gEff('map'), daoMult(), mp) * sectMarket();
       XUI.text(shop.name + (mp[i] > 0 ? ' Lv' + mp[i] : ''), px + 16, ry + rowH / 2,
                { size: 23, weight: 700, align: 'left' });
       XUI.text(mk[i] + ' 间 · ' + XB.fmtRate(perShop) + '/s·间',
                px + 108, ry + rowH / 2, { size: 17, color: IC.ink55, align: 'left', serif: false });
       if (XUI.button('mk-' + i, px + pw - 296, ry + 4, 140, rowH - 8, {
-        label: '置办', sub: XB.fmt(cost),
+        label: '置办 ' + XB.fmt(cost), sub: '回本' + XB.formatDur(cost / perShop),
         style: 'gold', size: 19, disabled: stones < cost
       })) buyMarket(i);
       /* 利润配方升级 */
       var pcost = XB.marketProfitCost(i, mp[i], S);
       var needN = XB.MARKET_PROFIT_UP[mp[i] + 1];
       var canP = needN != null && mk[i] >= needN;
-      var pLabel = needN == null ? '已至顶层' : (canP ? '利润↑' : ('需' + needN + '间'));
+      var pLabel = needN == null ? '已至顶层' : (canP ? '升阶 ' + XB.fmt(pcost) : ('需' + needN + '间'));
       if (XUI.button('mkp-' + i, px + pw - 150, ry + 4, 136, rowH - 8, {
-        label: pLabel, sub: canP ? XB.fmt(pcost) : '',
+        label: pLabel, sub: canP ? '回本' + XB.formatDur(pcost / (mk[i] * perShop * (XB.MARKET_PROFIT_R - 1))) : '',
         style: 'primary', size: 19, disabled: !canP || stones < pcost
       })) buyMarketProfit(i);
     }
@@ -1452,7 +1491,7 @@
     var iy = py + 84;
     XUI.text('层产出：修为·领悟·贡献为主，灵石仅少量补贴；第 ' + XB.TOWER_MILESTONE +
              ' 层里程碑必掉装备', px + 16, iy, { size: 18, color: IC.ink55, align: 'left', serif: false });
-    XUI.text('血量归零 = 重伤逃塔：40s 内不宜再战，但有 45% 概率顿悟（永久 +5%）',
+    XUI.text('血尽重伤 · 每推进5层有一次生死顿悟机会；卡关可温养积累贡献与领悟',
              px + 16, iy + 26, { size: 18, color: IC.ink55, align: 'left', serif: false });
     XUI.text('累计斩妖 ' + XB.fmt(totalKills) + ' · 顿悟 x' + epip +
              ' · 贡献 ' + XB.fmt(contrib),
@@ -1462,10 +1501,14 @@
         label: '归山（保留血量）', style: 'ghost', size: 24
       })) leaveTower();
     } else {
-      if (XUI.button('tw-enter', px + pw / 2 - 150, py + pnlH - 74, 300, 58, {
-        label: injured() ? ('重伤未愈 ' + Math.ceil(injuryT) + 's') : '入魔窟 · 第 ' + level + ' 层',
-        style: 'primary', size: 24, disabled: injured()
-      })) enterTower();
+      if (XUI.button('tw-enter', px + 20, py + pnlH - 74, (pw - 52) / 2, 58, {
+        label: injured() ? ('重伤未愈 ' + Math.ceil(injuryT) + 's') : '闯关 · 第 ' + towerFloor + ' 层',
+        style: 'primary', size: 22, disabled: injured()
+      })) enterTower('advance');
+      if (XUI.button('tw-temper', px + pw / 2 + 6, py + pnlH - 74, (pw - 52) / 2, 58, {
+        label: towerBest >= 6 ? '温养 · 积累贡献' : '推进6层解锁温养',
+        style: 'gold', size: 21, disabled: injured() || towerBest < 6
+      })) enterTower('temper');
     }
   }
 
@@ -1674,6 +1717,13 @@
       XUI.text(stext, 375, ms.y + 150, {
         size: 24, color: IC.ink, maxW: ms.w - 96, lineH: 40, serif: true
       });
+      if (storyRealm > 0) {
+        var rewards = XB.breakthroughPreview(storyRealm * 4 - 1);
+        XUI.text('战力与修行 ×' + XB.fmtRate(rewards.powerMult) + ' · 气血回满',
+          375, ms.y + 290, { size: 23, color: IC.cinnabar, weight: 700 });
+        XUI.text(rewards.unlocks.length ? '新功法 · ' + rewards.unlocks.join('、') : '再入魔窟，试一试旧日的大妖',
+          375, ms.y + 332, { size: 20, color: IC.indigo });
+      }
       XUI.text('—— 第 ' + (storyRealm + 1) + ' 卷 · ' + XB.REALM_LIST[storyRealm] + ' ——',
                375, ms.y + ms.h - 130, { size: 18, color: IC.ink30, serif: false });
       if (XUI.button('story-ok', 375 - 120, ms.y + ms.h - 96, 240, 60, {
@@ -2048,8 +2098,8 @@
           if (XUI.button('tw-enter-main', 375 - 108, gy + 4, 216, 54, {
             label: injured() ? ('将养 ' + Math.ceil(injuryT) + 's') : ('入塔历练 · 第 ' + level + ' 层'),
             style: 'primary', size: 23, disabled: injured()
-          })) enterTower();
-          else if (XUI.tapped('tw-gate')) enterTower();
+          })) enterTower('advance');
+          else if (XUI.tapped('tw-gate')) enterTower('advance');
         } else if (activeTab === 'cult') {
           XD.drawCenser(ctx, 375, MON_BASE_Y, nowSec);
         } else if (activeTab === 'sect') {
@@ -2224,11 +2274,11 @@
         : (typeof GameGlobal !== 'undefined' ? GameGlobal : null);
   if (G) {
     G.__test = {
-      step: function (sec) {
+      step: function (sec, noRender) {
         var steps = Math.ceil(sec / 0.05);
         var per = sec / steps;
         for (var i = 0; i < steps; i++) updateCore(per);
-        render(per);   /* 必须传 dt：否则 drawToasts 等依赖渲染计时的逻辑会被 NaN 污染 */
+        if (!noRender) render(per);   /* 必须传 dt：否则 drawToasts 等依赖渲染计时的逻辑会被 NaN 污染 */
       },
       state: function () {
         return {
@@ -2237,7 +2287,7 @@
           sj: sj, ss: ss, ls: ls, tn: tn, gf: gf.slice(),
           dj: dj, rb: rb, bond: bond, sgn: sgn, best: best,
           mk: mk.slice(), accStones: accStones,
-          mode: mode, ph: Math.round(ph), phMax: playerHpMax(),
+          mode: mode, towerPlan: towerPlan, epipFrontier: epipFrontier, ph: Math.round(ph), phMax: playerHpMax(),
           towerBest: towerBest, injuryT: injuryT, epip: epip,
           contrib: contrib, sectId: sectId, sectLv: JSON.parse(JSON.stringify(sectLv || {})),
           cmp: cmp.slice(), mp: mp.slice(),
@@ -2295,13 +2345,14 @@
         return { equipped: false, power: Math.round(power) };
       },
       triggerTide: function () { tide.left = XB.TIDE_DUR; },
-      enterTower: function () { enterTower(); return mode; },
+      enterTower: function (plan) { enterTower(plan); return mode; },
       leaveTower: function () { leaveTower(); return mode; },
       hurtPlayer: function (n) { ph -= n; if (ph <= 0) severeInjury(); return ph; },
       joinSect: joinSect, learnArt: learnArt, claimMission: claimMission,
       buyMarketProfit: buyMarketProfit,
       addContrib: function (n) { contrib += n; },
       setEpip: function (n) { epip = n; },
+      fateReward: fateExpReward,
       openFateEvent: function (i) { return openFateEvent(i != null ? XB.FATE_EVENTS[i] : null); },
       fateOption: function (i) { resolveFateOption(i); },
       storyOk: function () { if (modal === 'story') modal = null; },
@@ -2312,7 +2363,7 @@
         if (!monster) return null;
         var c = monsterCenter();
         if (kind === 0) {
-          var gift = XB.fateExpGift(S, tn, gEff('breath') * sectMed(), 1) * expAllMult();
+          var gift = fateExpReward();
           exp += gift;
           return { exp: gift };
         }

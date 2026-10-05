@@ -1,23 +1,8 @@
-/* ============================================================
- * 斩妖·修仙录 · balance.js  v3
- * 数值公式与中文数字格式化
- * ------------------------------------------------------------
- * v3 设计要点（借鉴修仙小说境界体系 + 经典放置游戏机制）：
- * A. 境界：15 大境界（人界 9 + 仙界 6）× 4 小境界（初期/中期/
- *    后期/大圆满）= 60 次突破；全局小境界序号 S（0..59）。
- *    每次小境界突破 全局倍率 ×1.5，每个大境界 ≈ ×5.06。
- * B. 修为以「打坐」为主增量：修为/秒随 S 同步缩放（锁步），
- *    需求曲线略陡（1.55 vs 1.50），缺口靠吐纳术/功法/道基补。
- *    斩妖获得修为为一次性补充（辅助）。
- * C. 功法经书：7 部，按大境界解锁，灵石购买等级，提供乘区
- *    （攻击/剑侍/打坐/灵石/暴击/坊市）。
- * D. 暴击 + 连击：主动点击的爽感层；灵气潮汐/奇遇随机奖励。
- * E. 离线闭关：修为按打坐效率、灵石按坊市产出折算，前 2h 全额
- *    之后 50%，上限 24h——修复旧版「挂多久都是同一个数」的问题
- *    （旧版上限 8h 且只有剑侍 DPS 参与，超过上限收益恒定）。
- * F. 轮回转世：渡劫(S=32)解锁，道基 = 全局永久乘区。
- * 经典脚本，挂 window.XB
- * ============================================================ */
+/* 斩妖·修仙录：数值、节奏与纯函数。
+ * BALANCE 是可调入口；docs/progression-research.md 记录依据与测量。
+ * 小境界积累 → 大境界释放；魔窟提供装备/领悟，坊市提供投资选择。
+ * 60 个小境界，前2小时离线全额、之后50%、24小时封顶；不清除旧存档。
+ */
 
 'use strict';
 
@@ -46,18 +31,53 @@ var XB = (function () {
   /* 是否大境界之门（大圆满 → 下一大境界初期） */
   function isRealmGate(S) { return stageIdx(S) === STAGES_PER_REALM - 1; }
 
-  /* ================= 境界倍率与修为需求 ================= */
-  var STAGE_MULT = 1.5;                       /* 每次小境界突破全局 ×1.5 */
-  function realmMult(S) { return Math.pow(STAGE_MULT, S); }
-
-  /* 小境界需求：25 × 1.66^S（比收入曲线 1.5 陡，形成追求功法/道基的墙） */
-  function expNeed(S) { return Math.round(25 * Math.pow(1.75, S)); }
+  /* ================= 可调数值（以时间与回本衡量） ================= */
+  var BALANCE_VERSION = 1;
+  var BALANCE = {
+    stageMult: 1.3, realmGateMult: 2.25,
+    expBase: 35, expGrowth: 1.92, gateNeedMult: 1.6,
+    marketRealmGrowth: 1.18, profitCostGrowth: 2.4,
+    insightPerPoint: 0.005,
+    encounterSeconds: 120, encounterStageFraction: 0.35,
+    recoveryReserve: 0.2
+  };
+  var STAGE_MULT = BALANCE.stageMult;
+  var REALM_GATE_MULT = BALANCE.realmGateMult;
+  function realmMult(S) {
+    return Math.pow(STAGE_MULT, S) * Math.pow(REALM_GATE_MULT / STAGE_MULT, Math.floor(S / 4));
+  }
+  function expNeed(S) {
+    return Math.round(BALANCE.expBase * Math.pow(BALANCE.expGrowth, S) *
+      (isRealmGate(S) ? BALANCE.gateNeedMult : 1));
+  }
+  function legacyExpNeed(S) { return Math.round(25 * Math.pow(1.75, S)); }
+  function marketRealmMult(S) { return Math.pow(BALANCE.marketRealmGrowth, S); }
+  function fateExpReward(S, steadyRate) {
+    return Math.min(Math.max(0, steadyRate) * BALANCE.encounterSeconds,
+      expNeed(S) * BALANCE.encounterStageFraction);
+  }
+  function breakthroughPreview(S) {
+    if (S >= MAX_STAGE) return null;
+    var next = S + 1;
+    return { next: next, name: realmName(next), major: isRealmGate(S),
+      powerMult: realmMult(next) / realmMult(S),
+      incomeMult: marketRealmMult(next) / marketRealmMult(S),
+      unlocks: GONGFA.filter(function (g) { return g.unlock === realmIdx(next) && isRealmGate(S); })
+        .map(function (g) { return g.name; }) };
+  }
+  // Cleared, non-boss five-floor loop: a recoverable alternative to repeated injury.
+  function temperStart(best, dps, maxHp) {
+    var limit = Math.max(5, best - 1);
+    if (dps > 0) limit = Math.min(limit, Math.log(Math.max(18, dps * 0.8) / 18) / Math.log(1.24) + 1);
+    if (maxHp > 0) limit = Math.min(limit, Math.log(Math.max(7, maxHp * 0.15) / 7) / Math.log(1.155) + 1);
+    return Math.max(1, Math.floor(Math.max(0, limit - 5) / 10) * 10 + 1);
+  }
 
   /* ================= 打坐（修为主来源） ================= */
-  /* 基础吐纳效率 0.5 修为/秒 × 1.5^S（与需求锁步）× 各乘区 */
+  /* 基础吐纳0.5修为/秒，随境界战力同步；门槛另有准备段。 */
   var MEDITATE_BASE = 0.5;
   function meditationRate(S, tnLv, gongfaMed, daoJiMult, eventMult) {
-    var m = MEDITATE_BASE * Math.pow(STAGE_MULT, S);
+    var m = MEDITATE_BASE * realmMult(S);
     m *= 1 + 0.06 * (tnLv || 0);            /* 吐纳术：+6%/级 */
     m *= gongfaMed || 1;
     m *= daoJiMult || 1;
@@ -79,7 +99,7 @@ var XB = (function () {
     var v = 3 + 1.5 * (level - 1);
     return Math.round(isBoss(level) ? v * 4 : v);
   }
-  /* 击杀修为（辅助）：随境界锁步缩放（3×1.5^S ≈ 12% 小境界），Boss ×3。
+  /* 击杀修为（辅助）：随境界战力缩放，Boss ×3。
      与境界脱钩的高关卡加成会导致杀怪修为碾压突破需求（模拟器实证）；
      推图的额外回报放在灵石与装备线上。 */
   function expGain(level, S) {
@@ -217,10 +237,10 @@ var XB = (function () {
   ];
   var MARKET_PROFIT_UP = [0, 4, 10, 18, 30, 46, 66, 90];   /* 第 n 次升级所需拥有数 */
   var MARKET_PROFIT_R = 1.55;                               /* 每级利润 ×1.55 */
-  var MARKET_PROFIT_COST = [800, 9000, 110000, 1500000, 2.4e7]; /* 基础价，另随境界 ×1.9^S */
+  var MARKET_PROFIT_COST = [800, 9000, 110000, 1500000, 2.4e7]; /* 固定配方阶梯，不随突破涨价 */
   function marketProfitCost(shopIdx, up, S) {
     var base = MARKET_PROFIT_COST[shopIdx] || 1e6;
-    return Math.round(base * Math.pow(1.9, up) * Math.pow(2.6, S || 0));
+    return Math.round(base * Math.pow(BALANCE.profitCostGrowth, up));
   }
   function marketCost(shopIdx, owned) {
     /* 软上限：60 间后 ×4/间 */
@@ -228,14 +248,14 @@ var XB = (function () {
     var over = Math.max(0, owned - 60);
     return Math.round(MARKET_SHOPS[shopIdx].cost * Math.pow(1.35, m) * Math.pow(4, over));
   }
-  /* 产出随小境界 S 缩放（与全局乘区一致）×利润等级^ ×功法坊市层 ×道基 */
+  /* 经济随境界温和增长；战斗释放与财富增长分开，避免一次突破买穿全部升级。 */
   function marketRate(counts, S, gongfaMap, daoJiMult, profits) {
     var total = 0;
     for (var j = 0; j < MARKET_SHOPS.length; j++) {
       var p = (profits && profits[j]) || 0;
       total += (counts[j] || 0) * MARKET_SHOPS[j].rate * Math.pow(MARKET_PROFIT_R, p);
     }
-    return total * realmMult(S) * (gongfaMap || 1) * (daoJiMult || 1);
+    return total * marketRealmMult(S) * (gongfaMap || 1) * (daoJiMult || 1);
   }
 
   /* ================= 灵石获取总乘区 ================= */
@@ -261,9 +281,9 @@ var XB = (function () {
 
   /* 击杀触发奇遇概率 */
   var FATE_CHANCE = 0.012;
-  /* 奇遇：仙人传功=10分钟打坐修为；妖丹=灵石；残卷=功法+1层；灵植=吐纳+1级 */
+  /* 传功至多120秒稳定修炼，且不超过当前小境界35%；不连跳整段内容。 */
   function fateExpGift(S, tnLv, gongfaMed, daoJiMult) {
-    return meditationRate(S, tnLv, gongfaMed, daoJiMult, 1) * 600;
+    return fateExpReward(S, meditationRate(S, tnLv, gongfaMed, daoJiMult, 1));
   }
   /* 奇遇灵石：随境界缩放（与坊市经济同轨），塔层小额加成 */
   function fateStones(S, floor) {
@@ -297,7 +317,7 @@ var XB = (function () {
     { id: 'old-fisherman', title: '蓑衣老翁',
       text: '寒江上孤舟蓑翁，钓的不是鱼，是一江风雪。\n他问你：“后生，急什么？”',
       options: [
-        { label: '坐下陪他钓鱼', desc: '打坐十分钟的修为', apply: 'exp' },
+        { label: '坐下陪他钓鱼', desc: '修为机缘（至多本境35%）', apply: 'exp' },
         { label: '讨教一句', desc: '仙缘 +1（永久）', apply: 'bond' }
       ] },
     { id: 'dark-cave', title: '幽窟微光',
@@ -349,7 +369,7 @@ var XB = (function () {
   /* ================= 魔窟妖塔（v4：战斗主场景） ================= */
   /* 平日打坐修行，战斗移入塔内：层越高怪越难；血量跨层不重置，
      归零重伤强制归家；装备只在塔层里程碑（每 5 层）掉。 */
-  var TOWER_UNLOCK_LEVEL = 3;          /* 首斩后解锁 */
+  var TOWER_UNLOCK_LEVEL = 1;          /* 首斩后解锁 */
   var TOWER_MILESTONE = 5;             /* 每 5 层里程碑：必掉装备 */
   function towerHp(f) {
     var v = 18 * Math.pow(1.24, f - 1);
@@ -374,8 +394,8 @@ var XB = (function () {
   /* 领悟：斩妖实践加深功法理解，每层塔提供的理解点 */
   function towerInsight(f) { return Math.max(1, Math.round(1 + f * 0.35)); }
   var INSIGHT_CAP = 100;              /* 单部功法领悟上限 */
-  function insightBonus(lv) {         /* 每点领悟：该功法效果 +2% */
-    return 1 + 0.02 * Math.min(lv || 0, INSIGHT_CAP);
+  function insightBonus(lv) {         /* 领悟有界，避免多乘区堆叠吞掉整段境界 */
+    return 1 + BALANCE.insightPerPoint * Math.min(lv || 0, INSIGHT_CAP);
   }
 
   /* ================= 主角血量 / 重伤 / 顿悟 ================= */
@@ -514,7 +534,9 @@ var XB = (function () {
 
   /* ================= 时长 ================= */
   function formatDur(sec) {
-    sec = Math.floor(sec);
+    if (!isFinite(sec)) return '暂不可达';
+    sec = Math.max(0, Math.ceil(sec));
+    if (sec < 60) return sec + '秒';
     var d = Math.floor(sec / 86400);
     var h = Math.floor((sec % 86400) / 3600);
     var m = Math.floor((sec % 3600) / 60);
@@ -542,6 +564,9 @@ var XB = (function () {
   }
 
   return {
+    BALANCE_VERSION: BALANCE_VERSION, BALANCE: BALANCE,
+    legacyExpNeed: legacyExpNeed, marketRealmMult: marketRealmMult,
+    fateExpReward: fateExpReward, breakthroughPreview: breakthroughPreview, temperStart: temperStart,
     REALM_LIST: REALM_LIST,
     STAGE_NAMES: STAGE_NAMES,
     MORTAL_REALMS: MORTAL_REALMS,
@@ -554,6 +579,7 @@ var XB = (function () {
     isMortal: isMortal,
     isRealmGate: isRealmGate,
     STAGE_MULT: STAGE_MULT,
+    REALM_GATE_MULT: REALM_GATE_MULT,
     realmMult: realmMult,
     expNeed: expNeed,
     MEDITATE_BASE: MEDITATE_BASE,

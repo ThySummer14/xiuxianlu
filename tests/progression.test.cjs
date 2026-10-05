@@ -52,9 +52,9 @@ test('shop-profit upgrades cannot pass their final tier even by repeated calls',
   const g=createGame({save:{S:4,level:5,mk:[100,0,0,0,0],mp:[7,0,0,0,0],stones:1e30}});g.api.buyMarketProfit(0);g.api.buyMarketProfit(0);
   assert.equal(g.state().mp[0],7);
 });
-test('ten-minute insight gift applies Dao foundation and arts only once', () => {
+test('insight gift is capped at 35% of current stage after all multipliers', () => {
   const g=createGame({save:rich});g.api.enterTower();const rate=g.state().medRate;
-  const reward=g.api.triggerFate(0);close(reward.exp,rate*600,'gift');
+  const reward=g.api.triggerFate(0);close(reward.exp,Math.min(rate*120,g.state().expNeed*.35),'gift');
 });
 test('old version-three saves keep currency, equipment, realm, sect, and shops', () => {
   const saved={...rich,stones:98765,exp:333,eq:{sword:{name:'良品精钢剑',power:45,qIdx:1}}};
@@ -63,4 +63,69 @@ test('old version-three saves keep currency, equipment, realm, sect, and shops',
 test('tower combat pauses while an encounter choice is open', () => {
   const g=createGame();g.api.enterTower();g.api.openFateEvent(0);const hp=g.state().ph,monster=g.state().monsterHp;
   g.step(2);assert.equal(g.state().ph,hp);assert.equal(g.state().monsterHp,monster);
+});
+
+
+test('major breakthrough is stronger than a minor stage and restores combat readiness', () => {
+  const g=createGame({save:{S:3,exp:1e7,ph:20}}); const old=g.state();
+  g.tap('bt-break');g.step(2.5);
+  const s=g.state();assert.equal(s.S,4);assert.equal(s.ph,s.phMax);
+  close(g.XB.realmMult(4)/g.XB.realmMult(3),2.25,'realm burst');
+  close(g.XB.realmMult(3)/g.XB.realmMult(2),1.3,'minor burst');
+  assert.deepEqual(Array.from(g.XB.breakthroughPreview(3).unlocks),['太虚剑意']);
+});
+test('legacy balance migration preserves current breakthrough percentage and all banked experience', () => {
+  const g=createGame({save:{balanceVersion:0,S:15,exp:12345,stones:98765}});
+  close(g.state().exp/g.state().expNeed,12345/g.XB.legacyExpNeed(15),'progress fraction');
+  assert.equal(g.state().stones,98765);assert.equal(g.state().S,15);
+  g.step(4);assert.equal(g.save().balanceVersion,1);
+});
+test('a breakthrough never makes a shop recipe cost more or take longer to repay', () => {
+  const B=createGame().XB;
+  for(let S=0;S<59;S++) {
+    const before=B.marketProfitCost(0,0,S),after=B.marketProfitCost(0,0,S+1);
+    assert.equal(before,after);
+    assert.ok(after/B.marketRate([4,0,0,0,0],S+1,1,1)<before/B.marketRate([4,0,0,0,0],S,1,1));
+  }
+});
+test('temper mode loops cleared floors without inflating the frontier', () => {
+  const g=createGame({save:{S:8,level:41,towerFloor:41,towerBest:41,sj:20,ss:20}});
+  g.api.enterTower('temper');assert.equal(g.state().towerPlan,'temper');
+  const initial=g.state().level;g.step(20);
+  assert.equal(g.state().towerBest,41);assert.ok(g.state().level<=initial+4);
+  g.api.leaveTower();assert.equal(g.state().level,41);
+  g.api.enterTower('advance');assert.equal(g.state().level,41);
+});
+test('old tower saves restore the frontier after a temper run and reload', () => {
+  const g=createGame({save:{S:12,level:31,towerBest:71,towerFloor:71,towerPlan:'temper'}});
+  assert.equal(g.state().level,71);assert.equal(g.state().towerBest,71);
+});
+test('dying repeatedly at one wall cannot farm permanent epiphanies', () => {
+  const g=createGame({save:{S:8,towerBest:30,level:30,epipFrontier:30}});
+  for(let i=0;i<30;i++){g.api.hurtPlayer(1e12);g.step(41);}
+  assert.equal(g.state().epip,0);
+});
+test('temper selection never includes an uncleared floor or boss', () => {
+  const B=createGame().XB;
+  for(let best=6;best<220;best++) {
+    const start=B.temperStart(best,1000,5000);
+    assert.ok(start+4<best);for(let f=start;f<start+5;f++)assert.notEqual(f%10,0);
+  }
+});
+test('all playable realms and investment prices remain finite and positive', () => {
+  const B=createGame().XB;
+  for(let S=0;S<=B.MAX_STAGE;S++){assert.ok(Number.isFinite(B.expNeed(S)));assert.ok(B.expNeed(S)>0);assert.ok(Number.isFinite(B.realmMult(S)));}
+  for(let i=0;i<5;i++)for(let n=0;n<100;n++)assert.ok(Number.isFinite(B.marketCost(i,n)));
+});
+
+
+test('a peaceful cultivator receives a working tea stall at Foundation Establishment', () => {
+  const g=createGame({save:{S:3,exp:1000,level:1,towerBest:1}});g.tap('bt-break');g.step(2.5);
+  assert.equal(g.state().S,4);assert.equal(g.state().mk[0],1);assert.ok(g.state().marketRate>0);
+  g.api.addStones(100);g.api.buyMarket(0);assert.equal(g.state().mk[0],2);
+});
+test('upgrading during temper combat does not move the current five-floor loop onto a boss', () => {
+  const g=createGame({save:{S:8,towerBest:90,level:90,towerFloor:90,ss:20}});g.api.enterTower('temper');
+  const start=g.state().level;g.api.addStones(1e15);for(let i=0;i<25;i++)g.api.buy('ss');
+  for(let i=0;i<30;i++){g.step(1);assert.ok(g.state().level>=start&&g.state().level<=start+4);assert.equal(g.state().isBoss,false);}
 });
