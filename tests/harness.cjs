@@ -47,9 +47,13 @@ function createGame(options = {}) {
     for (const key of Object.keys(sandbox.XD)) if (key.startsWith('draw')) sandbox.XD[key] = noop;
     for (const key of ['text','panel','bar','drawToasts','modalBackdrop']) sandbox.XUI[key] = noop;
   }
+  const uiControls=new Map(),scrollViews=new Map();
+  const originalButton=sandbox.XUI.button,originalScroll=sandbox.XUI.scrollArea;
+  sandbox.XUI.button=(id,x,y,w,h,opt)=>{uiControls.set(id,{x,y,w,h,opt});return originalButton(id,x,y,w,h,opt);};
+  sandbox.XUI.scrollArea=(id,x,y,w,h,contentH)=>{const state=originalScroll(id,x,y,w,h,contentH);scrollViews.set(id,{x,y,w,h,state});return state;};
   const api = sandbox.__test;
   return {
-    api, XB: sandbox.XB, sandbox, storage,
+    api, XB: sandbox.XB, sandbox, storage, uiControls, scrollViews,
     tap: id => { const old=sandbox.XUI.button; sandbox.XUI.button=(key,...args)=>key===id?true:old(key,...args); api.step(1e-9); sandbox.XUI.button=old; },
     state: () => api.state(),
     step: sec => { now += sec * 1000; api.step(sec, options.fast); return api.state(); },

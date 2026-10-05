@@ -130,6 +130,7 @@
           /* 'settings'|'confirm'|'realm' */
   var resetArmed = false;
   var rebirthArmed = false;
+  var rebirthArmT = 0;
   var resetArmT = 0;
   var hiddenAt = 0;
   var muted = false;
@@ -297,20 +298,101 @@
     } catch (e) { /* 静默 */ }
   }
 
+  function safeNumber(value, fallback, max, integer) {
+    var n = Number(value);
+    if (!isFinite(n)) return fallback || 0;
+    n = Math.max(0, Math.min(max == null ? 1e100 : max, n));
+    return integer ? Math.floor(n) : n;
+  }
+  function backupRawSave(raw) {
+    if (!raw) return;
+    var key = STORE_KEY + '_backup';
+    var previous = XP.storageGet(key);
+    if (previous === raw) return;
+    if (previous) XP.storageSet(STORE_KEY + '_previous', previous);
+    XP.storageSet(key, raw);
+  }
+  // Only impossible/corrupt values are repaired; ordinary earned progress is retained.
+  function normalizeSave(d) {
+    var money = ['stones', 'exp', 'contrib', 'accStones'];
+    for (var i = 0; i < money.length; i++) d[money[i]] = safeNumber(d[money[i]], 0);
+    d.S = safeNumber(d.S, 0, XB.MAX_STAGE, true);
+    d.best = Math.max(d.S, safeNumber(d.best, 0, XB.MAX_STAGE, true));
+    var upgrades = ['sj', 'ss', 'ls', 'tn'];
+    for (i = 0; i < upgrades.length; i++) d[upgrades[i]] = safeNumber(d[upgrades[i]], 0, (upgrades[i] === 'sj' || upgrades[i] === 'ss') ? 3000 : 1e12, true);
+    var permanent = ['dj', 'rb', 'bond', 'sgn', 'kills'];
+    for (i = 0; i < permanent.length; i++) d[permanent[i]] = safeNumber(d[permanent[i]], 0, 1e12, true);
+    d.level = Math.max(1, safeNumber(d.level, 1, 3000, true));
+    d.towerFloor = Math.max(1, safeNumber(d.towerFloor, d.level, 3000, true));
+    d.towerBest = Math.max(d.towerFloor, safeNumber(d.towerBest, d.level, 3000, true));
+    d.epipFrontier = Math.max(1, safeNumber(d.epipFrontier, d.towerFloor, 3000, true));
+    d.epip = safeNumber(d.epip, 0, XB.EPIPHANY_MAX, true);
+    d.injuryT = safeNumber(d.injuryT, 0, XB.INJURE_DUR);
+    function levels(values, length, cap) {
+      var result = [];
+      for (var j = 0; j < length; j++) result.push(safeNumber(values && values[j], 0, cap, true));
+      return result;
+    }
+    d.gf = levels(d.gf, XB.GONGFA_COUNT, 1e12);
+    d.cmp = levels(d.cmp, XB.GONGFA_COUNT, XB.INSIGHT_CAP);
+    d.mk = levels(d.mk, XB.MARKET_SHOPS.length, 1e12);
+    d.mp = levels(d.mp, XB.MARKET_SHOPS.length, XB.MARKET_PROFIT_UP.length - 1);
+    var cleanArts = {};
+    for (i = 0; i < XB.SECTS.length; i++) for (var j = 0; j < XB.SECTS[i].arts.length; j++) {
+      var artId = XB.SECTS[i].arts[j].id;
+      var artLv = safeNumber(d.sectLv && d.sectLv[artId], 0, 1e12, true);
+      if (artLv > 0) cleanArts[artId] = artLv;
+    }
+    d.sectLv = cleanArts;
+    var cleanEquip = {};
+    for (i = 0; i < XB.EQUIP_SLOTS.length; i++) {
+      var slot = XB.EQUIP_SLOTS[i];
+      var item = d.eq && d.eq[slot];
+      if (item && item.name && typeof item.power === 'number' && isFinite(item.power) && item.power >= 0) {
+        cleanEquip[slot] = {slot: slot, name: String(item.name), power: safeNumber(item.power, 0),
+          qIdx: safeNumber(item.qIdx, 0, XB.QUALITIES.length - 1, true)};
+      }
+    }
+    d.eq = cleanEquip;
+    var maxHp = XB.playerHpMax(d.S, cleanEquip.armor ? cleanEquip.armor.power : 0, 1);
+    d.ph = safeNumber(d.ph, maxHp, maxHp);
+    if (d.ph <= 0 && d.injuryT <= 0) d.ph = maxHp;
+    var missionKinds = XB.MISSION_KINDS.map(function (m) { return m.kind; });
+    d.missions = [0, 1, 2].map(function (idx) {
+      var m = d.missions && d.missions[idx];
+      if (!m || missionKinds.indexOf(m.kind) < 0) return null;
+      var keys = ['base', 'need', 'contrib', 'stones'];
+      for (var k = 0; k < keys.length; k++) {
+        var n = Number(m[keys[k]]);
+        if (!isFinite(n) || n < 0 || n > 1e100) return null;
+      }
+      if (m.need <= 0 || (m.kind === 'realm' && m.base > d.S)) return null;
+      return {kind: m.kind, base: Number(m.base), need: Number(m.need), contrib: Number(m.contrib),
+        stones: Number(m.stones), runFrontier: !!m.runFrontier};
+    });
+    return d;
+  }
+
   function loadGame() {
     try {
       var raw = XP.storageGet(STORE_KEY);
       if (raw) {
         var d = JSON.parse(raw);
-        if (d && typeof d === 'object' && d.v === 3 && d.ts) return d;
+        if (d && typeof d === 'object' && d.v === 3 && d.ts) {
+          backupRawSave(raw);
+          return normalizeSave(d);
+        }
       }
       /* 旧版 v1/v2 档迁移 */
       var old = XP.storageGet(LEGACY_KEY);
       if (old) {
         var o = JSON.parse(old);
-        if (o && typeof o === 'object' && o.ts) return migrateLegacy(o);
+        if (o && typeof o === 'object' && o.ts) {
+          backupRawSave(old);
+          return normalizeSave(migrateLegacy(o));
+        }
       }
-    } catch (e) { /* 忽略 */ }
+    } catch (e) { backupRawSave(raw); }
     return null;
   }
 
@@ -401,6 +483,7 @@
     questClaimed = (d.questClaimed && typeof d.questClaimed === 'object') ? d.questClaimed : {};
     muted = !!d.muted;
     XAudio.setMuted(muted);
+    if (sectId) rollMissions(false);
   }
 
   /* ---------- 妖兽（v4：只存在于魔窟塔内） ---------- */
@@ -1458,6 +1541,7 @@
     ctx.rect(px + 4, py + 4, pw - 8, ph - 8);
     ctx.clip();
     ctx.translate(0, -sc.off);
+    XUI.beginScroll(sc);
     for (var i = 0; i < XB.GONGFA.length; i++) {
       var g = XB.GONGFA[i];
       var id0 = g.id;
@@ -1493,6 +1577,7 @@
         }
       }
     }
+    XUI.endScroll();
     ctx.restore();
   }
 
@@ -1723,6 +1808,7 @@
     ctx.rect(px + 4, listTop, pw - 8, ph - (listTop - py) - 8);
     ctx.clip();
     ctx.translate(0, -sc.off);
+    XUI.beginScroll(sc);
     for (var i = 0; i < qs.length; i++) {
       var q = qs[i];
       var y = listTop + 4 + i * (rowH + gap);
@@ -1743,6 +1829,7 @@
         })) claimQuest(q.id);
       }
     }
+    XUI.endScroll();
     ctx.restore();
   }
 
@@ -1869,6 +1956,7 @@
       ctx.rect(mm.x + 24, mm.y + 112, mm.w - 48, 560);
       ctx.clip();
       ctx.translate(0, -sc.off);
+      XUI.beginScroll(sc);
       for (var r = 0; r < rows; r++) {
         var y2 = mm.y + 116 + r * (rowH + 4);
         var cur = r === XB.realmIdx(S);
@@ -1888,6 +1976,7 @@
           size: 20, color: cur ? IC.cinnabar : IC.ink30, serif: false
         });
       }
+      XUI.endScroll();
       ctx.restore();
 
       /* 轮回区 */
@@ -1897,11 +1986,11 @@
         if (rebirthArmed) XUI.text('重修：境界、灵石、装备、修行升级、普通功法、坊市归零\n保留：道基、宗门功法、贡献、顿悟、仙缘、剑心',
           375, rbY - 44, { size: 17, lineH: 20, maxW: mm.w - 50, color: IC.ink55 });
         if (XUI.button('rebirth', mm.x + 60, rbY, mm.w - 120, 60, {
-          label: rebirthArmed ? '再点一次 · 转世重修' :
+          label: rebirthArmed ? Math.ceil(rebirthArmT) + '秒内再点 · 转世重修' :
                  '轮回转世（+' + gain + ' 道基）',
           style: rebirthArmed ? 'danger' : 'primary', size: 24
         })) {
-          if (!rebirthArmed) rebirthArmed = true;
+          if (!rebirthArmed) { rebirthArmed = true; rebirthArmT = 5; }
           else doRebirth();
         }
         XUI.text('本次永久收益 ×' + XB.fmtRate(XB.daoJiMult(dj + gain) / daoMult()) + ' · 道基每点 +12%',
@@ -2110,6 +2199,10 @@
     }
 
     if (shakeT > 0) shakeT = Math.max(0, shakeT - dt);
+    if (rebirthArmed) {
+      rebirthArmT -= dt;
+      if (rebirthArmT <= 0) rebirthArmed = false;
+    }
     if (resetArmed) {
       resetArmT -= dt;
       if (resetArmT <= 0) resetArmed = false;
@@ -2298,6 +2391,8 @@
     if (scene !== SCENE_PLAY || hiddenAt) return;
     hiddenAt = Date.now();
     hold.active = false;
+    rebirthArmed = false; resetArmed = false;
+    XUI.cancelPointer();
     saveGame();
   });
   XP.onShow(function () {

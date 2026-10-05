@@ -14,7 +14,7 @@ python3 -m http.server 8000
 需要 Node.js 20+，没有第三方测试依赖：
 
 ```sh
-node --test --test-concurrency=1 tests/*.test.cjs
+node scripts/check.cjs # 所有生产脚本语法检查 + 59项单进程回归测试
 node scripts/characterize.cjs
 node scripts/simulate.cjs --seconds=3600 --policy=active
 node scripts/balance-matrix.cjs # 40次模拟，单进程，可能需要数分钟

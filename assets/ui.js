@@ -25,6 +25,8 @@ var XUI = (function () {
 
   var rects = [];             /* 本帧注册的可点矩形 {id,x,y,w,h,scroll} */
   var scrollStates = {};      /* id → {off, contentH, dragging, lastY, lastT, v} */
+  var inputScopes = [];
+  var scrollCandidate = null;
   var hotId = null;           /* 当前按压中的控件（反馈用） */
   var pressT = 0;             /* 按下时刻（按压动画） */
 
@@ -55,54 +57,55 @@ var XUI = (function () {
   /* ============================================================
    * 输入（由 main.js 从 canvas 事件喂入，逻辑坐标 750×1334）
    * ============================================================ */
+  function contains(r, x, y) {
+    return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+  }
+  function topHit(x, y) {
+    for (var i = rects.length - 1; i >= 0; i--) if (contains(rects[i], x, y)) return rects[i];
+    return null;
+  }
   function hitTest(x, y, wantScroll) {
     for (var i = rects.length - 1; i >= 0; i--) {
       var r = rects[i];
-      if (!!r.scroll !== !!wantScroll) continue;
-      if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) return r;
+      if (!contains(r, x, y)) continue;
+      if (wantScroll && r.blockScroll) return null;
+      if (!!r.scroll === !!wantScroll) return r;
     }
     return null;
   }
-
+  function beginDrag(id, y, startTime) {
+    downId = id; downIsScroll = true; hotId = null;
+    var st = _scrollState(id);
+    st.dragging = true; st.lastY = y; st.lastT = startTime == null ? nowT : startTime; st.v = 0;
+  }
   function pointerDown(x, y) {
     ptr.x = x; ptr.y = y; ptr.down = true;
     downPt = { x: x, y: y };
-    scrolled = false;
-    var r = hitTest(x, y, false);
+    scrolled = false; scrollCandidate = null;
+    var r = topHit(x, y);
+    if (r && r.scroll) { beginDrag(r.id, y); return true; }
     if (r) {
-      downId = r.id;
-      downIsScroll = false;
-      hotId = r.id;
-      pressT = nowT;
+      downId = r.id; downIsScroll = false; hotId = r.id; pressT = nowT;
+      scrollCandidate = r.scrollParent || null;
       return true;
     }
-    var sc = hitTest(x, y, true);
-    if (sc) {
-      downId = sc.id;
-      downIsScroll = true;
-      var st = _scrollState(sc.id);
-      st.dragging = true;
-      st.lastY = y;
-      st.lastT = nowT;
-      st.v = 0;
-      hotId = null;
-      return true;
-    }
-    downId = null;
-    hotId = null;
+    downId = null; hotId = null;
     return false;
   }
 
   function pointerMove(x, y) {
     ptr.x = x; ptr.y = y;
     if (!ptr.down) return;
-    if (downPt && Math.abs(y - downPt.y) > 10) scrolled = true;
+    if (downPt && Math.abs(y - downPt.y) > 10) {
+      scrolled = true;
+      if (scrollCandidate && !downIsScroll) beginDrag(scrollCandidate, downPt.y, pressT);
+    }
     if (downIsScroll && downId) {
       var st = scrollStates[downId];
       if (st && st.dragging) {
         var dy = st.lastY - y;
         st.off = Math.max(0, Math.min(st.contentH, st.off + dy));
-        st.v = dy / Math.max(0.001, nowT - st.lastT);
+        st.v = dy / Math.max(0.016, nowT - st.lastT);
         st.lastY = y;
         st.lastT = nowT;
       }
@@ -117,11 +120,19 @@ var XUI = (function () {
     }
     if (downId && !downIsScroll && !scrolled && downPt) {
       var dx = x - downPt.x, dy = y - downPt.y;
-      if (dx * dx + dy * dy < 24 * 24) taps.push(downId);
+      var releasedOn = topHit(x, y);
+      if (dx * dx + dy * dy < 24 * 24 && releasedOn && releasedOn.id === downId) taps.push(downId);
     }
     downId = null;
     downIsScroll = false;
+    scrollCandidate = null;
     hotId = null;
+  }
+
+  function cancelPointer() {
+    ptr.down = false; downPt = null; downId = null; downIsScroll = false;
+    scrollCandidate = null; hotId = null; taps.length = 0; frameTaps.length = 0;
+    for (var id in scrollStates) { scrollStates[id].dragging = false; scrollStates[id].v = 0; }
   }
 
   function wheel(x, y, dy) {
@@ -141,12 +152,24 @@ var XUI = (function () {
     nowT += (typeof dt === 'number' && dt > 0 && dt < 1) ? dt : 0.016;
     frameTaps = taps.splice(0, taps.length);
     rects.length = 0;
+    inputScopes.length = 0;
   }
 
   /* 注册一个可点区域（用于非按钮的自绘控件，如页签） */
   function register(id, x, y, w, h) {
-    rects.push({ id: id, x: x, y: y, w: w, h: h });
+    var scope = inputScopes.length ? inputScopes[inputScopes.length - 1] : null;
+    var parent = null;
+    if (scope) {
+      y -= scope.off;
+      var right = Math.min(x + w, scope.x + scope.w), bottom = Math.min(y + h, scope.y + scope.h);
+      x = Math.max(x, scope.x); y = Math.max(y, scope.y);
+      w = right - x; h = bottom - y; parent = scope.id;
+      if (w <= 0 || h <= 0) return;
+    }
+    rects.push({ id: id, x: x, y: y, w: w, h: h, scrollParent: parent });
   }
+  function beginScroll(st) { inputScopes.push(st.inputView); }
+  function endScroll() { inputScopes.pop(); }
 
   function tapped(id) { return frameTaps.indexOf(id) >= 0; }
   function isPressed(id) { return hotId === id && ptr.down; }
@@ -244,7 +267,7 @@ var XUI = (function () {
    *        badge, r }  返回是否被点按 */
   function button(id, x, y, w, h, opt) {
     opt = opt || {};
-    rects.push({ id: id, x: x, y: y, w: w, h: h });
+    register(id, x, y, w, h);
     var dis = !!opt.disabled;
     var pressed = isPressed(id) && !dis;
     var style = opt.style || 'ghost';
@@ -346,13 +369,14 @@ var XUI = (function () {
     }
     /* 橡皮筋回弹 */
     if (st.off > st.contentH) st.off = st.contentH;
+    st.inputView = {id: id, x: x, y: y, w: w, h: h, off: st.off};
     return st;
   }
 
   /* ---------- 弹窗底幕 + 卡片（w/h 随动态画布传入） ---------- */
   function modalBackdrop(id, w, h) {
     var W = w || 750, H = h || 1334;
-    rects.push({ id: id, x: 0, y: 0, w: W, h: H });
+    rects.push({ id: id, x: 0, y: 0, w: W, h: H, blockScroll: true });
     ctx.fillStyle = 'rgba(47,42,36,0.5)';
     ctx.fillRect(0, 0, W, H);
     return tapped(id);
@@ -401,6 +425,7 @@ var XUI = (function () {
     pointerDown: pointerDown,
     pointerMove: pointerMove,
     pointerUp: pointerUp,
+    cancelPointer: cancelPointer,
     wheel: wheel,
     panel: panel,
     text: text,
@@ -411,6 +436,7 @@ var XUI = (function () {
     chip: chip,
     sectionHeader: sectionHeader,
     scrollArea: scrollArea,
+    beginScroll: beginScroll, endScroll: endScroll,
     modalBackdrop: modalBackdrop,
     toast: toast,
     setViewSize: setViewSize,
