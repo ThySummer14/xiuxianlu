@@ -39,7 +39,7 @@ function createGame(options = {}) {
   }
   // Start through the same title button used by the UI, with the save fixture.
   const button = sandbox.XUI.button;
-  let start = true;
+  let start = !options.noStart;
   sandbox.XUI.button = (id, ...args) => id === 'start' && start ? (start = false, true) : button(id, ...args);
   sandbox.__test.step(0.001);
   sandbox.XUI.button = button;

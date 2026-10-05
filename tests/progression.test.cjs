@@ -25,7 +25,7 @@ test('full reload and tab return award identical offline gains with all earned m
   const reload = g.api.computeOffline({...rich,ts:1},3600);
   const resume = g.api.computeOffline(g.api.snapshot(),3600);
   close(reload.expGain, resume.expGain, 'experience'); close(reload.stoneGain, resume.stoneGain, 'stones');
-  close(reload.expGain, Math.floor(g.state().medRate * 3600), 'offline rate equals no-tide online');
+  close(reload.expGain, g.state().medRate * 3600, 'offline rate equals no-tide online');
 });
 test('offline reward grows after two hours and caps at 24 hours', () => {
   const g = createGame({save:rich}); const snap=g.api.snapshot();

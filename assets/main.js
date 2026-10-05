@@ -121,6 +121,7 @@
   var bgTrans = 1;
 
   var autosaveT = 0;
+  var offlineResumeModal = null;
   var offlineInfo = null;    /* 离线结算弹窗数据 */
   var activeTab = 'cult';
   var questClaimed = {};
@@ -276,6 +277,8 @@
 
   /* ---------- 存档 ---------- */
   function saveGame() {
+    // The title screen has not loaded the saved character yet. Never overwrite it.
+    if (scene !== SCENE_PLAY) return;
     try {
       XP.storageSet(STORE_KEY, JSON.stringify({
         v: 3, balanceVersion: XB.BALANCE_VERSION, stones: stones, exp: exp, S: S, level: level,
@@ -365,12 +368,12 @@
     sgn = Math.max(0, Number(d.sgn) || 0);
     storySeen = (d.storySeen && typeof d.storySeen === 'object') ? d.storySeen : {};
     /* v4 字段（旧档缺失按默认值） */
-    towerFloor = Math.max(1, Number(d.towerFloor) || 1);
+    towerFloor = Math.max(1, Number(d.towerFloor) || Number(d.level) || 1);
     level = Math.max(level, towerFloor);
     towerBest = Math.max(towerFloor, Number(d.towerBest) || 1);
-    towerFloor = towerBest; level = towerFloor;
+    level = towerFloor; /* 本世进度与历代最深纪录分开，轮回后不可跳回旧魔窟 */
     towerPlan = d.towerPlan === 'temper' ? 'temper' : 'advance';
-    epipFrontier = Math.max(1, Number(d.epipFrontier) || towerBest);
+    epipFrontier = Math.max(1, Number(d.epipFrontier) || towerFloor);
     epip = Math.max(0, Math.min(XB.EPIPHANY_MAX, Number(d.epip) || 0));
     sectId = typeof d.sectId === 'string' && XB.getSect(d.sectId) ? d.sectId : '';
     sectLv = (d.sectLv && typeof d.sectLv === 'object') ? d.sectLv : {};
@@ -389,7 +392,7 @@
     ph = Math.max(0, Number(d.ph) || 0);
     injuryT = Math.max(0, Number(d.injuryT) || 0);
     mode = 'home';
-    if (ph <= 0) ph = playerHpMax();
+    if (ph <= 0 && injuryT <= 0) ph = playerHpMax();
     best = Math.max(0, Number(d.best) || 0);
     totalKills = Math.max(0, Number(d.kills) || 0);
     questClaimed = (d.questClaimed && typeof d.questClaimed === 'object') ? d.questClaimed : {};
@@ -706,7 +709,7 @@
     else if (plan === 'advance') towerPlan = 'advance';
     if (injured()) { XUI.toast('道体受创，先养好伤再入魔窟'); XAudio.deny(); return; }
     if (bt && bt.big) return;
-    if (ph <= 0) ph = playerHpMax();
+    if (ph <= 0 && injuryT <= 0) ph = playerHpMax();
     mode = 'tower';
     temperFloor = XB.temperStart(towerBest, curDps(), playerHpMax());
     level = towerPlan === 'temper' ? temperFloor : towerFloor;
@@ -745,8 +748,8 @@
     combo.n = 0;
     injuryT = XB.INJURE_DUR * (sectId === 'dantang' ? 0.7 : 1);
     var c = { x: 375, y: MON_BASE_Y - 260 };
-    var newTrial = towerBest >= epipFrontier + 5;
-    if (newTrial) epipFrontier = towerBest;
+    var newTrial = towerFloor >= epipFrontier + 5;
+    if (newTrial) epipFrontier = towerFloor;
     if (newTrial && epip < XB.EPIPHANY_MAX && Math.random() < XB.EPIPHANY_CHANCE) {
       epip += 1;
       addFloat(c.x, c.y - 60, '生死之间，忽有所得！', '#b03a30', 44, 2.2);
@@ -1046,7 +1049,7 @@
 
   function computeOffline(d, gapSec) {
     var gap = gapSec != null ? gapSec : (Date.now() - d.ts) / 1000;
-    if (gap < OFFLINE_MIN_GAP) return null;
+    if (!isFinite(gap) || gap <= 0) return null;
     var weighted = XB.offlineWeightedSec(gap);
     var sSaved = Math.min(XB.MAX_STAGE, Math.max(0, Number(d.S) || 0));
     var djSaved = Math.max(0, Number(d.dj) || 0);
@@ -1076,19 +1079,50 @@
     var mkt = XB.marketRate(mkSaved, sSaved, mapG, daojiG, Array.isArray(d.mp) ? d.mp : null);
     if (sectSaved === 'tianshu') mkt *= 1.10;
     mkt *= 1 + 0.15 * (sLv.ts1 | 0);
-    var expGainV = med * weighted;
+    var healMult = sectSaved === 'dantang' ? 1.5 : 1;
+    var oldInjury = Math.max(0, Number(d.injuryT) || 0);
+    var resting = d.mode !== 'tower' || gap >= OFFLINE_MIN_GAP;
+    var injuredSeconds = Math.min(gap, oldInjury / healMult);
+    var injuredWeight = XB.offlineWeightedSec(injuredSeconds);
+    var expGainV = med * (weighted - injuredWeight * (1 - XB.INJURE_PENALTY));
+    var armor = d.eq && d.eq.armor ? Number(d.eq.armor.power) || 0 : 0;
+    var hpMax = XB.playerHpMax(sSaved, armor, 1);
+    var hpBefore = d.ph == null ? hpMax : Math.max(0, Number(d.ph) || 0);
+    var recovered = resting ? hpMax * healMult *
+      (injuredSeconds * XB.INJURY_HEAL_RATE + (gap - injuredSeconds) * XB.HEAL_RATE) : 0;
     var stoneGain = mkt * weighted;
     if (expGainV <= 0 && stoneGain <= 0) return null;
     return {
       seconds: Math.min(gap, XB.OFFLINE_CAP_SEC),
-      expGain: Math.floor(expGainV),
-      stoneGain: Math.floor(stoneGain)
+      expGain: expGainV,
+      stoneGain: stoneGain,
+      injuryRemaining: Math.max(0, oldInjury - (resting ? gap * healMult : 0)),
+      health: Math.min(hpMax, hpBefore + recovered)
     };
   }
 
   function showOfflineModal(info) {
+    offlineResumeModal = modal && modal !== 'offline' ? modal : null;
     offlineInfo = info;
     modal = 'offline';   /* 前后台切换归来的结算也要弹窗可见 */
+  }
+
+  function settleOffline(info) {
+    if (!info) return;
+    exp += info.expGain;
+    stones += info.stoneGain; accStones += info.stoneGain;
+    injuryT = info.injuryRemaining; ph = info.health;
+    if (info.seconds >= OFFLINE_MIN_GAP) {
+      if (mode === 'tower') { mode = 'home'; monster = null; level = towerFloor; combo.n = 0; }
+      showOfflineModal(info);
+    } else offlineInfo = null;
+    checkBreakthroughAuto();
+    saveGame();
+  }
+  function dismissOffline() {
+    offlineInfo = null;
+    modal = offlineResumeModal;
+    offlineResumeModal = null;
   }
 
   /* ---------- 标题 / 场景 ---------- */
@@ -1108,14 +1142,9 @@
     bgTrans = 1;
     mode = 'home';
     monster = null;
-    if (ph <= 0) ph = playerHpMax();
+    if (ph <= 0 && injuryT <= 0) ph = playerHpMax();
     if (!tide.next) scheduleTide();
-    if (fromSave && offlineInfo) {
-      exp += offlineInfo.expGain;
-      stones += offlineInfo.stoneGain; accStones += offlineInfo.stoneGain;
-      checkBreakthroughAuto();
-      modal = 'offline';
-    }
+    if (fromSave && offlineInfo) settleOffline(offlineInfo);
   }
 
   function freshState() {
@@ -1137,7 +1166,7 @@
     sectId = ''; sectLv = {}; contrib = 0;
     missions = [null, null, null]; accStones = 0;
     slashes.length = 0; smokes.length = 0; floats.length = 0;
-    bt = null; offlineInfo = null;
+    bt = null; offlineInfo = null; offlineResumeModal = null;
   }
 
   /* ============================================================
@@ -1859,7 +1888,7 @@
 
     if (modal === 'offline' && offlineInfo) {
       XUI.modalBackdrop('offline-bg', VIEW_W, VIEW_H);
-      var mo = drawModalCard(600, 480);
+      var mo = drawModalCard(600, 560);
       XUI.text('闭 关 归 来', 375, mo.y + 60, { size: 32, weight: 800 });
       XUI.text('闭关 ' + XB.formatDur(offlineInfo.seconds),
                375, mo.y + 130, { size: 26, color: IC.ink55 });
@@ -1874,15 +1903,16 @@
                  375, ly, { size: 30, color: '#8a6a30', weight: 700 });
         ly += 56;
       }
+      XUI.text(offlineInfo.injuryRemaining > 0 ? '继续养伤 ' + Math.ceil(offlineInfo.injuryRemaining) + '秒' : '闭关养息 · 气血已恢复',
+               375, mo.y + 320, { size: 21, color: IC.indigo });
       XUI.text('前 2 小时全额收益，其后 50%，24 小时封顶',
-               375, mo.y + mo.h - 116, { size: 18, color: IC.ink30, serif: false });
+               375, mo.y + mo.h - 154, { size: 18, color: IC.ink30, serif: false });
       XUI.text('打坐效率越高，闭关收获越丰',
-               375, mo.y + mo.h - 88, { size: 18, color: IC.ink30, serif: false });
-      if (XUI.button('offline-ok', 375 - 120, mo.y + mo.h - 150, 240, 66, {
+               375, mo.y + mo.h - 126, { size: 18, color: IC.ink30, serif: false });
+      if (XUI.button('offline-ok', 375 - 120, mo.y + mo.h - 94, 240, 66, {
         label: '收 下', style: 'primary', size: 26
       })) {
-        offlineInfo = null;
-        modal = null;
+        dismissOffline();
       }
     }
   }
@@ -1909,6 +1939,7 @@
 
   /* ---------- 主循环 ---------- */
   function updateCore(dt) {
+    if (hiddenAt) return; // Background time is settled once on return, never twice.
     nowSec += dt;
 
     /* 突破动画推进 */
@@ -2232,7 +2263,9 @@
 
   /* ---------- 前后台切换 ---------- */
   XP.onHide(function () {
+    if (scene !== SCENE_PLAY || hiddenAt) return;
     hiddenAt = Date.now();
+    hold.active = false;
     saveGame();
   });
   XP.onShow(function () {
@@ -2240,16 +2273,7 @@
     var gap = (Date.now() - hiddenAt) / 1000;
     hiddenAt = 0;
     lastFrame = 0;
-    if (gap > OFFLINE_MIN_GAP && scene === SCENE_PLAY) {
-      var info = computeOffline(currentSnapshot(), gap);
-      if (info) {
-        exp += info.expGain;
-        stones += info.stoneGain; accStones += info.stoneGain;
-        showOfflineModal(info);
-        checkBreakthroughAuto();
-        saveGame();
-      }
-    }
+    if (scene === SCENE_PLAY) settleOffline(computeOffline(currentSnapshot(), gap));
   });
   if (!XP.isWx && typeof document !== 'undefined') {
     window.addEventListener('pagehide', saveGame);
@@ -2261,7 +2285,7 @@
       S: S, tn: tn, gf: gf.slice(), dj: dj, mk: mk.slice(),
       cmp: cmp.slice(), mp: mp.slice(), bond: bond, epip: epip,
       sectId: sectId, sectLv: Object.assign({}, sectLv),
-      injuryT: injuryT, ph: ph
+      injuryT: injuryT, ph: ph, eq: eq, mode: mode
     };
   }
 
@@ -2376,6 +2400,7 @@
       },
       openModal: function (m) { openModal(m); },
       closeModal: function () { modal = null; },
+      dismissOffline: dismissOffline,
       switchTab: function (t) { activeTab = t; },
       getSaveRaw: function () { return XP.storageGet(STORE_KEY); },
       setSaveTs: function (msAgo) {
@@ -2392,9 +2417,7 @@
         /* 模拟离线归来：不落盘，直接按当前状态结算 */
         var info = computeOffline(currentSnapshot(), secAgo);
         if (!info) return null;
-        exp += info.expGain;
-        stones += info.stoneGain; accStones += info.stoneGain;
-        showOfflineModal(info);
+        settleOffline(info);
         return info;
       },
       resetAll: function () {
