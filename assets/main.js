@@ -263,7 +263,10 @@
            sectDps() * injPenalty() * XB.epiphanyMult(epip);
   }
   function curMarketRate() {
-    return XB.marketRate(mk, S, gEff('map'), daoMult(), mp) * sectMarket();
+    return XB.marketRate(mk, S, gEff('map'), daoMult(), mp) * sectMarket() * marketEarningsMult();
+  }
+  function marketEarningsMult() {
+    return gEff('gold') * (1 + .10 * sectArtLv('ts2')) * (tide.left > 0 ? XB.TIDE_STONE_MULT : 1);
   }
   function expNeed() { return XB.expNeed(S); }
   function critRate() {
@@ -492,6 +495,11 @@
     }
   }
 
+  function fateStoneReward() {
+    var steadyMarket = curMarketRate() / (tide.left > 0 ? XB.TIDE_STONE_MULT : 1);
+    return steadyMarket > 0 ? steadyMarket * XB.BALANCE.encounterStoneSeconds :
+      XB.fateStones(S, level) * gEff('gold') * daoMult();
+  }
   function fateExpReward() {
     var steadyRate = medRate() / tideMultMed() / injPenalty();
     return XB.fateExpReward(S, steadyRate);
@@ -510,7 +518,7 @@
       exp += gift;
       addFloat(c.x, c.y - 190, '仙人传功 · +' + XB.fmt(gift) + ' 修为', '#b03a30', 38, 1.4);
     } else if (roll < 0.6) {
-      var st = XB.fateStones(S, level) * stoneMultAll();
+      var st = fateStoneReward();
       stones += st; accStones += st;
       addFloat(c.x, c.y - 190, '妖兽内丹 · +' + XB.fmt(st) + ' 灵石', '#8a6a30', 38, 1.4);
     } else if (roll < 0.72) {
@@ -529,7 +537,7 @@
         gf[gi] += 1;
         addFloat(c.x, c.y - 190, '残卷 ·《' + XB.GONGFA[gi].name + '》+1层', '#3d4a5c', 34, 1.4);
       } else {
-        stones += XB.fateStones(S, level) * 0.5; accStones += XB.fateStones(S, level) * 0.5;
+        stones += fateStoneReward() * 0.5; accStones += fateStoneReward() * 0.5;
       }
     } else {
       tn += 1;
@@ -574,7 +582,7 @@
       exp += gift;
       addFloat(c.x, c.y - 190, ' +' + XB.fmt(gift) + ' 修为', '#b03a30', 36, 1.6);
     } else if (key === 'stones') {
-      st = XB.fateStones(S, level) * stoneMultAll();
+      st = fateStoneReward();
       stones += st; accStones += st;
       addFloat(c.x, c.y - 190, ' +' + XB.fmt(st) + ' 灵石', '#8a6a30', 36, 1.6);
     } else if (key === 'equip') {
@@ -586,17 +594,17 @@
       var er2 = grantEquip(Math.max(level, S * 4));
       addFloat(c.x, c.y - 190, '仙缘 +1 · ' + (er2.got ? '获赠 ' + er2.got : '谢礼已收'), '#3d4a5c', 34, 1.8);
     } else if (key === 'stones-exp') {
-      st = XB.fateStones(S, level) * 0.6 * stoneMultAll();
+      st = fateStoneReward() * 0.6;
       gift = fateExpReward() * 0.5;
       stones += st; accStones += st; exp += gift;
       addFloat(c.x, c.y - 190, '因果回报 · 灵石与修为双得', '#8a6a30', 34, 1.6);
     } else if (key === 'big-stones-exp') {
       if (riskyBig) {
-        st = XB.fateStones(S, level) * 0.4 * stoneMultAll();
+        st = fateStoneReward() * 0.4;
         stones += st; accStones += st;
         addFloat(c.x, c.y - 190, '窟中空空 · 只得 +' + XB.fmt(st) + ' 灵石', 'rgba(47,42,36,0.62)', 32, 1.6);
       } else {
-        st = XB.fateStones(S, level) * 2.5 * stoneMultAll();
+        st = fateStoneReward() * 2.5;
         gift = fateExpReward() * 1.2;
         stones += st; accStones += st; exp += gift;
         addFloat(c.x, c.y - 190, '满载而归 · 大机缘！', '#8a6a30', 38, 1.8);
@@ -609,6 +617,15 @@
     modal = null;
     checkBreakthroughAuto();
     saveGame();
+  }
+
+  function fateOptionPreview(option) {
+    var key = option.apply;
+    if (key === 'exp') return '+' + XB.fmt(fateExpReward()) + ' 修为（本境' + Math.round(fateExpReward() / expNeed() * 100) + '%）';
+    if (key === 'stones') return '+' + XB.fmt(fateStoneReward()) + (curMarketRate() > 0 ? ' 灵石（45秒稳定坊市产出）' : ' 灵石（初入仙途的路资）');
+    if (key === 'stones-exp') return '+' + XB.fmt(fateStoneReward() * .6) + ' 灵石 / +' + XB.fmt(fateExpReward() * .5) + ' 修为';
+    if (key === 'big-stones-exp') return '65%得大机缘；35%只得' + XB.fmt(fateStoneReward() * .4) + '灵石';
+    return option.desc;
   }
 
   /* ---------- 战斗 ---------- */
@@ -842,6 +859,8 @@
     questClaimed = {};
     storySeen = {}; storyQueue.length = 0;
     towerFloor = 1; level = 1; towerPlan = 'advance'; epipFrontier = 1;
+    missions = [null, null, null];
+    if (sectId) rollMissions(true);
     monster = null; mode = 'home';
     ph = playerHpMax(); injuryT = 0;
     for (var ci3 = 0; ci3 < cmp.length; ci3++) cmp[ci3] = 0;
@@ -969,21 +988,30 @@
   }
 
   function rollMission() {
-    var kinds = XB.MISSION_KINDS;
+    var used = missions.filter(function (m) { return !!m; }).map(function (m) { return m.kind; });
+    var kinds = XB.MISSION_KINDS.filter(function (m) {
+      return used.indexOf(m.kind) < 0 && !(m.kind === 'realm' && S >= XB.MAX_STAGE - 1);
+    });
     var kind = kinds[Math.floor(Math.random() * kinds.length)].kind;
     var need, base = 0;
     if (kind === 'kill')  { need = 8 + Math.round(S * 2 + towerBest * 0.5); base = totalKills; }
-    else if (kind === 'floor') { base = Math.max(1, towerBest - 1); need = base + 3 + Math.round(S * 0.6); }
-    else if (kind === 'stone') { need = Math.round((40 + S * 25) * (1 + mk[0] + mk[1] + mk[2] + mk[3] + mk[4]) * 10); base = accStones; }
+    else if (kind === 'floor') { base = Math.max(1, towerFloor - 1); need = base + 3 + Math.round(S * 0.6); }
+    else if (kind === 'stone') {
+      var stableIncome = curMarketRate() / (tide.left > 0 ? XB.TIDE_STONE_MULT : 1);
+      need = Math.max(400 + S * 250, Math.round(stableIncome * 90)); base = accStones;
+    }
     else if (kind === 'shop') {
       var shops = mk[0] + mk[1] + mk[2] + mk[3] + mk[4];
-      need = shops + 2 + Math.floor(S / 8); base = shops;
+      need = shops + Math.min(4, 2 + Math.floor(S / 12)); base = shops;
     }
     else { kind = 'realm'; need = S + 2; base = S; }
     var rew = XB.missionReward(kind, S);
-    return { kind: kind, need: need, base: base, contrib: rew.contrib, stones: rew.stones };
+    return { kind: kind, need: need, base: base, contrib: rew.contrib,
+      stones: kind === 'stone' ? Math.min(rew.stones, Math.floor(need * .2)) : rew.stones,
+      runFrontier: kind === 'floor' };
   }
   function rollMissions(force) {
+    if (force) missions = [null, null, null];
     for (var i = 0; i < 3; i++) {
       if (force || !missions[i]) missions[i] = rollMission();
     }
@@ -991,7 +1019,7 @@
   /* 统一（当前值-基线）进度，need 为目标绝对值或增量已折算 */
   function missionCur(m) {
     if (m.kind === 'kill') return totalKills - m.base;
-    if (m.kind === 'floor') return towerBest - m.base;
+    if (m.kind === 'floor') return (m.runFrontier ? towerFloor : towerBest) - m.base;
     if (m.kind === 'stone') return accStones - m.base;
     if (m.kind === 'shop') return (mk[0] + mk[1] + mk[2] + mk[3] + mk[4]) - m.base;
     return S - m.base; /* realm: 再进一步 */
@@ -1009,6 +1037,7 @@
     stones += m.stones; accStones += m.stones;
     XUI.toast('宗门任务·缴令 +' + m.contrib + ' 贡献 +' + XB.fmt(m.stones) + ' 灵石');
     XAudio.buy();
+    missions[i] = null;
     missions[i] = rollMission();
     saveGame();
   }
@@ -1058,7 +1087,7 @@
       gfs.push(Math.max(0, (d.gf && Number(d.gf[i])) || 0));
     }
     /* 打坐效率（离线不吃潮汐）；v4：含领悟/宗门/顿悟乘区 */
-    var medG = 1, mapG = 1, daojiG = XB.daoJiMult(djSaved);
+    var medG = 1, mapG = 1, goldG = 1, daojiG = XB.daoJiMult(djSaved);
     var epSaved = Math.max(0, Math.min(XB.EPIPHANY_MAX, Number(d.epip) || 0));
     var sectSaved = typeof d.sectId === 'string' ? d.sectId : '';
     var sLv = (d.sectLv && typeof d.sectLv === 'object') ? d.sectLv : {};
@@ -1068,6 +1097,7 @@
       if (g.id === 'breath') medG *= g.eff(gfs[j]) * ins;
       if (g.id === 'dao') medG *= g.eff(gfs[j]) * ins;
       if (g.id === 'map') mapG *= g.eff(gfs[j]) * ins;
+      if (g.id === 'gold') goldG *= g.eff(gfs[j]) * ins;
     }
     medG *= 1 + 0.12 * (sLv.dt1 | 0);             /* 丹霞镇宗功法 */
     medG *= 1 + 0.08 * (sLv.dt2 | 0);             /* 全部修为：线上线下一致 */
@@ -1078,7 +1108,7 @@
     var mkSaved = Array.isArray(d.mk) ? d.mk : [0, 0, 0, 0, 0];
     var mkt = XB.marketRate(mkSaved, sSaved, mapG, daojiG, Array.isArray(d.mp) ? d.mp : null);
     if (sectSaved === 'tianshu') mkt *= 1.10;
-    mkt *= 1 + 0.15 * (sLv.ts1 | 0);
+    mkt *= (1 + 0.15 * (sLv.ts1 | 0)) * goldG * (1 + .10 * (sLv.ts2 | 0));
     var healMult = sectSaved === 'dantang' ? 1.5 : 1;
     var oldInjury = Math.max(0, Number(d.injuryT) || 0);
     var resting = d.mode !== 'tower' || gap >= OFFLINE_MIN_GAP;
@@ -1191,7 +1221,7 @@
     ctx.lineWidth = 1;
     ctx.strokeRect(bx - bw / 2 + 8, by - bh / 2 + 8, bw - 16, bh - 16);
     XUI.text('斩妖·修仙录', 375, by - 6, { size: 92, weight: 900, color: IC.ink });
-    XUI.text('v4 · 宗门魔窟版', 375, by + 56, { size: 26, color: IC.ink55, serif: false });
+    XUI.text('v4.5 · 破境与传承', 375, by + 56, { size: 26, color: IC.ink55, serif: false });
 
     var hasSave = titleSave && titleSave.hasSave;
     XUI.text(hasSave
@@ -1482,7 +1512,7 @@
       var ry = py + 38 + i * (rowH + 3);
       var cost = XB.marketCost(i, mk[i]);
       var single = [0, 0, 0, 0, 0]; single[i] = 1;
-      var perShop = XB.marketRate(single, S, gEff('map'), daoMult(), mp) * sectMarket();
+      var perShop = XB.marketRate(single, S, gEff('map'), daoMult(), mp) * sectMarket() * marketEarningsMult();
       XUI.text(shop.name + (mp[i] > 0 ? ' Lv' + mp[i] : ''), px + 16, ry + rowH / 2,
                { size: 23, weight: 700, align: 'left' });
       XUI.text(mk[i] + ' 间 · ' + XB.fmtRate(perShop) + '/s·间',
@@ -1779,7 +1809,7 @@
       for (var fi = 0; fi < fopts.length; fi++) {
         var fo = fopts[fi];
         if (XUI.button('fate-' + fi, mf.x + 60, mf.y + 320 + fi * 96, mf.w - 120, 78, {
-          label: fo.label, sub: fo.desc, style: fi === 0 ? 'primary' : 'gold', size: 24
+          label: fo.label, sub: fateOptionPreview(fo), style: fi === 0 ? 'primary' : 'gold', size: 24
         })) {
           resolveFateOption(fi);
           return;   /* 结算后本帧命运分支终止，避免碰已失效状态 */
@@ -1864,6 +1894,8 @@
       var rbY = mm.y + mm.h - 150;
       if (canRebirth()) {
         var gain = XB.daoJiGain(S);
+        if (rebirthArmed) XUI.text('重修：境界、灵石、装备、修行升级、普通功法、坊市归零\n保留：道基、宗门功法、贡献、顿悟、仙缘、剑心',
+          375, rbY - 44, { size: 17, lineH: 20, maxW: mm.w - 50, color: IC.ink55 });
         if (XUI.button('rebirth', mm.x + 60, rbY, mm.w - 120, 60, {
           label: rebirthArmed ? '再点一次 · 转世重修' :
                  '轮回转世（+' + gain + ' 道基）',
@@ -1872,7 +1904,7 @@
           if (!rebirthArmed) rebirthArmed = true;
           else doRebirth();
         }
-        XUI.text('道基每点：攻击/剑侍/打坐/灵石 +12%（永久）',
+        XUI.text('本次永久收益 ×' + XB.fmtRate(XB.daoJiMult(dj + gain) / daoMult()) + ' · 道基每点 +12%',
                  375, rbY + 84, { size: 17, color: IC.ink55, serif: false });
       } else {
         XUI.text('修至渡劫初期（' + (XB.REBIRTH_UNLOCK_S + 1) + '/' +
@@ -2377,6 +2409,9 @@
       addContrib: function (n) { contrib += n; },
       setEpip: function (n) { epip = n; },
       fateReward: fateExpReward,
+      fateStoneReward: fateStoneReward,
+      persist: saveGame,
+      rollMissions: function () { rollMissions(true); },
       openFateEvent: function (i) { return openFateEvent(i != null ? XB.FATE_EVENTS[i] : null); },
       fateOption: function (i) { resolveFateOption(i); },
       storyOk: function () { if (modal === 'story') modal = null; },
@@ -2392,7 +2427,7 @@
           return { exp: gift };
         }
         if (kind === 1) {
-          var st = XB.fateStones(S, level) * stoneMultAll();
+          var st = fateStoneReward();
           stones += st;
           return { stones: st };
         }

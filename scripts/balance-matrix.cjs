@@ -5,7 +5,8 @@ const seeds=[7,42,123,2026,65537];
 const quantile=(a,q)=>[...a].sort((x,y)=>x-y)[Math.floor((a.length-1)*q)];
 const range=a=>({min:Math.min(...a),p25:quantile(a,.25),median:quantile(a,.5),p75:quantile(a,.75),max:Math.max(...a)});
 const groups=[];
-for(const ref of ['c8a0af3',undefined])for(const policy of policies){
+const refs=process.argv.includes('--candidate-only')?[undefined]:['c8a0af3',undefined];
+for(const ref of refs)for(const policy of policies){
   const runs=seeds.map(seed=>simulate({duration:3600,seed,policy,ref}));
   groups.push({version:ref||'candidate',policy,seeds,
     stageAtMinutes:Object.fromEntries([15,30,60].map(min=>[min,range(runs.map(r=>r.milestones.filter(m=>m.atSeconds<=min*60).at(-1)?.stage||0))])),

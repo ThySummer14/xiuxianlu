@@ -1,0 +1,136 @@
+{
+  "v": 3,
+  "balanceVersion": 1,
+  "stones": 20209066852.113205,
+  "exp": 1876402889.274369,
+  "S": 32,
+  "level": 54,
+  "sj": 74,
+  "ss": 72,
+  "ls": 48,
+  "tn": 57,
+  "gf": [
+    29,
+    26,
+    27,
+    26,
+    25,
+    0,
+    0
+  ],
+  "eq": {
+    "sword": {
+      "slot": "sword",
+      "name": "仙品诛仙剑",
+      "power": 435.5323355323512,
+      "qIdx": 4
+    },
+    "armor": {
+      "slot": "armor",
+      "name": "仙品仙绫",
+      "power": 417.9289603107359,
+      "qIdx": 4
+    },
+    "talisman": {
+      "slot": "talisman",
+      "name": "极品宝符",
+      "power": 446.2568437127737,
+      "qIdx": 3
+    },
+    "pendant": {
+      "slot": "pendant",
+      "name": "极品宝佩",
+      "power": 448.0755488365219,
+      "qIdx": 3
+    }
+  },
+  "mk": [
+    38,
+    34,
+    29,
+    25,
+    22
+  ],
+  "mp": [
+    4,
+    4,
+    3,
+    3,
+    3
+  ],
+  "dj": 0,
+  "rb": 0,
+  "best": 32,
+  "bond": 11,
+  "sgn": 17,
+  "storySeen": {
+    "1": 1,
+    "2": 1,
+    "3": 1,
+    "4": 1,
+    "5": 1,
+    "6": 1,
+    "7": 1
+  },
+  "towerFloor": 130,
+  "towerBest": 130,
+  "towerPlan": "temper",
+  "epipFrontier": 130,
+  "ph": 532589,
+  "injuryT": 0,
+  "epip": 3,
+  "cmp": [
+    100,
+    100,
+    100,
+    100,
+    100,
+    20,
+    0
+  ],
+  "sectId": "dantang",
+  "sectLv": {
+    "dt1": 15,
+    "dt2": 9
+  },
+  "contrib": 18014,
+  "missions": [
+    {
+      "kind": "shop",
+      "need": 151,
+      "base": 147,
+      "contrib": 3256,
+      "stones": 466670,
+      "runFrontier": false
+    },
+    {
+      "kind": "realm",
+      "need": 32,
+      "base": 30,
+      "contrib": 80,
+      "stones": 737870,
+      "runFrontier": false
+    },
+    {
+      "kind": "floor",
+      "need": 137,
+      "base": 119,
+      "contrib": 1140,
+      "stones": 170900,
+      "runFrontier": true
+    }
+  ],
+  "accStones": 102584886555.09831,
+  "kills": 6924,
+  "muted": false,
+  "questClaimed": {
+    "first-blood": true,
+    "ten-thousand": true,
+    "steady-heart": true,
+    "merchant": true,
+    "foundational": true,
+    "fate-bound": true,
+    "sword-heart": true
+  },
+  "ts": 1800006199000
+}

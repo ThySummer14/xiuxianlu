@@ -1,0 +1,2272 @@
+{
+  "date": "2026-10-05",
+  "method": "Real production updateCore at 50ms steps. Canvas output omitted, no human playtest. Five fixed seeds per policy. Same policy across original and candidate. Minor timing differences can consume RNG in different order. Candidate metrics are initial evaluation targets, not retention predictions.",
+  "policies": {
+    "active": "4 clicks/sec, decisions each 2 seconds",
+    "idle": "First 30 seconds of clicks, then no clicks, decisions each 60 seconds",
+    "investor": "1 click/sec, decisions each 10 seconds, up to 80% spend on investment",
+    "explorer": "4 clicks/sec, decisions each 2 seconds, only 35% spend on investment"
+  },
+  "groups": [
+    {
+      "version": "candidate",
+      "policy": "active",
+      "seeds": [
+        7,
+        42,
+        123,
+        2026,
+        65537
+      ],
+      "stageAtMinutes": {
+        "15": {
+          "min": 15,
+          "p25": 15,
+          "median": 15,
+          "p75": 15,
+          "max": 15
+        },
+        "30": {
+          "min": 22,
+          "p25": 23,
+          "median": 23,
+          "p75": 23,
+          "max": 23
+        },
+        "60": {
+          "min": 27,
+          "p25": 29,
+          "median": 30,
+          "p75": 30,
+          "max": 30
+        }
+      },
+      "foundationSeconds": {
+        "min": 115,
+        "p25": 117,
+        "median": 123,
+        "p75": 125,
+        "max": 127
+      },
+      "goldenCoreSeconds": {
+        "min": 329,
+        "p25": 329,
+        "median": 339,
+        "p75": 357,
+        "max": 387
+      },
+      "injuries": {
+        "min": 33,
+        "p25": 33,
+        "median": 34,
+        "p75": 35,
+        "max": 35
+      },
+      "recipePurchases": {
+        "min": 17,
+        "p25": 17,
+        "median": 17,
+        "p75": 17,
+        "max": 17
+      },
+      "reachedFinalRealm": 0,
+      "samples": [
+        {
+          "seed": 7,
+          "injuries": 35,
+          "purchases": {
+            "shops": 143,
+            "recipes": 17,
+            "cultivation": 174,
+            "combat": 195,
+            "arts": 25
+          },
+          "snapshots": [
+            {
+              "seconds": 900,
+              "S": 15,
+              "realm": "元婴·大圆满",
+              "floor": 35,
+              "frontier": 80,
+              "medRate": 5315,
+              "marketRate": 89301,
+              "stones": 836038,
+              "tn": 45,
+              "shops": [
+                25,
+                21,
+                16,
+                8,
+                1
+              ],
+              "recipes": [
+                3,
+                3,
+                2,
+                0,
+                0
+              ]
+            },
+            {
+              "seconds": 1800,
+              "S": 23,
+              "realm": "炼虚·大圆满",
+              "floor": 44,
+              "frontier": 120,
+              "medRate": 1154704,
+              "marketRate": 6774996,
+              "stones": 243245514,
+              "tn": 54,
+              "shops": [
+                32,
+                26,
+                23,
+                19,
+                14
+              ],
+              "recipes": [
+                4,
+                3,
+                3,
+                3,
+                2
+              ]
+            },
+            {
+              "seconds": 3600,
+              "S": 30,
+              "realm": "大乘·后期",
+              "floor": 51,
+              "frontier": 130,
+              "medRate": 12868615,
+              "marketRate": 23385092,
+              "stones": 5316281056,
+              "tn": 56,
+              "shops": [
+                37,
+                33,
+                28,
+                24,
+                21
+              ],
+              "recipes": [
+                4,
+                4,
+                3,
+                3,
+                3
+              ]
+            }
+          ],
+          "final": {
+            "S": 30,
+            "realm": "大乘·后期",
+            "floor": 51,
+            "frontier": 130,
+            "tn": 56,
+            "dj": 0,
+            "exp": 2329921217,
+            "expNeed": 11043453464,
+            "medRate": 12868615,
+            "marketRate": 23385092
+          }
+        },
+        {
+          "seed": 42,
+          "injuries": 34,
+          "purchases": {
+            "shops": 135,
+            "recipes": 17,
+            "cultivation": 169,
+            "combat": 192,
+            "arts": 20
+          },
+          "snapshots": [
+            {
+              "seconds": 900,
+              "S": 15,
+              "realm": "元婴·大圆满",
+              "floor": 34,
+              "frontier": 90,
+              "medRate": 4740,
+              "marketRate": 87308,
+              "stones": 947011,
+              "tn": 46,
+              "shops": [
+                25,
+                21,
+                15,
+                8,
+                1
+              ],
+              "recipes": [
+                3,
+                3,
+                2,
+                0,
+                0
+              ]
+            },
+            {
+              "seconds": 1800,
+              "S": 22,
+              "realm": "炼虚·后期",
+              "floor": 43,
+              "frontier": 110,
+              "medRate": 215744,
+              "marketRate": 2870761,
+              "stones": 263291510,
+              "tn": 54,
+              "shops": [
+                32,
+                26,
+                23,
+                19,
+                14
+              ],
+              "recipes": [
+                4,
+                3,
+                3,
+                3,
+                2
+              ]
+            },
+            {
+              "seconds": 3600,
+              "S": 27,
+              "realm": "合体·大圆满",
+              "floor": 52,
+              "frontier": 120,
+              "medRate": 6525925,
+              "marketRate": 26210142,
+              "stones": 2937818513,
+              "tn": 56,
+              "shops": [
+                36,
+                31,
+                26,
+                23,
+                19
+              ],
+              "recipes": [
+                4,
+                4,
+                3,
+                3,
+                3
+              ]
+            }
+          ],
+          "final": {
+            "S": 27,
+            "realm": "合体·大圆满",
+            "floor": 52,
+            "frontier": 120,
+            "tn": 56,
+            "dj": 0,
+            "exp": 2194593901,
+            "expNeed": 2496440399,
+            "medRate": 6525925,
+            "marketRate": 26210142
+          }
+        },
+        {
+          "seed": 123,
+          "injuries": 33,
+          "purchases": {
+            "shops": 143,
+            "recipes": 17,
+            "cultivation": 176,
+            "combat": 191,
+            "arts": 24
+          },
+          "snapshots": [
+            {
+              "seconds": 900,
+              "S": 15,
+              "realm": "元婴·大圆满",
+              "floor": 31,
+              "frontier": 80,
+              "medRate": 5004,
+              "marketRate": 134678,
+              "stones": 1226201,
+              "tn": 47,
+              "shops": [
+                25,
+                21,
+                16,
+                9,
+                4
+              ],
+              "recipes": [
+                3,
+                3,
+                2,
+                1,
+                0
+              ]
+            },
+            {
+              "seconds": 1800,
+              "S": 23,
+              "realm": "炼虚·大圆满",
+              "floor": 42,
+              "frontier": 119,
+              "medRate": 339469,
+              "marketRate": 3727755,
+              "stones": 260079286,
+              "tn": 54,
+              "shops": [
+                33,
+                27,
+                24,
+                20,
+                15
+              ],
+              "recipes": [
+                4,
+                3,
+                3,
+                3,
+                2
+              ]
+            },
+            {
+              "seconds": 3600,
+              "S": 30,
+              "realm": "大乘·后期",
+              "floor": 54,
+              "frontier": 130,
+              "medRate": 11425412,
+              "marketRate": 24131424,
+              "stones": 5529019284,
+              "tn": 56,
+              "shops": [
+                37,
+                33,
+                28,
+                24,
+                21
+              ],
+              "recipes": [
+                4,
+                4,
+                3,
+                3,
+                3
+              ]
+            }
+          ],
+          "final": {
+            "S": 30,
+            "realm": "大乘·后期",
+            "floor": 54,
+            "frontier": 130,
+            "tn": 56,
+            "dj": 0,
+            "exp": 3227798279,
+            "expNeed": 11043453464,
+            "medRate": 11425412,
+            "marketRate": 24131424
+          }
+        },
+        {
+          "seed": 2026,
+          "injuries": 35,
+          "purchases": {
+            "shops": 143,
+            "recipes": 17,
+            "cultivation": 173,
+            "combat": 191,
+            "arts": 23
+          },
+          "snapshots": [
+            {
+              "seconds": 900,
+              "S": 15,
+              "realm": "元婴·大圆满",
+              "floor": 34,
+              "frontier": 80,
+              "medRate": 4404,
+              "marketRate": 68170,
+              "stones": 530905,
+              "tn": 44,
+              "shops": [
+                25,
+                20,
+                14,
+                7,
+                0
+              ],
+              "recipes": [
+                3,
+                3,
+                2,
+                0,
+                0
+              ]
+            },
+            {
+              "seconds": 1800,
+              "S": 23,
+              "realm": "炼虚·大圆满",
+              "floor": 45,
+              "frontier": 119,
+              "medRate": 333448,
+              "marketRate": 3574690,
+              "stones": 193048834,
+              "tn": 54,
+              "shops": [
+                33,
+                27,
+                23,
+                20,
+                15
+              ],
+              "recipes": [
+                4,
+                3,
+                3,
+                3,
+                2
+              ]
+            },
+            {
+              "seconds": 3600,
+              "S": 30,
+              "realm": "大乘·后期",
+              "floor": 51,
+              "frontier": 130,
+              "medRate": 11919739,
+              "marketRate": 23385092,
+              "stones": 6411359256,
+              "tn": 58,
+              "shops": [
+                37,
+                33,
+                28,
+                24,
+                21
+              ],
+              "recipes": [
+                4,
+                4,
+                3,
+                3,
+                3
+              ]
+            }
+          ],
+          "final": {
+            "S": 30,
+            "realm": "大乘·后期",
+            "floor": 51,
+            "frontier": 130,
+            "tn": 58,
+            "dj": 0,
+            "exp": 1734986591,
+            "expNeed": 11043453464,
+            "medRate": 11919739,
+            "marketRate": 23385092
+          }
+        },
+        {
+          "seed": 65537,
+          "injuries": 33,
+          "purchases": {
+            "shops": 140,
+            "recipes": 17,
+            "cultivation": 171,
+            "combat": 189,
+            "arts": 23
+          },
+          "snapshots": [
+            {
+              "seconds": 900,
+              "S": 15,
+              "realm": "元婴·大圆满",
+              "floor": 82,
+              "frontier": 82,
+              "medRate": 14343,
+              "marketRate": 184822,
+              "stones": 1191838,
+              "tn": 46,
+              "shops": [
+                26,
+                21,
+                16,
+                9,
+                1
+              ],
+              "recipes": [
+                3,
+                3,
+                2,
+                0,
+                0
+              ]
+            },
+            {
+              "seconds": 1800,
+              "S": 23,
+              "realm": "炼虚·大圆满",
+              "floor": 44,
+              "frontier": 110,
+              "medRate": 286124,
+              "marketRate": 3591373,
+              "stones": 184615840,
+              "tn": 54,
+              "shops": [
+                33,
+                27,
+                24,
+                20,
+                15
+              ],
+              "recipes": [
+                4,
+                3,
+                3,
+                3,
+                2
+              ]
+            },
+            {
+              "seconds": 3600,
+              "S": 29,
+              "realm": "大乘·中期",
+              "floor": 53,
+              "frontier": 130,
+              "medRate": 7978372,
+              "marketRate": 19128113,
+              "stones": 4809080094,
+              "tn": 56,
+              "shops": [
+                37,
+                32,
+                27,
+                24,
+                20
+              ],
+              "recipes": [
+                4,
+                4,
+                3,
+                3,
+                3
+              ]
+            }
+          ],
+          "final": {
+            "S": 29,
+            "realm": "大乘·中期",
+            "floor": 53,
+            "frontier": 130,
+            "tn": 56,
+            "dj": 0,
+            "exp": 2537728167,
+            "expNeed": 5751798679,
+            "medRate": 7978372,
+            "marketRate": 19128113
+          }
+        }
+      ]
+    },
+    {
+      "version": "candidate",
+      "policy": "idle",
+      "seeds": [
+        7,
+        42,
+        123,
+        2026,
+        65537
+      ],
+      "stageAtMinutes": {
+        "15": {
+          "min": 8,
+          "p25": 8,
+          "median": 8,
+          "p75": 8,
+          "max": 9
+        },
+        "30": {
+          "min": 15,
+          "p25": 15,
+          "median": 15,
+          "p75": 15,
+          "max": 17
+        },
+        "60": {
+          "min": 24,
+          "p25": 24,
+          "median": 25,
+          "p75": 25,
+          "max": 25
+        }
+      },
+      "foundationSeconds": {
+        "min": 303,
+        "p25": 363,
+        "median": 363,
+        "p75": 363,
+        "max": 363
+      },
+      "goldenCoreSeconds": {
+        "min": 783,
+        "p25": 783,
+        "median": 843,
+        "p75": 843,
+        "max": 843
+      },
+      "injuries": {
+        "min": 16,
+        "p25": 16,
+        "median": 16,
+        "p75": 17,
+        "max": 18
+      },
+      "recipePurchases": {
+        "min": 14,
+        "p25": 15,
+        "median": 15,
+        "p75": 15,
+        "max": 15
+      },
+      "reachedFinalRealm": 0,
+      "samples": [
+        {
+          "seed": 7,
+          "injuries": 16,
+          "purchases": {
+            "shops": 124,
+            "recipes": 15,
+            "cultivation": 165,
+            "combat": 167,
+            "arts": 19
+          },
+          "snapshots": [
+            {
+              "seconds": 900,
+              "S": 9,
+              "realm": "金丹·中期",
+              "floor": 30,
+              "frontier": 30,
+              "medRate": 62,
+              "marketRate": 919,
+              "stones": 198731,
+              "tn": 12,
+              "shops": [
+                14,
+                9,
+                3,
+                0,
+                0
+              ],
+              "recipes": [
+                2,
+                1,
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "seconds": 1800,
+              "S": 17,
+              "realm": "化神·中期",
+              "floor": 50,
+              "frontier": 50,
+              "medRate": 12609,
+              "marketRate": 173162,
+              "stones": 21139046,
+              "tn": 25,
+              "shops": [
+                24,
+                20,
+                15,
+                9,
+                4
+              ],
+              "recipes": [
+                3,
+                3,
+                2,
+                1,
+                0
+              ]
+            },
+            {
+              "seconds": 3600,
+              "S": 25,
+              "realm": "合体·中期",
+              "floor": 80,
+              "frontier": 80,
+              "medRate": 1301887,
+              "marketRate": 5886536,
+              "stones": 1532301132,
+              "tn": 53,
+              "shops": [
+                34,
+                28,
+                25,
+                21,
+                16
+              ],
+              "recipes": [
+                4,
+                3,
+                3,
+                3,
+                2
+              ]
+            }
+          ],
+          "final": {
+            "S": 25,
+            "realm": "合体·中期",
+            "floor": 80,
+            "frontier": 80,
+            "tn": 53,
+            "dj": 0,
+            "exp": 323039729,
+            "expNeed": 423251750,
+            "medRate": 1301887,
+            "marketRate": 5886536
+          }
+        },
+        {
+          "seed": 42,
+          "injuries": 18,
+          "purchases": {
+            "shops": 124,
+            "recipes": 15,
+            "cultivation": 167,
+            "combat": 168,
+            "arts": 16
+          },
+          "snapshots": [
+            {
+              "seconds": 900,
+              "S": 8,
+              "realm": "金丹·初期",
+              "floor": 27,
+              "frontier": 27,
+              "medRate": 35,
+              "marketRate": 744,
+              "stones": 156152,
+              "tn": 12,
+              "shops": [
+                14,
+                8,
+                3,
+                0,
+                0
+              ],
+              "recipes": [
+                2,
+                1,
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "seconds": 1800,
+              "S": 15,
+              "realm": "元婴·大圆满",
+              "floor": 31,
+              "frontier": 50,
+              "medRate": 3203,
+              "marketRate": 88168,
+              "stones": 8748543,
+              "tn": 26,
+              "shops": [
+                23,
+                17,
+                13,
+                8,
+                3
+              ],
+              "recipes": [
+                3,
+                2,
+                2,
+                1,
+                0
+              ]
+            },
+            {
+              "seconds": 3600,
+              "S": 25,
+              "realm": "合体·中期",
+              "floor": 80,
+              "frontier": 80,
+              "medRate": 891438,
+              "marketRate": 5886536,
+              "stones": 1369395921,
+              "tn": 53,
+              "shops": [
+                34,
+                28,
+                25,
+                21,
+                16
+              ],
+              "recipes": [
+                4,
+                3,
+                3,
+                3,
+                2
+              ]
+            }
+          ],
+          "final": {
+            "S": 25,
+            "realm": "合体·中期",
+            "floor": 80,
+            "frontier": 80,
+            "tn": 53,
+            "dj": 0,
+            "exp": 93218868,
+            "expNeed": 423251750,
+            "medRate": 891438,
+            "marketRate": 5886536
+          }
+        },
+        {
+          "seed": 123,
+          "injuries": 16,
+          "purchases": {
+            "shops": 119,
+            "recipes": 15,
+            "cultivation": 167,
+            "combat": 168,
+            "arts": 18
+          },
+          "snapshots": [
+            {
+              "seconds": 900,
+              "S": 8,
+              "realm": "金丹·初期",
+              "floor": 30,
+              "frontier": 30,
+              "medRate": 35,
+              "marketRate": 1197,
+              "stones": 180346,
+              "tn": 12,
+              "shops": [
+                16,
+                10,
+                5,
+                0,
+                0
+              ],
+              "recipes": [
+                2,
+                2,
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "seconds": 1800,
+              "S": 15,
+              "realm": "元婴·大圆满",
+              "floor": 31,
+              "frontier": 50,
+              "medRate": 3007,
+              "marketRate": 117188,
+              "stones": 13261277,
+              "tn": 26,
+              "shops": [
+                24,
+                20,
+                15,
+                9,
+                4
+              ],
+              "recipes": [
+                3,
+                3,
+                2,
+                1,
+                0
+              ]
+            },
+            {
+              "seconds": 3600,
+              "S": 25,
+              "realm": "合体·中期",
+              "floor": 42,
+              "frontier": 80,
+              "medRate": 890879,
+              "marketRate": 5570320,
+              "stones": 1083137166,
+              "tn": 53,
+              "shops": [
+                33,
+                27,
+                24,
+                20,
+                15
+              ],
+              "recipes": [
+                4,
+                3,
+                3,
+                3,
+                2
+              ]
+            }
+          ],
+          "final": {
+            "S": 25,
+            "realm": "合体·中期",
+            "floor": 42,
+            "frontier": 80,
+            "tn": 53,
+            "dj": 0,
+            "exp": 38245232,
+            "expNeed": 423251750,
+            "medRate": 890879,
+            "marketRate": 5570320
+          }
+        },
+        {
+          "seed": 2026,
+          "injuries": 17,
+          "purchases": {
+            "shops": 112,
+            "recipes": 14,
+            "cultivation": 165,
+            "combat": 168,
+            "arts": 17
+          },
+          "snapshots": [
+            {
+              "seconds": 900,
+              "S": 8,
+              "realm": "金丹·初期",
+              "floor": 30,
+              "frontier": 30,
+              "medRate": 151,
+              "marketRate": 1488,
+              "stones": 154134,
+              "tn": 12,
+              "shops": [
+                14,
+                8,
+                3,
+                0,
+                0
+              ],
+              "recipes": [
+                2,
+                1,
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "seconds": 1800,
+              "S": 15,
+              "realm": "元婴·大圆满",
+              "floor": 31,
+              "frontier": 50,
+              "medRate": 3681,
+              "marketRate": 99623,
+              "stones": 11060535,
+              "tn": 26,
+              "shops": [
+                23,
+                17,
+                14,
+                9,
+                3
+              ],
+              "recipes": [
+                3,
+                2,
+                2,
+                1,
+                0
+              ]
+            },
+            {
+              "seconds": 3600,
+              "S": 24,
+              "realm": "合体·初期",
+              "floor": 80,
+              "frontier": 80,
+              "medRate": 772328,
+              "marketRate": 3717520,
+              "stones": 891857393,
+              "tn": 53,
+              "shops": [
+                32,
+                26,
+                23,
+                17,
+                14
+              ],
+              "recipes": [
+                4,
+                3,
+                3,
+                2,
+                2
+              ]
+            }
+          ],
+          "final": {
+            "S": 24,
+            "realm": "合体·初期",
+            "floor": 80,
+            "frontier": 80,
+            "tn": 53,
+            "dj": 0,
+            "exp": 149860900,
+            "expNeed": 220443620,
+            "medRate": 772328,
+            "marketRate": 3717520
+          }
+        },
+        {
+          "seed": 65537,
+          "injuries": 16,
+          "purchases": {
+            "shops": 119,
+            "recipes": 15,
+            "cultivation": 162,
+            "combat": 167,
+            "arts": 18
+          },
+          "snapshots": [
+            {
+              "seconds": 900,
+              "S": 8,
+              "realm": "金丹·初期",
+              "floor": 29,
+              "frontier": 29,
+              "medRate": 31,
+              "marketRate": 1576,
+              "stones": 174372,
+              "tn": 12,
+              "shops": [
+                16,
+                12,
+                5,
+                1,
+                0
+              ],
+              "recipes": [
+                2,
+                2,
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "seconds": 1800,
+              "S": 15,
+              "realm": "元婴·大圆满",
+              "floor": 31,
+              "frontier": 50,
+              "medRate": 3007,
+              "marketRate": 93918,
+              "stones": 10300111,
+              "tn": 26,
+              "shops": [
+                23,
+                17,
+                13,
+                8,
+                3
+              ],
+              "recipes": [
+                3,
+                2,
+                2,
+                1,
+                0
+              ]
+            },
+            {
+              "seconds": 3600,
+              "S": 24,
+              "realm": "合体·初期",
+              "floor": 70,
+              "frontier": 70,
+              "medRate": 679760,
+              "marketRate": 4559680,
+              "stones": 955260716,
+              "tn": 54,
+              "shops": [
+                33,
+                27,
+                24,
+                20,
+                15
+              ],
+              "recipes": [
+                4,
+                3,
+                3,
+                3,
+                2
+              ]
+            }
+          ],
+          "final": {
+            "S": 24,
+            "realm": "合体·初期",
+            "floor": 70,
+            "frontier": 70,
+            "tn": 54,
+            "dj": 0,
+            "exp": 48912252,
+            "expNeed": 220443620,
+            "medRate": 679760,
+            "marketRate": 4559680
+          }
+        }
+      ]
+    },
+    {
+      "version": "candidate",
+      "policy": "investor",
+      "seeds": [
+        7,
+        42,
+        123,
+        2026,
+        65537
+      ],
+      "stageAtMinutes": {
+        "15": {
+          "min": 14,
+          "p25": 15,
+          "median": 15,
+          "p75": 15,
+          "max": 15
+        },
+        "30": {
+          "min": 22,
+          "p25": 22,
+          "median": 22,
+          "p75": 23,
+          "max": 23
+        },
+        "60": {
+          "min": 28,
+          "p25": 28,
+          "median": 29,
+          "p75": 29,
+          "max": 29
+        }
+      },
+      "foundationSeconds": {
+        "min": 143,
+        "p25": 163,
+        "median": 183,
+        "p75": 183,
+        "max": 193
+      },
+      "goldenCoreSeconds": {
+        "min": 373,
+        "p25": 393,
+        "median": 393,
+        "p75": 403,
+        "max": 453
+      },
+      "injuries": {
+        "min": 26,
+        "p25": 29,
+        "median": 30,
+        "p75": 30,
+        "max": 30
+      },
+      "recipePurchases": {
+        "min": 17,
+        "p25": 17,
+        "median": 17,
+        "p75": 17,
+        "max": 17
+      },
+      "reachedFinalRealm": 0,
+      "samples": [
+        {
+          "seed": 7,
+          "injuries": 30,
+          "purchases": {
+            "shops": 138,
+            "recipes": 17,
+            "cultivation": 168,
+            "combat": 192,
+            "arts": 24
+          },
+          "snapshots": [
+            {
+              "seconds": 900,
+              "S": 15,
+              "realm": "元婴·大圆满",
+              "floor": 80,
+              "frontier": 80,
+              "medRate": 14891,
+              "marketRate": 116490,
+              "stones": 1231406,
+              "tn": 43,
+              "shops": [
+                23,
+                17,
+                13,
+                7,
+                0
+              ],
+              "recipes": [
+                3,
+                2,
+                2,
+                0,
+                0
+              ]
+            },
+            {
+              "seconds": 1800,
+              "S": 22,
+              "realm": "炼虚·后期",
+              "floor": 106,
+              "frontier": 106,
+              "medRate": 260235,
+              "marketRate": 2761745,
+              "stones": 149329048,
+              "tn": 54,
+              "shops": [
+                32,
+                26,
+                23,
+                19,
+                14
+              ],
+              "recipes": [
+                4,
+                3,
+                3,
+                3,
+                2
+              ]
+            },
+            {
+              "seconds": 3600,
+              "S": 28,
+              "realm": "大乘·初期",
+              "floor": 51,
+              "frontier": 124,
+              "medRate": 21166127,
+              "marketRate": 32097054,
+              "stones": 4344755046,
+              "tn": 56,
+              "shops": [
+                36,
+                32,
+                27,
+                23,
+                20
+              ],
+              "recipes": [
+                4,
+                4,
+                3,
+                3,
+                3
+              ]
+            }
+          ],
+          "final": {
+            "S": 28,
+            "realm": "大乘·初期",
+            "floor": 51,
+            "frontier": 124,
+            "tn": 56,
+            "dj": 0,
+            "exp": 1697061233,
+            "expNeed": 2995728479,
+            "medRate": 21166127,
+            "marketRate": 32097054
+          }
+        },
+        {
+          "seed": 42,
+          "injuries": 30,
+          "purchases": {
+            "shops": 138,
+            "recipes": 17,
+            "cultivation": 173,
+            "combat": 193,
+            "arts": 24
+          },
+          "snapshots": [
+            {
+              "seconds": 900,
+              "S": 14,
+              "realm": "元婴·后期",
+              "floor": 76,
+              "frontier": 76,
+              "medRate": 1715,
+              "marketRate": 39644,
+              "stones": 493012,
+              "tn": 38,
+              "shops": [
+                22,
+                16,
+                12,
+                6,
+                0
+              ],
+              "recipes": [
+                3,
+                2,
+                2,
+                0,
+                0
+              ]
+            },
+            {
+              "seconds": 1800,
+              "S": 22,
+              "realm": "炼虚·后期",
+              "floor": 42,
+              "frontier": 104,
+              "medRate": 207498,
+              "marketRate": 2870761,
+              "stones": 178607859,
+              "tn": 54,
+              "shops": [
+                32,
+                26,
+                23,
+                19,
+                14
+              ],
+              "recipes": [
+                4,
+                3,
+                3,
+                3,
+                2
+              ]
+            },
+            {
+              "seconds": 3600,
+              "S": 28,
+              "realm": "大乘·初期",
+              "floor": 51,
+              "frontier": 122,
+              "medRate": 6047465,
+              "marketRate": 16048527,
+              "stones": 3079423614,
+              "tn": 56,
+              "shops": [
+                36,
+                32,
+                27,
+                23,
+                20
+              ],
+              "recipes": [
+                4,
+                4,
+                3,
+                3,
+                3
+              ]
+            }
+          ],
+          "final": {
+            "S": 28,
+            "realm": "大乘·初期",
+            "floor": 51,
+            "frontier": 122,
+            "tn": 56,
+            "dj": 0,
+            "exp": 2391015601,
+            "expNeed": 2995728479,
+            "medRate": 6047465,
+            "marketRate": 16048527
+          }
+        },
+        {
+          "seed": 123,
+          "injuries": 30,
+          "purchases": {
+            "shops": 138,
+            "recipes": 17,
+            "cultivation": 175,
+            "combat": 200,
+            "arts": 20
+          },
+          "snapshots": [
+            {
+              "seconds": 900,
+              "S": 15,
+              "realm": "元婴·大圆满",
+              "floor": 80,
+              "frontier": 80,
+              "medRate": 2993,
+              "marketRate": 80112,
+              "stones": 1048958,
+              "tn": 40,
+              "shops": [
+                24,
+                19,
+                14,
+                7,
+                2
+              ],
+              "recipes": [
+                3,
+                3,
+                2,
+                0,
+                0
+              ]
+            },
+            {
+              "seconds": 1800,
+              "S": 22,
+              "realm": "炼虚·后期",
+              "floor": 41,
+              "frontier": 100,
+              "medRate": 240052,
+              "marketRate": 2467266,
+              "stones": 193513746,
+              "tn": 54,
+              "shops": [
+                32,
+                26,
+                22,
+                17,
+                14
+              ],
+              "recipes": [
+                4,
+                3,
+                3,
+                2,
+                2
+              ]
+            },
+            {
+              "seconds": 3600,
+              "S": 29,
+              "realm": "大乘·中期",
+              "floor": 121,
+              "frontier": 121,
+              "medRate": 8145409,
+              "marketRate": 18937262,
+              "stones": 3685488931,
+              "tn": 56,
+              "shops": [
+                36,
+                32,
+                27,
+                23,
+                20
+              ],
+              "recipes": [
+                4,
+                4,
+                3,
+                3,
+                3
+              ]
+            }
+          ],
+          "final": {
+            "S": 29,
+            "realm": "大乘·中期",
+            "floor": 121,
+            "frontier": 121,
+            "tn": 56,
+            "dj": 0,
+            "exp": 88277266,
+            "expNeed": 5751798679,
+            "medRate": 8145409,
+            "marketRate": 18937262
+          }
+        },
+        {
+          "seed": 2026,
+          "injuries": 26,
+          "purchases": {
+            "shops": 138,
+            "recipes": 17,
+            "cultivation": 173,
+            "combat": 199,
+            "arts": 23
+          },
+          "snapshots": [
+            {
+              "seconds": 900,
+              "S": 15,
+              "realm": "元婴·大圆满",
+              "floor": 31,
+              "frontier": 79,
+              "medRate": 4867,
+              "marketRate": 103398,
+              "stones": 1502203,
+              "tn": 45,
+              "shops": [
+                25,
+                20,
+                14,
+                8,
+                3
+              ],
+              "recipes": [
+                3,
+                3,
+                2,
+                0,
+                0
+              ]
+            },
+            {
+              "seconds": 1800,
+              "S": 23,
+              "realm": "炼虚·大圆满",
+              "floor": 107,
+              "frontier": 107,
+              "medRate": 328857,
+              "marketRate": 3387498,
+              "stones": 246577982,
+              "tn": 54,
+              "shops": [
+                32,
+                26,
+                23,
+                19,
+                14
+              ],
+              "recipes": [
+                4,
+                3,
+                3,
+                3,
+                2
+              ]
+            },
+            {
+              "seconds": 3600,
+              "S": 29,
+              "realm": "大乘·中期",
+              "floor": 52,
+              "frontier": 120,
+              "medRate": 9123334,
+              "marketRate": 18937262,
+              "stones": 4603568675,
+              "tn": 57,
+              "shops": [
+                36,
+                32,
+                27,
+                23,
+                20
+              ],
+              "recipes": [
+                4,
+                4,
+                3,
+                3,
+                3
+              ]
+            }
+          ],
+          "final": {
+            "S": 29,
+            "realm": "大乘·中期",
+            "floor": 52,
+            "frontier": 120,
+            "tn": 57,
+            "dj": 0,
+            "exp": 669891746,
+            "expNeed": 5751798679,
+            "medRate": 9123334,
+            "marketRate": 18937262
+          }
+        },
+        {
+          "seed": 65537,
+          "injuries": 29,
+          "purchases": {
+            "shops": 138,
+            "recipes": 17,
+            "cultivation": 172,
+            "combat": 196,
+            "arts": 23
+          },
+          "snapshots": [
+            {
+              "seconds": 900,
+              "S": 15,
+              "realm": "元婴·大圆满",
+              "floor": 78,
+              "frontier": 78,
+              "medRate": 5187,
+              "marketRate": 114597,
+              "stones": 1787955,
+              "tn": 44,
+              "shops": [
+                25,
+                21,
+                14,
+                9,
+                3
+              ],
+              "recipes": [
+                3,
+                3,
+                2,
+                1,
+                0
+              ]
+            },
+            {
+              "seconds": 1800,
+              "S": 23,
+              "realm": "炼虚·大圆满",
+              "floor": 110,
+              "frontier": 110,
+              "medRate": 236703,
+              "marketRate": 3387498,
+              "stones": 233120465,
+              "tn": 54,
+              "shops": [
+                32,
+                26,
+                23,
+                19,
+                14
+              ],
+              "recipes": [
+                4,
+                3,
+                3,
+                3,
+                2
+              ]
+            },
+            {
+              "seconds": 3600,
+              "S": 29,
+              "realm": "大乘·中期",
+              "floor": 52,
+              "frontier": 120,
+              "medRate": 8625868,
+              "marketRate": 19541642,
+              "stones": 4782269923,
+              "tn": 56,
+              "shops": [
+                36,
+                32,
+                27,
+                23,
+                20
+              ],
+              "recipes": [
+                4,
+                4,
+                3,
+                3,
+                3
+              ]
+            }
+          ],
+          "final": {
+            "S": 29,
+            "realm": "大乘·中期",
+            "floor": 52,
+            "frontier": 120,
+            "tn": 56,
+            "dj": 0,
+            "exp": 539242762,
+            "expNeed": 5751798679,
+            "medRate": 8625868,
+            "marketRate": 19541642
+          }
+        }
+      ]
+    },
+    {
+      "version": "candidate",
+      "policy": "explorer",
+      "seeds": [
+        7,
+        42,
+        123,
+        2026,
+        65537
+      ],
+      "stageAtMinutes": {
+        "15": {
+          "min": 15,
+          "p25": 15,
+          "median": 15,
+          "p75": 15,
+          "max": 17
+        },
+        "30": {
+          "min": 22,
+          "p25": 22,
+          "median": 23,
+          "p75": 23,
+          "max": 23
+        },
+        "60": {
+          "min": 29,
+          "p25": 30,
+          "median": 30,
+          "p75": 30,
+          "max": 30
+        }
+      },
+      "foundationSeconds": {
+        "min": 109,
+        "p25": 115,
+        "median": 123,
+        "p75": 125,
+        "max": 131
+      },
+      "goldenCoreSeconds": {
+        "min": 295,
+        "p25": 295,
+        "median": 325,
+        "p75": 327,
+        "max": 367
+      },
+      "injuries": {
+        "min": 33,
+        "p25": 33,
+        "median": 33,
+        "p75": 33,
+        "max": 34
+      },
+      "recipePurchases": {
+        "min": 17,
+        "p25": 17,
+        "median": 17,
+        "p75": 17,
+        "max": 17
+      },
+      "reachedFinalRealm": 0,
+      "samples": [
+        {
+          "seed": 7,
+          "injuries": 33,
+          "purchases": {
+            "shops": 143,
+            "recipes": 17,
+            "cultivation": 171,
+            "combat": 195,
+            "arts": 24
+          },
+          "snapshots": [
+            {
+              "seconds": 900,
+              "S": 17,
+              "realm": "化神·中期",
+              "floor": 32,
+              "frontier": 90,
+              "medRate": 21096,
+              "marketRate": 121936,
+              "stones": 1470960,
+              "tn": 48,
+              "shops": [
+                26,
+                21,
+                15,
+                8,
+                1
+              ],
+              "recipes": [
+                3,
+                3,
+                2,
+                0,
+                0
+              ]
+            },
+            {
+              "seconds": 1800,
+              "S": 23,
+              "realm": "炼虚·大圆满",
+              "floor": 42,
+              "frontier": 113,
+              "medRate": 483974,
+              "marketRate": 3727755,
+              "stones": 315305356,
+              "tn": 54,
+              "shops": [
+                33,
+                27,
+                24,
+                20,
+                15
+              ],
+              "recipes": [
+                4,
+                3,
+                3,
+                3,
+                2
+              ]
+            },
+            {
+              "seconds": 3600,
+              "S": 30,
+              "realm": "大乘·后期",
+              "floor": 52,
+              "frontier": 130,
+              "medRate": 14400780,
+              "marketRate": 24131424,
+              "stones": 6166415742,
+              "tn": 56,
+              "shops": [
+                37,
+                33,
+                28,
+                24,
+                21
+              ],
+              "recipes": [
+                4,
+                4,
+                3,
+                3,
+                3
+              ]
+            }
+          ],
+          "final": {
+            "S": 30,
+            "realm": "大乘·后期",
+            "floor": 52,
+            "frontier": 130,
+            "tn": 56,
+            "dj": 0,
+            "exp": 4833576793,
+            "expNeed": 11043453464,
+            "medRate": 14400780,
+            "marketRate": 24131424
+          }
+        },
+        {
+          "seed": 42,
+          "injuries": 33,
+          "purchases": {
+            "shops": 138,
+            "recipes": 17,
+            "cultivation": 172,
+            "combat": 189,
+            "arts": 23
+          },
+          "snapshots": [
+            {
+              "seconds": 900,
+              "S": 15,
+              "realm": "元婴·大圆满",
+              "floor": 33,
+              "frontier": 87,
+              "medRate": 3273,
+              "marketRate": 34734,
+              "stones": 272147,
+              "tn": 40,
+              "shops": [
+                25,
+                17,
+                11,
+                3,
+                0
+              ],
+              "recipes": [
+                3,
+                2,
+                1,
+                0,
+                0
+              ]
+            },
+            {
+              "seconds": 1800,
+              "S": 22,
+              "realm": "炼虚·后期",
+              "floor": 110,
+              "frontier": 110,
+              "medRate": 204614,
+              "marketRate": 1679463,
+              "stones": 93592354,
+              "tn": 53,
+              "shops": [
+                31,
+                26,
+                22,
+                17,
+                11
+              ],
+              "recipes": [
+                4,
+                3,
+                3,
+                2,
+                1
+              ]
+            },
+            {
+              "seconds": 3600,
+              "S": 29,
+              "realm": "大乘·中期",
+              "floor": 52,
+              "frontier": 130,
+              "medRate": 8159753,
+              "marketRate": 18937262,
+              "stones": 5010993946,
+              "tn": 56,
+              "shops": [
+                36,
+                32,
+                27,
+                23,
+                20
+              ],
+              "recipes": [
+                4,
+                4,
+                3,
+                3,
+                3
+              ]
+            }
+          ],
+          "final": {
+            "S": 29,
+            "realm": "大乘·中期",
+            "floor": 52,
+            "frontier": 130,
+            "tn": 56,
+            "dj": 0,
+            "exp": 878041495,
+            "expNeed": 5751798679,
+            "medRate": 8159753,
+            "marketRate": 18937262
+          }
+        },
+        {
+          "seed": 123,
+          "injuries": 33,
+          "purchases": {
+            "shops": 140,
+            "recipes": 17,
+            "cultivation": 173,
+            "combat": 192,
+            "arts": 22
+          },
+          "snapshots": [
+            {
+              "seconds": 900,
+              "S": 15,
+              "realm": "元婴·大圆满",
+              "floor": 34,
+              "frontier": 88,
+              "medRate": 4674,
+              "marketRate": 50161,
+              "stones": 432664,
+              "tn": 43,
+              "shops": [
+                25,
+                19,
+                12,
+                5,
+                0
+              ],
+              "recipes": [
+                3,
+                3,
+                1,
+                0,
+                0
+              ]
+            },
+            {
+              "seconds": 1800,
+              "S": 22,
+              "realm": "炼虚·后期",
+              "floor": 45,
+              "frontier": 110,
+              "medRate": 242273,
+              "marketRate": 2766515,
+              "stones": 176461476,
+              "tn": 53,
+              "shops": [
+                32,
+                26,
+                23,
+                19,
+                13
+              ],
+              "recipes": [
+                4,
+                3,
+                3,
+                3,
+                2
+              ]
+            },
+            {
+              "seconds": 3600,
+              "S": 30,
+              "realm": "大乘·后期",
+              "floor": 53,
+              "frontier": 130,
+              "medRate": 9927375,
+              "marketRate": 22571174,
+              "stones": 5581172509,
+              "tn": 56,
+              "shops": [
+                37,
+                32,
+                27,
+                24,
+                20
+              ],
+              "recipes": [
+                4,
+                4,
+                3,
+                3,
+                3
+              ]
+            }
+          ],
+          "final": {
+            "S": 30,
+            "realm": "大乘·后期",
+            "floor": 53,
+            "frontier": 130,
+            "tn": 56,
+            "dj": 0,
+            "exp": 97317211,
+            "expNeed": 11043453464,
+            "medRate": 9927375,
+            "marketRate": 22571174
+          }
+        },
+        {
+          "seed": 2026,
+          "injuries": 34,
+          "purchases": {
+            "shops": 140,
+            "recipes": 17,
+            "cultivation": 172,
+            "combat": 201,
+            "arts": 26
+          },
+          "snapshots": [
+            {
+              "seconds": 900,
+              "S": 15,
+              "realm": "元婴·大圆满",
+              "floor": 34,
+              "frontier": 90,
+              "medRate": 5339,
+              "marketRate": 69258,
+              "stones": 737178,
+              "tn": 46,
+              "shops": [
+                25,
+                20,
+                14,
+                6,
+                0
+              ],
+              "recipes": [
+                3,
+                3,
+                2,
+                0,
+                0
+              ]
+            },
+            {
+              "seconds": 1800,
+              "S": 23,
+              "realm": "炼虚·大圆满",
+              "floor": 42,
+              "frontier": 120,
+              "medRate": 370098,
+              "marketRate": 3468364,
+              "stones": 181319161,
+              "tn": 54,
+              "shops": [
+                33,
+                27,
+                24,
+                20,
+                14
+              ],
+              "recipes": [
+                4,
+                3,
+                3,
+                3,
+                2
+              ]
+            },
+            {
+              "seconds": 3600,
+              "S": 30,
+              "realm": "大乘·后期",
+              "floor": 53,
+              "frontier": 130,
+              "medRate": 13818423,
+              "marketRate": 22571174,
+              "stones": 6233102402,
+              "tn": 56,
+              "shops": [
+                37,
+                32,
+                27,
+                24,
+                20
+              ],
+              "recipes": [
+                4,
+                4,
+                3,
+                3,
+                3
+              ]
+            }
+          ],
+          "final": {
+            "S": 30,
+            "realm": "大乘·后期",
+            "floor": 53,
+            "frontier": 130,
+            "tn": 56,
+            "dj": 0,
+            "exp": 3001423994,
+            "expNeed": 11043453464,
+            "medRate": 13818423,
+            "marketRate": 22571174
+          }
+        },
+        {
+          "seed": 65537,
+          "injuries": 33,
+          "purchases": {
+            "shops": 143,
+            "recipes": 17,
+            "cultivation": 169,
+            "combat": 195,
+            "arts": 25
+          },
+          "snapshots": [
+            {
+              "seconds": 900,
+              "S": 15,
+              "realm": "元婴·大圆满",
+              "floor": 33,
+              "frontier": 80,
+              "medRate": 15719,
+              "marketRate": 125522,
+              "stones": 946455,
+              "tn": 45,
+              "shops": [
+                25,
+                19,
+                13,
+                6,
+                0
+              ],
+              "recipes": [
+                3,
+                3,
+                2,
+                0,
+                0
+              ]
+            },
+            {
+              "seconds": 1800,
+              "S": 23,
+              "realm": "炼虚·大圆满",
+              "floor": 42,
+              "frontier": 120,
+              "medRate": 359423,
+              "marketRate": 3727755,
+              "stones": 240927305,
+              "tn": 54,
+              "shops": [
+                33,
+                27,
+                24,
+                20,
+                15
+              ],
+              "recipes": [
+                4,
+                3,
+                3,
+                3,
+                2
+              ]
+            },
+            {
+              "seconds": 3600,
+              "S": 30,
+              "realm": "大乘·后期",
+              "floor": 54,
+              "frontier": 130,
+              "medRate": 12587408,
+              "marketRate": 24131424,
+              "stones": 7426975379,
+              "tn": 57,
+              "shops": [
+                37,
+                33,
+                28,
+                24,
+                21
+              ],
+              "recipes": [
+                4,
+                4,
+                3,
+                3,
+                3
+              ]
+            }
+          ],
+          "final": {
+            "S": 30,
+            "realm": "大乘·后期",
+            "floor": 54,
+            "frontier": 130,
+            "tn": 57,
+            "dj": 0,
+            "exp": 5450618355,
+            "expNeed": 11043453464,
+            "medRate": 12587408,
+            "marketRate": 24131424
+          }
+        }
+      ]
+    }
+  ]
+}

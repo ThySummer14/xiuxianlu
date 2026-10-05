@@ -38,7 +38,8 @@ var XB = (function () {
     expBase: 35, expGrowth: 1.92, gateNeedMult: 1.6,
     marketRealmGrowth: 1.18, profitCostGrowth: 2.4,
     insightPerPoint: 0.005,
-    encounterSeconds: 120, encounterStageFraction: 0.35,
+    encounterSeconds: 120, encounterStageFraction: 0.35, encounterStoneSeconds: 45,
+    rebirthBaseGain: 4, rebirthRealmGain: 3,
     recoveryReserve: 0.2
   };
   var STAGE_MULT = BALANCE.stageMult;
@@ -109,13 +110,15 @@ var XB = (function () {
 
   /* 妖兽名号前缀：随关卡成长（百年/千年/万年/太古） */
   var AGE_PREFIX = [
-    [45, '百年'], [90, '千年'], [150, '万年'], [1e9, '太古']
+    [45, '百年'], [90, '千年'], [150, '万年'], [240, '太古']
   ];
   function agePrefix(level) {
+    var prefix = '';
     for (var i = 0; i < AGE_PREFIX.length; i++) {
-      if (level < AGE_PREFIX[i][0]) return '';
+      if (level < AGE_PREFIX[i][0]) break;
+      prefix = AGE_PREFIX[i][1];
     }
-    return AGE_PREFIX[AGE_PREFIX.length - 1][1];
+    return prefix;
   }
 
   /* ================= 三线升级（攻击线） =================
@@ -267,7 +270,8 @@ var XB = (function () {
   var REBIRTH_UNLOCK_S = 32;     /* 渡劫初期 */
   function daoJiGain(S) {
     if (S < REBIRTH_UNLOCK_S) return 0;
-    return Math.max(1, Math.floor(Math.pow(1.09, S - REBIRTH_UNLOCK_S)));
+    var progress = S - REBIRTH_UNLOCK_S;
+    return BALANCE.rebirthBaseGain + Math.floor(progress / 4) * BALANCE.rebirthRealmGain + Math.floor((progress % 4) / 2);
   }
   var DAOJI_RATE = 0.12;         /* 每点道基：全属性 +12% */
   function daoJiMult(dj) { return 1 + DAOJI_RATE * (dj || 0); }
@@ -287,7 +291,7 @@ var XB = (function () {
   }
   /* 奇遇灵石：随境界缩放（与坊市经济同轨），塔层小额加成 */
   function fateStones(S, floor) {
-    return Math.round(30 * Math.pow(1.5, S || 0) * (1 + 0.15 * (floor || 1)));
+    return Math.round(30 * marketRealmMult(S || 0) * (1 + 0.15 * (floor || 1)));
   }
 
   /* ================= 仙缘 / 剑心（选择型机缘的永久积累） ============ */
@@ -329,7 +333,7 @@ var XB = (function () {
     { id: 'sword-tide', title: '剑气潮汐',
       text: '天际一道剑光横贯云海，所过之处灵气如浪。\n是古修斗法余波，可遇不可求。',
       options: [
-        { label: '迎着剑光行', desc: '剑心 +1，且引发灵气潮汐', apply: 'sgn-tide' },
+        { label: '迎着剑光行', desc: '剑心 +1（永久）', apply: 'sgn' },
         { label: '顺势吐纳', desc: '灵气潮汐（修为灵石暴增）', apply: 'tide' }
       ] },
     { id: 'cast-off-treasure', title: '遗宝无主',

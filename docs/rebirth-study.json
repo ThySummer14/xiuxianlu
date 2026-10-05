@@ -1,0 +1,669 @@
+{
+  "date": "2026-10-05",
+  "method": "One deterministic first life and paired second lives with only Dao reward changed. Uses the real game. No free currency injected. No-luck case disables random crits, epiphanies and fate events via fixed high RNG; scheduled tides and deterministic equipment still occur. Peaceful case never enters the tower. This is not human playtesting or a retention estimate.",
+  "firstLife": {
+    "elapsedSeconds": 6199,
+    "final": {
+      "S": 32,
+      "realm": "渡劫·初期",
+      "floor": 54,
+      "frontier": 130,
+      "tn": 57,
+      "dj": 0,
+      "exp": 1876402889,
+      "expNeed": 40710586851,
+      "medRate": 121814753,
+      "marketRate": 74528774
+    },
+    "milestones": [
+      {
+        "stage": 1,
+        "atSeconds": 15
+      },
+      {
+        "stage": 2,
+        "atSeconds": 40
+      },
+      {
+        "stage": 3,
+        "atSeconds": 82
+      },
+      {
+        "stage": 4,
+        "atSeconds": 117
+      },
+      {
+        "stage": 5,
+        "atSeconds": 156
+      },
+      {
+        "stage": 6,
+        "atSeconds": 202
+      },
+      {
+        "stage": 7,
+        "atSeconds": 268
+      },
+      {
+        "stage": 8,
+        "atSeconds": 387
+      },
+      {
+        "stage": 9,
+        "atSeconds": 422
+      },
+      {
+        "stage": 10,
+        "atSeconds": 478
+      },
+      {
+        "stage": 11,
+        "atSeconds": 525
+      },
+      {
+        "stage": 12,
+        "atSeconds": 637
+      },
+      {
+        "stage": 13,
+        "atSeconds": 669
+      },
+      {
+        "stage": 14,
+        "atSeconds": 768
+      },
+      {
+        "stage": 15,
+        "atSeconds": 834
+      },
+      {
+        "stage": 16,
+        "atSeconds": 979
+      },
+      {
+        "stage": 17,
+        "atSeconds": 1028
+      },
+      {
+        "stage": 18,
+        "atSeconds": 1108
+      },
+      {
+        "stage": 19,
+        "atSeconds": 1211
+      },
+      {
+        "stage": 20,
+        "atSeconds": 1457
+      },
+      {
+        "stage": 21,
+        "atSeconds": 1528
+      },
+      {
+        "stage": 22,
+        "atSeconds": 1688
+      },
+      {
+        "stage": 23,
+        "atSeconds": 1905
+      },
+      {
+        "stage": 24,
+        "atSeconds": 2249
+      },
+      {
+        "stage": 25,
+        "atSeconds": 2400
+      },
+      {
+        "stage": 26,
+        "atSeconds": 2703
+      },
+      {
+        "stage": 27,
+        "atSeconds": 2907
+      },
+      {
+        "stage": 28,
+        "atSeconds": 3699
+      },
+      {
+        "stage": 29,
+        "atSeconds": 3920
+      },
+      {
+        "stage": 30,
+        "atSeconds": 4307
+      },
+      {
+        "stage": 31,
+        "atSeconds": 4909
+      },
+      {
+        "stage": 32,
+        "atSeconds": 6199
+      }
+    ]
+  },
+  "secondLives": [
+    {
+      "rewardModel": "old +1 foundation",
+      "gain": 1,
+      "cultivationMultiplier": 1.12,
+      "secondLifeElapsedSeconds": 3089,
+      "secondLifeFinal": {
+        "S": 32,
+        "realm": "渡劫·初期",
+        "floor": 55,
+        "frontier": 140,
+        "tn": 57,
+        "dj": 1,
+        "exp": 62564325,
+        "expNeed": 40710586851,
+        "medRate": 61600851,
+        "marketRate": 40880183
+      },
+      "milestones": [
+        {
+          "stage": 1,
+          "atSeconds": 4
+        },
+        {
+          "stage": 2,
+          "atSeconds": 8
+        },
+        {
+          "stage": 3,
+          "atSeconds": 12
+        },
+        {
+          "stage": 4,
+          "atSeconds": 25
+        },
+        {
+          "stage": 5,
+          "atSeconds": 31
+        },
+        {
+          "stage": 6,
+          "atSeconds": 52
+        },
+        {
+          "stage": 7,
+          "atSeconds": 71
+        },
+        {
+          "stage": 8,
+          "atSeconds": 105
+        },
+        {
+          "stage": 9,
+          "atSeconds": 111
+        },
+        {
+          "stage": 10,
+          "atSeconds": 120
+        },
+        {
+          "stage": 11,
+          "atSeconds": 151
+        },
+        {
+          "stage": 12,
+          "atSeconds": 197
+        },
+        {
+          "stage": 13,
+          "atSeconds": 206
+        },
+        {
+          "stage": 14,
+          "atSeconds": 252
+        },
+        {
+          "stage": 15,
+          "atSeconds": 310
+        },
+        {
+          "stage": 16,
+          "atSeconds": 387
+        },
+        {
+          "stage": 17,
+          "atSeconds": 433
+        },
+        {
+          "stage": 18,
+          "atSeconds": 467
+        },
+        {
+          "stage": 19,
+          "atSeconds": 537
+        },
+        {
+          "stage": 20,
+          "atSeconds": 593
+        },
+        {
+          "stage": 21,
+          "atSeconds": 638
+        },
+        {
+          "stage": 22,
+          "atSeconds": 741
+        },
+        {
+          "stage": 23,
+          "atSeconds": 800
+        },
+        {
+          "stage": 24,
+          "atSeconds": 957
+        },
+        {
+          "stage": 25,
+          "atSeconds": 1063
+        },
+        {
+          "stage": 26,
+          "atSeconds": 1160
+        },
+        {
+          "stage": 27,
+          "atSeconds": 1400
+        },
+        {
+          "stage": 28,
+          "atSeconds": 1671
+        },
+        {
+          "stage": 29,
+          "atSeconds": 1834
+        },
+        {
+          "stage": 30,
+          "atSeconds": 2000
+        },
+        {
+          "stage": 31,
+          "atSeconds": 2343
+        },
+        {
+          "stage": 32,
+          "atSeconds": 3089
+        }
+      ],
+      "firstGoldenCoreSeconds": 105
+    },
+    {
+      "rewardModel": "candidate +4 foundation",
+      "gain": 4,
+      "cultivationMultiplier": 1.48,
+      "secondLifeElapsedSeconds": 2331,
+      "secondLifeFinal": {
+        "S": 32,
+        "realm": "渡劫·初期",
+        "floor": 51,
+        "frontier": 140,
+        "tn": 57,
+        "dj": 4,
+        "exp": 137905989,
+        "expNeed": 40710586851,
+        "medRate": 91601772,
+        "marketRate": 58325241
+      },
+      "milestones": [
+        {
+          "stage": 1,
+          "atSeconds": 3
+        },
+        {
+          "stage": 2,
+          "atSeconds": 6
+        },
+        {
+          "stage": 3,
+          "atSeconds": 10
+        },
+        {
+          "stage": 4,
+          "atSeconds": 19
+        },
+        {
+          "stage": 5,
+          "atSeconds": 22
+        },
+        {
+          "stage": 6,
+          "atSeconds": 32
+        },
+        {
+          "stage": 7,
+          "atSeconds": 51
+        },
+        {
+          "stage": 8,
+          "atSeconds": 81
+        },
+        {
+          "stage": 9,
+          "atSeconds": 100
+        },
+        {
+          "stage": 10,
+          "atSeconds": 111
+        },
+        {
+          "stage": 11,
+          "atSeconds": 121
+        },
+        {
+          "stage": 12,
+          "atSeconds": 173
+        },
+        {
+          "stage": 13,
+          "atSeconds": 190
+        },
+        {
+          "stage": 14,
+          "atSeconds": 206
+        },
+        {
+          "stage": 15,
+          "atSeconds": 244
+        },
+        {
+          "stage": 16,
+          "atSeconds": 313
+        },
+        {
+          "stage": 17,
+          "atSeconds": 322
+        },
+        {
+          "stage": 18,
+          "atSeconds": 361
+        },
+        {
+          "stage": 19,
+          "atSeconds": 416
+        },
+        {
+          "stage": 20,
+          "atSeconds": 497
+        },
+        {
+          "stage": 21,
+          "atSeconds": 539
+        },
+        {
+          "stage": 22,
+          "atSeconds": 585
+        },
+        {
+          "stage": 23,
+          "atSeconds": 650
+        },
+        {
+          "stage": 24,
+          "atSeconds": 765
+        },
+        {
+          "stage": 25,
+          "atSeconds": 842
+        },
+        {
+          "stage": 26,
+          "atSeconds": 940
+        },
+        {
+          "stage": 27,
+          "atSeconds": 1071
+        },
+        {
+          "stage": 28,
+          "atSeconds": 1281
+        },
+        {
+          "stage": 29,
+          "atSeconds": 1349
+        },
+        {
+          "stage": 30,
+          "atSeconds": 1501
+        },
+        {
+          "stage": 31,
+          "atSeconds": 1720
+        },
+        {
+          "stage": 32,
+          "atSeconds": 2331
+        }
+      ],
+      "firstGoldenCoreSeconds": 81
+    }
+  ],
+  "noLuck": {
+    "final": {
+      "S": 26,
+      "realm": "合体·后期",
+      "floor": 42,
+      "frontier": 110,
+      "tn": 55,
+      "dj": 0,
+      "exp": 793489850,
+      "expNeed": 812643359,
+      "medRate": 1521418,
+      "marketRate": 7319248
+    },
+    "milestones": [
+      {
+        "stage": 1,
+        "atSeconds": 17
+      },
+      {
+        "stage": 2,
+        "atSeconds": 52
+      },
+      {
+        "stage": 3,
+        "atSeconds": 86
+      },
+      {
+        "stage": 4,
+        "atSeconds": 137
+      },
+      {
+        "stage": 5,
+        "atSeconds": 175
+      },
+      {
+        "stage": 6,
+        "atSeconds": 222
+      },
+      {
+        "stage": 7,
+        "atSeconds": 292
+      },
+      {
+        "stage": 8,
+        "atSeconds": 411
+      },
+      {
+        "stage": 9,
+        "atSeconds": 462
+      },
+      {
+        "stage": 10,
+        "atSeconds": 503
+      },
+      {
+        "stage": 11,
+        "atSeconds": 586
+      },
+      {
+        "stage": 12,
+        "atSeconds": 715
+      },
+      {
+        "stage": 13,
+        "atSeconds": 793
+      },
+      {
+        "stage": 14,
+        "atSeconds": 864
+      },
+      {
+        "stage": 15,
+        "atSeconds": 969
+      },
+      {
+        "stage": 16,
+        "atSeconds": 1133
+      },
+      {
+        "stage": 17,
+        "atSeconds": 1219
+      },
+      {
+        "stage": 18,
+        "atSeconds": 1309
+      },
+      {
+        "stage": 19,
+        "atSeconds": 1427
+      },
+      {
+        "stage": 20,
+        "atSeconds": 1681
+      },
+      {
+        "stage": 21,
+        "atSeconds": 1802
+      },
+      {
+        "stage": 22,
+        "atSeconds": 1982
+      },
+      {
+        "stage": 23,
+        "atSeconds": 2193
+      },
+      {
+        "stage": 24,
+        "atSeconds": 2667
+      },
+      {
+        "stage": 25,
+        "atSeconds": 2898
+      },
+      {
+        "stage": 26,
+        "atSeconds": 3185
+      }
+    ]
+  },
+  "peaceful": {
+    "final": {
+      "S": 21,
+      "realm": "炼虚·中期",
+      "floor": 1,
+      "frontier": 1,
+      "tn": 53,
+      "dj": 0,
+      "exp": 13425391,
+      "expNeed": 31145395,
+      "medRate": 83010,
+      "marketRate": 907228
+    },
+    "milestones": [
+      {
+        "stage": 1,
+        "atSeconds": 71
+      },
+      {
+        "stage": 2,
+        "atSeconds": 139
+      },
+      {
+        "stage": 3,
+        "atSeconds": 278
+      },
+      {
+        "stage": 4,
+        "atSeconds": 565
+      },
+      {
+        "stage": 5,
+        "atSeconds": 693
+      },
+      {
+        "stage": 6,
+        "atSeconds": 795
+      },
+      {
+        "stage": 7,
+        "atSeconds": 935
+      },
+      {
+        "stage": 8,
+        "atSeconds": 1221
+      },
+      {
+        "stage": 9,
+        "atSeconds": 1319
+      },
+      {
+        "stage": 10,
+        "atSeconds": 1414
+      },
+      {
+        "stage": 11,
+        "atSeconds": 1510
+      },
+      {
+        "stage": 12,
+        "atSeconds": 1773
+      },
+      {
+        "stage": 13,
+        "atSeconds": 1877
+      },
+      {
+        "stage": 14,
+        "atSeconds": 2022
+      },
+      {
+        "stage": 15,
+        "atSeconds": 2183
+      },
+      {
+        "stage": 16,
+        "atSeconds": 2495
+      },
+      {
+        "stage": 17,
+        "atSeconds": 2583
+      },
+      {
+        "stage": 18,
+        "atSeconds": 2719
+      },
+      {
+        "stage": 19,
+        "atSeconds": 2872
+      },
+      {
+        "stage": 20,
+        "atSeconds": 3257
+      },
+      {
+        "stage": 21,
+        "atSeconds": 3467
+      }
+    ]
+  }
+}

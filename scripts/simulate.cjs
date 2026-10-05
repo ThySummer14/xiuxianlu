@@ -3,14 +3,15 @@
 const fs=require('node:fs');
 const cp=require('node:child_process');
 const {createGame}=require('../tests/harness.cjs');
-function simulate({duration=3600,seed=42,active=true,ref,save,events=true,policy='active'}={}) {
+function simulate({duration=3600,seed=42,active=true,ref,save,events=true,policy='active',stopAtStage=59,includeSave=false,noLuckyEvents=false}={}) {
   const cached={};
   const source=ref ? (name,current) => cached[name] ||= cp.execFileSync('git',['show',`${ref}:assets/${name}.js`],{encoding:'utf8',maxBuffer:2e6}) : undefined;
   const g=createGame({seed,save,source,fast:true}),a=g.api,B=g.XB;
   const snapshots=[], milestones=[], purchases={shops:0,recipes:0,cultivation:0,combat:0,arts:0};
-  let prevS=g.state().S, firstShop=null, injuries=0, prevInjury=0, failedPower=0, temperPower=0;
+  let prevS=g.state().S, firstShop=null, injuries=0, prevInjury=0, failedPower=0, temperPower=0, elapsedSeconds=0;
   const inputGap=policy==='idle'?60:policy==='investor'?10:2;
   const marketShare=policy==='explorer'?.35:policy==='investor'?.8:.65;
+  if(noLuckyEvents)g.sandbox.Math.random=()=>.999;
   a.joinSect('dantang');
   function invest(s) {
     for(const q of s.quests) if(q.ready) a.claimQuest(q.id);
@@ -59,14 +60,18 @@ function simulate({duration=3600,seed=42,active=true,ref,save,events=true,policy
     if(s.towerPlan==='temper'&&s.totalPower>=Math.max(failedPower*1.4,temperPower*1.4))a.leaveTower();
     const n=t<30?4:clicks;
     for(let c=0;c<Math.max(1,n);c++){if(active&&n>0)a.attack();g.step(dt/Math.max(1,n));}
-    s=a.state();if(s.injuryT>0&&prevInjury<=0){injuries++;failedPower=s.totalPower/B.INJURE_PENALTY;}prevInjury=s.injuryT;
+    s=a.state();
+    for(const key of ['S','stones','exp','medRate','marketRate','clickDmg','dps']) if(!Number.isFinite(s[key]))throw new Error('Non-finite '+key+' at '+t+' seconds');
+    if(s.injuryT>0&&prevInjury<=0){injuries++;failedPower=s.totalPower/B.INJURE_PENALTY;}prevInjury=s.injuryT;
     if(s.S>prevS){milestones.push({stage:s.S,atSeconds:Math.round(t+dt)});prevS=s.S;}
     if(firstShop===null&&(s.mk||g.save().mk||[]).some(x=>x>0))firstShop=Math.round(t+dt);
     if([900,1800,3600,7200].includes(t+dt))snapshots.push({seconds:t+dt,S:s.S,realm:s.realmName,floor:s.level,frontier:s.towerBest,medRate:Math.round(s.medRate),marketRate:Math.round(s.marketRate),stones:Math.round(s.stones),tn:s.tn,shops:s.mk||g.save().mk,recipes:Array.from(s.mp)});
-    if(s.S>=59)break;
+    elapsedSeconds=t+dt;
+    if(s.S>=stopAtStage)break;
   }
   const s=a.state();
-  return {seed,duration,active,ref:ref||'working-tree',policy,inputGap,clicksPerSecond:clicks,firstShop,injuries,purchases,milestones,snapshots,final:{S:s.S,realm:s.realmName,floor:s.level,frontier:s.towerBest,tn:s.tn,dj:s.dj,exp:Math.round(s.exp),expNeed:s.expNeed,medRate:Math.round(s.medRate),marketRate:Math.round(s.marketRate)}};
+  if(includeSave&&a.persist)a.persist();
+  return {seed,duration,elapsedSeconds,save:includeSave?g.save():undefined,active,ref:ref||'working-tree',policy,inputGap,clicksPerSecond:clicks,firstShop,injuries,purchases,milestones,snapshots,final:{S:s.S,realm:s.realmName,floor:s.level,frontier:s.towerBest,tn:s.tn,dj:s.dj,exp:Math.round(s.exp),expNeed:s.expNeed,medRate:Math.round(s.medRate),marketRate:Math.round(s.marketRate)}};
 }
 if(require.main===module){const ref=process.argv.find(x=>x.startsWith('--ref='))?.slice(6);const duration=Number(process.argv.find(x=>x.startsWith('--seconds='))?.slice(10)||3600);console.log(JSON.stringify(simulate({ref,duration,active:!process.argv.includes('--passive'),policy:process.argv.find(x=>x.startsWith('--policy='))?.slice(9)||'active'}),null,2));}
 module.exports={simulate};
