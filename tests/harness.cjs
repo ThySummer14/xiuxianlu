@@ -8,8 +8,9 @@ const root = path.resolve(__dirname, '..');
 const KEY = 'xiuxian_idle_v3';
 function createGame(options = {}) {
   const storage = new Map();
-  let now = 1800000000000;
+  let now = options.now || 1800000000000;
   let seed = options.seed || 42;
+  let frameCallback=null,rafTime=1;
   const math = Object.create(Math);
   math.random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
   const noop = () => {};
@@ -22,7 +23,7 @@ function createGame(options = {}) {
   const FakeDate = class extends Date { static now() { return now; } };
   const sandbox = {
     console, Math: math, Date: FakeDate, performance: { now: () => now },
-    setTimeout: noop, clearTimeout: noop, requestAnimationFrame: noop,
+    setTimeout: noop, clearTimeout: noop, requestAnimationFrame: cb => { frameCallback=cb; },
     innerWidth: options.width || 375, innerHeight: options.height || 667, devicePixelRatio: 1,
     addEventListener: noop, navigator: {}, location: { search: '' },
     document: { getElementById: () => canvas, createElement: () => canvas, addEventListener: noop },
@@ -56,6 +57,7 @@ function createGame(options = {}) {
     api, XB: sandbox.XB, sandbox, storage, uiControls, scrollViews,
     tap: id => { const old=sandbox.XUI.button; sandbox.XUI.button=(key,...args)=>key===id?true:old(key,...args); api.step(1e-9); sandbox.XUI.button=old; },
     state: () => api.state(),
+    frame: ms => {now+=ms;rafTime+=ms;frameCallback(rafTime);return api.state();},
     step: sec => { now += sec * 1000; api.step(sec, options.fast); return api.state(); },
     save: () => JSON.parse(storage.get(KEY) || '{}'),
     show: sec => { sandbox.XP._fireHide(); now += sec * 1000; sandbox.XP._fireShow(); return api.state(); },

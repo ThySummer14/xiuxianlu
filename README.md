@@ -14,11 +14,12 @@ python3 -m http.server 8000
 需要 Node.js 20+，没有第三方测试依赖：
 
 ```sh
-node scripts/check.cjs # 所有生产脚本语法检查 + 59项单进程回归测试
+node scripts/check.cjs # 所有生产脚本语法检查 + 62项单进程回归测试
 node scripts/characterize.cjs
 node scripts/simulate.cjs --seconds=3600 --policy=active
 node scripts/balance-matrix.cjs # 40次模拟，单进程，可能需要数分钟
 node scripts/rebirth-study.cjs # 完整首世、配对轮回与无机缘/纯闭关测试
+node scripts/session-study.cjs # 渲染节奏、24小时上限和重复归来测试
 ```
 
 测试加载真实 production 脚本，使用确定性随机数、模拟时间、Canvas 空实现；验证核心游戏行为与存档兼容性，**不代表浏览器视觉/输入验收**。

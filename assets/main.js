@@ -2297,12 +2297,24 @@
 
   var lastFrame = 0;
   function frame(ts) {
-    var dt = lastFrame ? Math.min(0.05, (ts - lastFrame) / 1000) : 0.016;
-    lastFrame = ts;
-    /* 单帧异常不得杀死主循环（否则整个游戏冻结、按钮失效） */
+    var elapsed = lastFrame ? Math.max(0, (ts - lastFrame) / 1000) : 0.016;
+    if (!isFinite(elapsed)) elapsed = 0.016;
+    lastFrame = isFinite(ts) ? ts : 0;
+    if (hiddenAt) { requestAnimationFrame(frame); return; }
+    /* Keep physical steps small without throwing away a slow device's elapsed time. */
     try {
-      updateCore(dt);
-      render(dt);
+      if (scene !== SCENE_PLAY) updateCore(Math.min(0.05, elapsed));
+      else if (elapsed > 5) {
+        // A suspended or stalled foreground must not need thousands of catch-up frames.
+        // It receives the same bounded, non-combat settlement as a returning player.
+        hold.active = false; rebirthArmed = false; resetArmed = false;
+        XUI.cancelPointer();
+        settleOffline(computeOffline(currentSnapshot(), elapsed));
+      } else {
+        var count = Math.max(1, Math.ceil(elapsed / 0.05));
+        for (var i = 0; i < count; i++) updateCore(elapsed / count);
+      }
+      render(Math.min(0.05, elapsed));
     } catch (e) {
       if (G0) { try { G0.__errs.push('frame: ' + (e && e.stack || e)); } catch (e2) {} }
       if (typeof console !== 'undefined' && console.error) console.error(e);

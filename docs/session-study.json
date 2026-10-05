@@ -1,0 +1,582 @@
+{
+  "date": "2026-10-05",
+  "method": "Headless real production scripts. Render-cadence comparison executes the real UI state transitions once/second, while still stubbing drawing. Game randomness and visual shake share Math.random, so equal seeds can diverge when rendering cadence differs. Long session observes up to 24 simulated hours or the final realm. This is numerical/input validation, not browser visual QA.",
+  "cadence": [
+    {
+      "policy": "active",
+      "seed": 7,
+      "renderEvery": 0,
+      "final": {
+        "S": 30,
+        "realm": "大乘·后期",
+        "floor": 51,
+        "frontier": 130,
+        "tn": 56,
+        "dj": 0,
+        "exp": 2329921217,
+        "expNeed": 11043453464,
+        "medRate": 12868615,
+        "marketRate": 23385092
+      },
+      "injuries": 35,
+      "foundationSeconds": 115,
+      "goldenCoreSeconds": 339
+    },
+    {
+      "policy": "active",
+      "seed": 7,
+      "renderEvery": 1,
+      "final": {
+        "S": 29,
+        "realm": "大乘·中期",
+        "floor": 53,
+        "frontier": 130,
+        "tn": 56,
+        "dj": 0,
+        "exp": 1373932825,
+        "expNeed": 5751798679,
+        "medRate": 8104406,
+        "marketRate": 18937262
+      },
+      "injuries": 34,
+      "foundationSeconds": 115,
+      "goldenCoreSeconds": 321
+    },
+    {
+      "policy": "active",
+      "seed": 42,
+      "renderEvery": 0,
+      "final": {
+        "S": 27,
+        "realm": "合体·大圆满",
+        "floor": 52,
+        "frontier": 120,
+        "tn": 56,
+        "dj": 0,
+        "exp": 2194593901,
+        "expNeed": 2496440399,
+        "medRate": 6525925,
+        "marketRate": 26210142
+      },
+      "injuries": 34,
+      "foundationSeconds": 117,
+      "goldenCoreSeconds": 387
+    },
+    {
+      "policy": "active",
+      "seed": 42,
+      "renderEvery": 1,
+      "final": {
+        "S": 29,
+        "realm": "大乘·中期",
+        "floor": 51,
+        "frontier": 130,
+        "tn": 56,
+        "dj": 0,
+        "exp": 2289689822,
+        "expNeed": 5751798679,
+        "medRate": 8020748,
+        "marketRate": 19128113
+      },
+      "injuries": 32,
+      "foundationSeconds": 117,
+      "goldenCoreSeconds": 387
+    },
+    {
+      "policy": "active",
+      "seed": 123,
+      "renderEvery": 0,
+      "final": {
+        "S": 30,
+        "realm": "大乘·后期",
+        "floor": 54,
+        "frontier": 130,
+        "tn": 56,
+        "dj": 0,
+        "exp": 3227798279,
+        "expNeed": 11043453464,
+        "medRate": 11425412,
+        "marketRate": 24131424
+      },
+      "injuries": 33,
+      "foundationSeconds": 123,
+      "goldenCoreSeconds": 329
+    },
+    {
+      "policy": "active",
+      "seed": 123,
+      "renderEvery": 1,
+      "final": {
+        "S": 30,
+        "realm": "大乘·后期",
+        "floor": 51,
+        "frontier": 130,
+        "tn": 56,
+        "dj": 0,
+        "exp": 9145237734,
+        "expNeed": 11043453464,
+        "medRate": 13476581,
+        "marketRate": 24131424
+      },
+      "injuries": 33,
+      "foundationSeconds": 115,
+      "goldenCoreSeconds": 343
+    },
+    {
+      "policy": "idle",
+      "seed": 7,
+      "renderEvery": 0,
+      "final": {
+        "S": 25,
+        "realm": "合体·中期",
+        "floor": 80,
+        "frontier": 80,
+        "tn": 53,
+        "dj": 0,
+        "exp": 323039729,
+        "expNeed": 423251750,
+        "medRate": 1301887,
+        "marketRate": 5886536
+      },
+      "injuries": 16,
+      "foundationSeconds": 303,
+      "goldenCoreSeconds": 783
+    },
+    {
+      "policy": "idle",
+      "seed": 7,
+      "renderEvery": 1,
+      "final": {
+        "S": 25,
+        "realm": "合体·中期",
+        "floor": 80,
+        "frontier": 80,
+        "tn": 53,
+        "dj": 0,
+        "exp": 208030982,
+        "expNeed": 423251750,
+        "medRate": 1152609,
+        "marketRate": 5570320
+      },
+      "injuries": 17,
+      "foundationSeconds": 303,
+      "goldenCoreSeconds": 783
+    },
+    {
+      "policy": "idle",
+      "seed": 42,
+      "renderEvery": 0,
+      "final": {
+        "S": 25,
+        "realm": "合体·中期",
+        "floor": 80,
+        "frontier": 80,
+        "tn": 53,
+        "dj": 0,
+        "exp": 93218868,
+        "expNeed": 423251750,
+        "medRate": 891438,
+        "marketRate": 5886536
+      },
+      "injuries": 18,
+      "foundationSeconds": 363,
+      "goldenCoreSeconds": 843
+    },
+    {
+      "policy": "idle",
+      "seed": 42,
+      "renderEvery": 1,
+      "final": {
+        "S": 24,
+        "realm": "合体·初期",
+        "floor": 70,
+        "frontier": 70,
+        "tn": 53,
+        "dj": 0,
+        "exp": 105184503,
+        "expNeed": 220443620,
+        "medRate": 644291,
+        "marketRate": 4300836
+      },
+      "injuries": 15,
+      "foundationSeconds": 363,
+      "goldenCoreSeconds": 903
+    },
+    {
+      "policy": "idle",
+      "seed": 123,
+      "renderEvery": 0,
+      "final": {
+        "S": 25,
+        "realm": "合体·中期",
+        "floor": 42,
+        "frontier": 80,
+        "tn": 53,
+        "dj": 0,
+        "exp": 38245232,
+        "expNeed": 423251750,
+        "medRate": 890879,
+        "marketRate": 5570320
+      },
+      "injuries": 16,
+      "foundationSeconds": 363,
+      "goldenCoreSeconds": 843
+    },
+    {
+      "policy": "idle",
+      "seed": 123,
+      "renderEvery": 1,
+      "final": {
+        "S": 24,
+        "realm": "合体·初期",
+        "floor": 80,
+        "frontier": 80,
+        "tn": 53,
+        "dj": 0,
+        "exp": 85578828,
+        "expNeed": 220443620,
+        "medRate": 711410,
+        "marketRate": 4559680
+      },
+      "injuries": 16,
+      "foundationSeconds": 423,
+      "goldenCoreSeconds": 843
+    }
+  ],
+  "long": {
+    "elapsedSeconds": 53699,
+    "final": {
+      "S": 59,
+      "realm": "道祖·大圆满",
+      "floor": 101,
+      "frontier": 200,
+      "tn": 101,
+      "dj": 0,
+      "exp": 182833539904707,
+      "expNeed": 2903758676654803000,
+      "medRate": 145605054003688,
+      "marketRate": 248760865362
+    },
+    "milestones": [
+      {
+        "stage": 1,
+        "atSeconds": 15
+      },
+      {
+        "stage": 2,
+        "atSeconds": 40
+      },
+      {
+        "stage": 3,
+        "atSeconds": 82
+      },
+      {
+        "stage": 4,
+        "atSeconds": 117
+      },
+      {
+        "stage": 5,
+        "atSeconds": 156
+      },
+      {
+        "stage": 6,
+        "atSeconds": 202
+      },
+      {
+        "stage": 7,
+        "atSeconds": 268
+      },
+      {
+        "stage": 8,
+        "atSeconds": 387
+      },
+      {
+        "stage": 9,
+        "atSeconds": 422
+      },
+      {
+        "stage": 10,
+        "atSeconds": 478
+      },
+      {
+        "stage": 11,
+        "atSeconds": 525
+      },
+      {
+        "stage": 12,
+        "atSeconds": 637
+      },
+      {
+        "stage": 13,
+        "atSeconds": 669
+      },
+      {
+        "stage": 14,
+        "atSeconds": 768
+      },
+      {
+        "stage": 15,
+        "atSeconds": 824
+      },
+      {
+        "stage": 16,
+        "atSeconds": 929
+      },
+      {
+        "stage": 17,
+        "atSeconds": 992
+      },
+      {
+        "stage": 18,
+        "atSeconds": 1100
+      },
+      {
+        "stage": 19,
+        "atSeconds": 1218
+      },
+      {
+        "stage": 20,
+        "atSeconds": 1433
+      },
+      {
+        "stage": 21,
+        "atSeconds": 1568
+      },
+      {
+        "stage": 22,
+        "atSeconds": 1707
+      },
+      {
+        "stage": 23,
+        "atSeconds": 1831
+      },
+      {
+        "stage": 24,
+        "atSeconds": 2183
+      },
+      {
+        "stage": 25,
+        "atSeconds": 2382
+      },
+      {
+        "stage": 26,
+        "atSeconds": 2527
+      },
+      {
+        "stage": 27,
+        "atSeconds": 2730
+      },
+      {
+        "stage": 28,
+        "atSeconds": 3293
+      },
+      {
+        "stage": 29,
+        "atSeconds": 3484
+      },
+      {
+        "stage": 30,
+        "atSeconds": 3841
+      },
+      {
+        "stage": 31,
+        "atSeconds": 4501
+      },
+      {
+        "stage": 32,
+        "atSeconds": 5623
+      },
+      {
+        "stage": 33,
+        "atSeconds": 5713
+      },
+      {
+        "stage": 34,
+        "atSeconds": 5899
+      },
+      {
+        "stage": 35,
+        "atSeconds": 6170
+      },
+      {
+        "stage": 36,
+        "atSeconds": 6609
+      },
+      {
+        "stage": 37,
+        "atSeconds": 6934
+      },
+      {
+        "stage": 38,
+        "atSeconds": 7262
+      },
+      {
+        "stage": 39,
+        "atSeconds": 7634
+      },
+      {
+        "stage": 40,
+        "atSeconds": 8305
+      },
+      {
+        "stage": 41,
+        "atSeconds": 8745
+      },
+      {
+        "stage": 42,
+        "atSeconds": 9455
+      },
+      {
+        "stage": 43,
+        "atSeconds": 10296
+      },
+      {
+        "stage": 44,
+        "atSeconds": 11651
+      },
+      {
+        "stage": 45,
+        "atSeconds": 12616
+      },
+      {
+        "stage": 46,
+        "atSeconds": 13834
+      },
+      {
+        "stage": 47,
+        "atSeconds": 15313
+      },
+      {
+        "stage": 48,
+        "atSeconds": 18039
+      },
+      {
+        "stage": 49,
+        "atSeconds": 19182
+      },
+      {
+        "stage": 50,
+        "atSeconds": 21159
+      },
+      {
+        "stage": 51,
+        "atSeconds": 24223
+      },
+      {
+        "stage": 52,
+        "atSeconds": 28921
+      },
+      {
+        "stage": 53,
+        "atSeconds": 30732
+      },
+      {
+        "stage": 54,
+        "atSeconds": 33001
+      },
+      {
+        "stage": 55,
+        "atSeconds": 36279
+      },
+      {
+        "stage": 56,
+        "atSeconds": 42299
+      },
+      {
+        "stage": 57,
+        "atSeconds": 45348
+      },
+      {
+        "stage": 58,
+        "atSeconds": 48854
+      },
+      {
+        "stage": 59,
+        "atSeconds": 53699
+      }
+    ],
+    "injuries": 57
+  },
+  "returns": [
+    {
+      "gapSeconds": 60,
+      "award": {
+        "seconds": 60,
+        "expGain": 2436295060.536187,
+        "stoneGain": 2235863234.5248165,
+        "injuryRemaining": 0,
+        "health": 532589
+      },
+      "stageAfterAutoProgress": 32,
+      "bankedExperience": 4475117620.512995,
+      "nextThreshold": 40710586851,
+      "duplicateReloadAward": false,
+      "health": 532589,
+      "healthMax": 532589
+    },
+    {
+      "gapSeconds": 7200,
+      "award": {
+        "seconds": 7200,
+        "expGain": 292355407264.34247,
+        "stoneGain": 268303588142.978,
+        "injuryRemaining": 0,
+        "health": 532589
+      },
+      "stageAfterAutoProgress": 35,
+      "bankedExperience": 25556164688.77368,
+      "nextThreshold": 461031958633,
+      "duplicateReloadAward": false,
+      "health": 1012761,
+      "healthMax": 1168597
+    },
+    {
+      "gapSeconds": 28800,
+      "award": {
+        "seconds": 28800,
+        "expGain": 730888518160.8562,
+        "stoneGain": 670758970357.4451,
+        "injuryRemaining": 0,
+        "health": 532589
+      },
+      "stageAfterAutoProgress": 35,
+      "bankedExperience": 464089275585.2875,
+      "nextThreshold": 461031958633,
+      "duplicateReloadAward": false,
+      "health": 1012761,
+      "healthMax": 1168597
+    },
+    {
+      "gapSeconds": 86400,
+      "award": {
+        "seconds": 86400,
+        "expGain": 1900310147218.226,
+        "stoneGain": 1743973322929.357,
+        "injuryRemaining": 0,
+        "health": 532589
+      },
+      "stageAfterAutoProgress": 35,
+      "bankedExperience": 1633510904642.6553,
+      "nextThreshold": 461031958633,
+      "duplicateReloadAward": false,
+      "health": 1012761,
+      "healthMax": 1168597
+    },
+    {
+      "gapSeconds": 172800,
+      "award": {
+        "seconds": 86400,
+        "expGain": 1900310147218.226,
+        "stoneGain": 1743973322929.357,
+        "injuryRemaining": 0,
+        "health": 532589
+      },
+      "stageAfterAutoProgress": 35,
+      "bankedExperience": 1633510904642.6553,
+      "nextThreshold": 461031958633,
+      "duplicateReloadAward": false,
+      "health": 1012761,
+      "healthMax": 1168597
+    }
+  ]
+}
