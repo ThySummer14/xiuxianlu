@@ -14,12 +14,13 @@ python3 -m http.server 8000
 需要 Node.js 20+，没有第三方测试依赖：
 
 ```sh
-node scripts/check.cjs # 所有生产脚本语法检查 + 151项单进程回归测试
+node scripts/check.cjs # 所有生产脚本语法检查 + 169项单进程回归测试
 node scripts/characterize.cjs
 node scripts/simulate.cjs --seconds=3600 --policy=active
 node scripts/balance-matrix.cjs # 40次模拟，单进程，可能需要数分钟
 node scripts/rebirth-study.cjs # 完整首世、配对轮回与无机缘/纯闭关测试
 node scripts/session-study.cjs # 渲染节奏、24小时上限和重复归来测试
+node --max-old-space-size=128 --expose-gc scripts/mirror-study.cjs # 镜狐目标策略/血量/时间/收益配对对照
 node scripts/text-layout-study.cjs # 有界换行缓存与未缓存布局的输出/调用对照
 ```
 
@@ -53,3 +54,7 @@ node scripts/text-layout-study.cjs # 有界换行缓存与未缓存布局的输�
 ## 文本布局性能
 
 界面复用相同字体、文本和宽度的换行结果，缓存有容量/文本长度/总量限制，并在字体加载与resize时失效。模拟对照中重复测量调用减少98.33%，文字绘制输出及游戏状态保持一致；这不是手机FPS实测。[方法与边界](docs/text-layout-performance.md)。
+
+## 镜狐与渡口狐灯
+
+16层起的镜狐会在半血时分出烈影和障影，可提前预选目标，也可让剑侍自动先清烈影再清障影。幻影使用原层级血量预算，真身倒下只结算一次奖励。配套见闻提供静心咒与即时领悟，以及复命后的修行/挥剑成长选择。[玩法与数值对照](docs/mirror-fox.md)。

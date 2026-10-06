@@ -594,6 +594,62 @@ var XB = (function () {
         {label: '以经验换取护山符', desc: '护山符补满至3张，留作以后闯关之用', apply: 'hunt-refill'}]}
   };
 
+  /* Mirror fox divides its remaining HP budget, rather than adding extra lives.
+     Auto targets the dangerous flame, then the ward, then the real body. */
+  var MIRRORFOX = {unlockFloor: 16, splitAt: 0.5, shadowShare: 0.1,
+    wardFactor: 0.65, flameAttack: 1.2, calmAttack: 1.05, clearedAttack: 0.75};
+  function mirrorState(type, floor) {
+    return {enabled: type === 'mirrorfox' && floor >= MIRRORFOX.unlockFloor,
+      split: false, flame: 0, ward: 0, focus: 'auto', cleared: 0};
+  }
+  function mirrorTarget(m) {
+    if (!m || !m.enabled || !m.split) return 'body';
+    if (m.focus === 'body' || ((m.focus === 'flame' || m.focus === 'ward') && m[m.focus] > 0)) return m.focus;
+    return m.flame > 0 ? 'flame' : m.ward > 0 ? 'ward' : 'body';
+  }
+  function mirrorDamage(m, hp, maxHp, damage) {
+    if (!m || !m.enabled) return hp - damage;
+    if (!(damage > 0) || !isFinite(damage) || hp <= 0) return hp;
+    if (!m.split) {
+      var before = Math.min(damage, Math.max(0, hp - maxHp * MIRRORFOX.splitAt));
+      hp -= before; damage -= before;
+      if (hp <= maxHp * MIRRORFOX.splitAt + 1e-9) {
+        m.split = true;
+        m.flame = m.ward = maxHp * MIRRORFOX.shadowShare;
+        hp -= m.flame + m.ward;
+      }
+    }
+    // At most two shadows and the body; excess damage carries on, never vanishes.
+    for (var i = 0; i < 3 && damage > 0 && hp > 0; i++) {
+      var target = mirrorTarget(m);
+      if (target === 'body') { hp -= damage * (m.ward > 0 ? MIRRORFOX.wardFactor : 1); break; }
+      var used = Math.min(damage, m[target]);
+      m[target] -= used; damage -= used;
+      if (m[target] <= 1e-9) {
+        m[target] = 0; m.cleared++;
+        if (m.focus === target) m.focus = 'auto';
+      }
+    }
+    return hp;
+  }
+  function mirrorAttackMult(m, choice) {
+    if (!m || !m.enabled || !m.split) return 1;
+    return m.flame > 0 ? (choice === 'calm' ? MIRRORFOX.calmAttack : MIRRORFOX.flameAttack) : MIRRORFOX.clearedAttack;
+  }
+  function mirrorTotalHp(m, hp) { return Math.max(0, hp) + (m && m.enabled && hp > 0 ? m.flame + m.ward : 0); }
+  var MIRROR_EVENTS = {
+    prepare: {id: 'mirror-prepare', title: '渡口狐灯',
+      text: '渡口老妪将两盏纸灯分开：“镜狐伤至半血，会借剩余妖气化出双影。烈影助长攻势，障影护住真身。”\n“剑侍会先清烈影，再清障影；你也可提前在魔窟面板预选目标，半血分影后生效。清除双影后击败镜狐，再来讲讲你所见。”',
+      options: [
+        {label: '记住静心咒', desc: '永久减弱镜狐烈影：增伤20%降为5%；不改变其他妖怪', apply: 'mirror-calm'},
+        {label: '参悟灯上剑纹', desc: '一部已解锁功法领悟最多 +6；圆满时转为修为，立即生效', apply: 'mirror-insight'}]},
+    return: {id: 'mirror-return', title: '灯灭而心明',
+      text: '烈影与障影都已散尽，渡口只剩一盏照路的灯。老妪问：“看清虚实之后，你愿让这一念安于呼吸，还是凝在剑锋？”',
+      options: [
+        {label: '以静观照修行', desc: '仙缘 +1（打坐修为永久 +3%）', apply: 'mirror-bond'},
+        {label: '以剑辨明虚实', desc: '剑心 +1（挥剑伤害永久 +2%）', apply: 'mirror-sword'}]}
+  };
+
   /* ================= 妖兽种类 ================= */
   var MONSTER_TYPES = [
     { id: 'fox',      name: '狐妖' },
@@ -602,6 +658,7 @@ var XB = (function () {
     { id: 'spider',   name: '蛛妖' }
   ];
   function monsterName(typeId, boss, level) {
+    if (typeId === 'mirrorfox') return (agePrefix(level || 1) || '') + '镜狐' + (boss ? '王' : '');
     for (var i = 0; i < MONSTER_TYPES.length; i++) {
       if (MONSTER_TYPES[i].id === typeId) {
         var n = AGE_PREFIX.length && agePrefix(level || 1);
@@ -698,6 +755,8 @@ var XB = (function () {
     fmtRate: fmtRate,
     formatDur: formatDur,
     SHANXIAO: SHANXIAO, monsterIntent: monsterIntent, advanceIntent: advanceIntent, strikeIntent: strikeIntent, HUNT_EVENTS: HUNT_EVENTS,
+    MIRRORFOX: MIRRORFOX, mirrorState: mirrorState, mirrorTarget: mirrorTarget,
+    mirrorDamage: mirrorDamage, mirrorAttackMult: mirrorAttackMult, mirrorTotalHp: mirrorTotalHp, MIRROR_EVENTS: MIRROR_EVENTS,
     MONSTER_TYPES: MONSTER_TYPES,
     monsterName: monsterName,
     TOWER_UNLOCK_LEVEL: TOWER_UNLOCK_LEVEL,

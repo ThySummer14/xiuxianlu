@@ -1,0 +1,1669 @@
+{
+  "baseline": "7aa1ec7be1c3969680c1b3966b44e24c8faf21af",
+  "sourceTree": "5e7c9aea6af510587630787c38b1378ad47ae101",
+  "notes": [
+    "Production combat code,20 spaced deterministic seeds per case; one encounter, no purchases; seeds are imul(index+1,0x9e3779b1) unsigned.",
+    "Baseline forces an ordinary fox at the same floor; the boss case is controlled, not a promised natural spawn.",
+    "Manual input is2Hz. Auto clears flame,ward,body; other policies select the named first target and then attack the body.",
+    "Shadow health is redistributed from remaining body HP; resource rewards occur once per final body defeat.",
+    "This is combat simulation, not phone FPS or a whole-campaign balance claim."
+  ],
+  "results": [
+    {
+      "fixture": {
+        "name": "first mirror fox",
+        "floor": 16,
+        "S": 4,
+        "sj": 4,
+        "ss": 4
+      },
+      "policy": "idle",
+      "before": {
+        "wins": 0,
+        "n": 20,
+        "seconds": {
+          "p10": 8.1,
+          "median": 8.1,
+          "p90": 8.1
+        },
+        "healthLoss": {
+          "p10": 343,
+          "median": 343,
+          "p90": 343
+        },
+        "medianStones": 0,
+        "medianKills": 0,
+        "medianContrib": 0,
+        "medianHits": 0
+      },
+      "after": {
+        "wins": 0,
+        "n": 20,
+        "seconds": {
+          "p10": 8.1,
+          "median": 8.1,
+          "p90": 8.1
+        },
+        "healthLoss": {
+          "p10": 343,
+          "median": 343,
+          "p90": 343
+        },
+        "medianStones": 0,
+        "medianKills": 0,
+        "medianContrib": 0,
+        "medianHits": 0
+      }
+    },
+    {
+      "fixture": {
+        "name": "first mirror fox",
+        "floor": 16,
+        "S": 4,
+        "sj": 4,
+        "ss": 4
+      },
+      "policy": "auto-2hz",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 2.05,
+          "median": 4.05,
+          "p90": 4.05
+        },
+        "healthLoss": {
+          "p10": 61,
+          "median": 122,
+          "p90": 122
+        },
+        "medianStones": 21,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 8
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 2.05,
+          "median": 4.05,
+          "p90": 4.05
+        },
+        "healthLoss": {
+          "p10": 61,
+          "median": 106.75,
+          "p90": 106.75
+        },
+        "medianStones": 21,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 8
+      }
+    },
+    {
+      "fixture": {
+        "name": "first mirror fox",
+        "floor": 16,
+        "S": 4,
+        "sj": 4,
+        "ss": 4
+      },
+      "policy": "ward-body",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 2.05,
+          "median": 4.05,
+          "p90": 4.05
+        },
+        "healthLoss": {
+          "p10": 61,
+          "median": 122,
+          "p90": 122
+        },
+        "medianStones": 21,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 8
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 2.05,
+          "median": 4.05,
+          "p90": 4.05
+        },
+        "healthLoss": {
+          "p10": 61,
+          "median": 134.2,
+          "p90": 134.2
+        },
+        "medianStones": 21,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 8
+      }
+    },
+    {
+      "fixture": {
+        "name": "first mirror fox",
+        "floor": 16,
+        "S": 4,
+        "sj": 4,
+        "ss": 4
+      },
+      "policy": "flame-body",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 2.05,
+          "median": 4.05,
+          "p90": 4.05
+        },
+        "healthLoss": {
+          "p10": 61,
+          "median": 122,
+          "p90": 122
+        },
+        "medianStones": 21,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 8
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 2.05,
+          "median": 4.55,
+          "p90": 4.55
+        },
+        "healthLoss": {
+          "p10": 61,
+          "median": 152.5,
+          "p90": 152.5
+        },
+        "medianStones": 21,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 9
+      }
+    },
+    {
+      "fixture": {
+        "name": "first mirror fox",
+        "floor": 16,
+        "S": 4,
+        "sj": 4,
+        "ss": 4
+      },
+      "policy": "body",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 2.05,
+          "median": 4.05,
+          "p90": 4.05
+        },
+        "healthLoss": {
+          "p10": 61,
+          "median": 122,
+          "p90": 122
+        },
+        "medianStones": 21,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 8
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 2.05,
+          "median": 4.05,
+          "p90": 4.05
+        },
+        "healthLoss": {
+          "p10": 61,
+          "median": 134.2,
+          "p90": 134.2
+        },
+        "medianStones": 21,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 8
+      }
+    },
+    {
+      "fixture": {
+        "name": "first mirror fox",
+        "floor": 16,
+        "S": 4,
+        "sj": 4,
+        "ss": 4
+      },
+      "policy": "calm-idle",
+      "before": {
+        "wins": 0,
+        "n": 20,
+        "seconds": {
+          "p10": 8.1,
+          "median": 8.1,
+          "p90": 8.1
+        },
+        "healthLoss": {
+          "p10": 343,
+          "median": 343,
+          "p90": 343
+        },
+        "medianStones": 0,
+        "medianKills": 0,
+        "medianContrib": 0,
+        "medianHits": 0
+      },
+      "after": {
+        "wins": 0,
+        "n": 20,
+        "seconds": {
+          "p10": 8.1,
+          "median": 8.1,
+          "p90": 8.1
+        },
+        "healthLoss": {
+          "p10": 343,
+          "median": 343,
+          "p90": 343
+        },
+        "medianStones": 0,
+        "medianKills": 0,
+        "medianContrib": 0,
+        "medianHits": 0
+      }
+    },
+    {
+      "fixture": {
+        "name": "idle-ready first encounter",
+        "floor": 16,
+        "S": 6,
+        "sj": 4,
+        "ss": 4
+      },
+      "policy": "idle",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 11.45,
+          "median": 11.45,
+          "p90": 11.45
+        },
+        "healthLoss": {
+          "p10": 488,
+          "median": 488,
+          "p90": 488
+        },
+        "medianStones": 21,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 0
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 11.45,
+          "median": 11.45,
+          "p90": 11.45
+        },
+        "healthLoss": {
+          "p10": 454.45,
+          "median": 454.45,
+          "p90": 454.45
+        },
+        "medianStones": 21,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 0
+      }
+    },
+    {
+      "fixture": {
+        "name": "idle-ready first encounter",
+        "floor": 16,
+        "S": 6,
+        "sj": 4,
+        "ss": 4
+      },
+      "policy": "auto-2hz",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.55,
+          "median": 2.55,
+          "p90": 2.55
+        },
+        "healthLoss": {
+          "p10": 61,
+          "median": 61,
+          "p90": 61
+        },
+        "medianStones": 21,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 5
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.55,
+          "median": 2.55,
+          "p90": 2.55
+        },
+        "healthLoss": {
+          "p10": 61,
+          "median": 61,
+          "p90": 61
+        },
+        "medianStones": 21,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 5
+      }
+    },
+    {
+      "fixture": {
+        "name": "idle-ready first encounter",
+        "floor": 16,
+        "S": 6,
+        "sj": 4,
+        "ss": 4
+      },
+      "policy": "ward-body",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.55,
+          "median": 2.55,
+          "p90": 2.55
+        },
+        "healthLoss": {
+          "p10": 61,
+          "median": 61,
+          "p90": 61
+        },
+        "medianStones": 21,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 5
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.55,
+          "median": 2.55,
+          "p90": 2.55
+        },
+        "healthLoss": {
+          "p10": 61,
+          "median": 61,
+          "p90": 61
+        },
+        "medianStones": 21,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 5
+      }
+    },
+    {
+      "fixture": {
+        "name": "idle-ready first encounter",
+        "floor": 16,
+        "S": 6,
+        "sj": 4,
+        "ss": 4
+      },
+      "policy": "flame-body",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.55,
+          "median": 2.55,
+          "p90": 2.55
+        },
+        "healthLoss": {
+          "p10": 61,
+          "median": 61,
+          "p90": 61
+        },
+        "medianStones": 21,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 5
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.55,
+          "median": 2.9,
+          "p90": 2.9
+        },
+        "healthLoss": {
+          "p10": 61,
+          "median": 106.75,
+          "p90": 106.75
+        },
+        "medianStones": 21,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 5
+      }
+    },
+    {
+      "fixture": {
+        "name": "idle-ready first encounter",
+        "floor": 16,
+        "S": 6,
+        "sj": 4,
+        "ss": 4
+      },
+      "policy": "body",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.55,
+          "median": 2.55,
+          "p90": 2.55
+        },
+        "healthLoss": {
+          "p10": 61,
+          "median": 61,
+          "p90": 61
+        },
+        "medianStones": 21,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 5
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.55,
+          "median": 2.55,
+          "p90": 2.55
+        },
+        "healthLoss": {
+          "p10": 61,
+          "median": 61,
+          "p90": 61
+        },
+        "medianStones": 21,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 5
+      }
+    },
+    {
+      "fixture": {
+        "name": "idle-ready first encounter",
+        "floor": 16,
+        "S": 6,
+        "sj": 4,
+        "ss": 4
+      },
+      "policy": "calm-idle",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 11.45,
+          "median": 11.45,
+          "p90": 11.45
+        },
+        "healthLoss": {
+          "p10": 488,
+          "median": 488,
+          "p90": 488
+        },
+        "medianStones": 21,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 0
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 11.45,
+          "median": 11.45,
+          "p90": 11.45
+        },
+        "healthLoss": {
+          "p10": 445.3,
+          "median": 445.3,
+          "p90": 445.3
+        },
+        "medianStones": 21,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 0
+      }
+    },
+    {
+      "fixture": {
+        "name": "first natural mirror boss",
+        "floor": 20,
+        "S": 12,
+        "sj": 4,
+        "ss": 4
+      },
+      "policy": "idle",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 11.2,
+          "median": 11.2,
+          "p90": 11.2
+        },
+        "healthLoss": {
+          "p10": 2700,
+          "median": 2700,
+          "p90": 2700
+        },
+        "medianStones": 103,
+        "medianKills": 1,
+        "medianContrib": 8,
+        "medianHits": 0
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 11.2,
+          "median": 11.2,
+          "p90": 11.2
+        },
+        "healthLoss": {
+          "p10": 2484,
+          "median": 2484,
+          "p90": 2484
+        },
+        "medianStones": 103,
+        "medianKills": 1,
+        "medianContrib": 8,
+        "medianHits": 0
+      }
+    },
+    {
+      "fixture": {
+        "name": "first natural mirror boss",
+        "floor": 20,
+        "S": 12,
+        "sj": 4,
+        "ss": 4
+      },
+      "policy": "auto-2hz",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.55,
+          "median": 2.55,
+          "p90": 2.55
+        },
+        "healthLoss": {
+          "p10": 270,
+          "median": 540,
+          "p90": 540
+        },
+        "medianStones": 103,
+        "medianKills": 1,
+        "medianContrib": 8,
+        "medianHits": 5
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.55,
+          "median": 2.55,
+          "p90": 2.55
+        },
+        "healthLoss": {
+          "p10": 270,
+          "median": 472.5,
+          "p90": 472.5
+        },
+        "medianStones": 103,
+        "medianKills": 1,
+        "medianContrib": 8,
+        "medianHits": 5
+      }
+    },
+    {
+      "fixture": {
+        "name": "first natural mirror boss",
+        "floor": 20,
+        "S": 12,
+        "sj": 4,
+        "ss": 4
+      },
+      "policy": "ward-body",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.55,
+          "median": 2.55,
+          "p90": 2.55
+        },
+        "healthLoss": {
+          "p10": 270,
+          "median": 540,
+          "p90": 540
+        },
+        "medianStones": 103,
+        "medianKills": 1,
+        "medianContrib": 8,
+        "medianHits": 5
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.55,
+          "median": 2.55,
+          "p90": 2.55
+        },
+        "healthLoss": {
+          "p10": 270,
+          "median": 594,
+          "p90": 594
+        },
+        "medianStones": 103,
+        "medianKills": 1,
+        "medianContrib": 8,
+        "medianHits": 5
+      }
+    },
+    {
+      "fixture": {
+        "name": "first natural mirror boss",
+        "floor": 20,
+        "S": 12,
+        "sj": 4,
+        "ss": 4
+      },
+      "policy": "flame-body",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.55,
+          "median": 2.55,
+          "p90": 2.55
+        },
+        "healthLoss": {
+          "p10": 270,
+          "median": 540,
+          "p90": 540
+        },
+        "medianStones": 103,
+        "medianKills": 1,
+        "medianContrib": 8,
+        "medianHits": 5
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.55,
+          "median": 2.8,
+          "p90": 2.8
+        },
+        "healthLoss": {
+          "p10": 270,
+          "median": 472.5,
+          "p90": 472.5
+        },
+        "medianStones": 103,
+        "medianKills": 1,
+        "medianContrib": 8,
+        "medianHits": 5
+      }
+    },
+    {
+      "fixture": {
+        "name": "first natural mirror boss",
+        "floor": 20,
+        "S": 12,
+        "sj": 4,
+        "ss": 4
+      },
+      "policy": "body",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.55,
+          "median": 2.55,
+          "p90": 2.55
+        },
+        "healthLoss": {
+          "p10": 270,
+          "median": 540,
+          "p90": 540
+        },
+        "medianStones": 103,
+        "medianKills": 1,
+        "medianContrib": 8,
+        "medianHits": 5
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.55,
+          "median": 2.55,
+          "p90": 2.55
+        },
+        "healthLoss": {
+          "p10": 270,
+          "median": 594,
+          "p90": 594
+        },
+        "medianStones": 103,
+        "medianKills": 1,
+        "medianContrib": 8,
+        "medianHits": 5
+      }
+    },
+    {
+      "fixture": {
+        "name": "first natural mirror boss",
+        "floor": 20,
+        "S": 12,
+        "sj": 4,
+        "ss": 4
+      },
+      "policy": "calm-idle",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 11.2,
+          "median": 11.2,
+          "p90": 11.2
+        },
+        "healthLoss": {
+          "p10": 2700,
+          "median": 2700,
+          "p90": 2700
+        },
+        "medianStones": 103,
+        "medianKills": 1,
+        "medianContrib": 8,
+        "medianHits": 0
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 11.2,
+          "median": 11.2,
+          "p90": 11.2
+        },
+        "healthLoss": {
+          "p10": 2443.5,
+          "median": 2443.5,
+          "p90": 2443.5
+        },
+        "medianStones": 103,
+        "medianKills": 1,
+        "medianContrib": 8,
+        "medianHits": 0
+      }
+    },
+    {
+      "fixture": {
+        "name": "established cultivator",
+        "floor": 26,
+        "S": 8,
+        "sj": 8,
+        "ss": 8
+      },
+      "policy": "idle",
+      "before": {
+        "wins": 0,
+        "n": 20,
+        "seconds": {
+          "p10": 5.4,
+          "median": 5.4,
+          "p90": 5.4
+        },
+        "healthLoss": {
+          "p10": 979,
+          "median": 979,
+          "p90": 979
+        },
+        "medianStones": 0,
+        "medianKills": 0,
+        "medianContrib": 0,
+        "medianHits": 0
+      },
+      "after": {
+        "wins": 0,
+        "n": 20,
+        "seconds": {
+          "p10": 5.4,
+          "median": 5.4,
+          "p90": 5.4
+        },
+        "healthLoss": {
+          "p10": 979,
+          "median": 979,
+          "p90": 979
+        },
+        "medianStones": 0,
+        "medianKills": 0,
+        "medianContrib": 0,
+        "medianHits": 0
+      }
+    },
+    {
+      "fixture": {
+        "name": "established cultivator",
+        "floor": 26,
+        "S": 8,
+        "sj": 8,
+        "ss": 8
+      },
+      "policy": "auto-2hz",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 2.05,
+          "median": 4.05,
+          "p90": 4.05
+        },
+        "healthLoss": {
+          "p10": 257,
+          "median": 514,
+          "p90": 514
+        },
+        "medianStones": 33,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 8
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 2.05,
+          "median": 4.05,
+          "p90": 4.05
+        },
+        "healthLoss": {
+          "p10": 257,
+          "median": 449.75,
+          "p90": 449.75
+        },
+        "medianStones": 33,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 8
+      }
+    },
+    {
+      "fixture": {
+        "name": "established cultivator",
+        "floor": 26,
+        "S": 8,
+        "sj": 8,
+        "ss": 8
+      },
+      "policy": "ward-body",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 2.05,
+          "median": 4.05,
+          "p90": 4.05
+        },
+        "healthLoss": {
+          "p10": 257,
+          "median": 514,
+          "p90": 514
+        },
+        "medianStones": 33,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 8
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 2.05,
+          "median": 4,
+          "p90": 4
+        },
+        "healthLoss": {
+          "p10": 257,
+          "median": 565.4,
+          "p90": 565.4
+        },
+        "medianStones": 33,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 7
+      }
+    },
+    {
+      "fixture": {
+        "name": "established cultivator",
+        "floor": 26,
+        "S": 8,
+        "sj": 8,
+        "ss": 8
+      },
+      "policy": "flame-body",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 2.05,
+          "median": 4.05,
+          "p90": 4.05
+        },
+        "healthLoss": {
+          "p10": 257,
+          "median": 514,
+          "p90": 514
+        },
+        "medianStones": 33,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 8
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 2.05,
+          "median": 4.55,
+          "p90": 4.55
+        },
+        "healthLoss": {
+          "p10": 257,
+          "median": 642.5,
+          "p90": 642.5
+        },
+        "medianStones": 33,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 9
+      }
+    },
+    {
+      "fixture": {
+        "name": "established cultivator",
+        "floor": 26,
+        "S": 8,
+        "sj": 8,
+        "ss": 8
+      },
+      "policy": "body",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 2.05,
+          "median": 4.05,
+          "p90": 4.05
+        },
+        "healthLoss": {
+          "p10": 257,
+          "median": 514,
+          "p90": 514
+        },
+        "medianStones": 33,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 8
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 2.05,
+          "median": 3.95,
+          "p90": 3.95
+        },
+        "healthLoss": {
+          "p10": 257,
+          "median": 565.4,
+          "p90": 565.4
+        },
+        "medianStones": 33,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 7
+      }
+    },
+    {
+      "fixture": {
+        "name": "established cultivator",
+        "floor": 26,
+        "S": 8,
+        "sj": 8,
+        "ss": 8
+      },
+      "policy": "calm-idle",
+      "before": {
+        "wins": 0,
+        "n": 20,
+        "seconds": {
+          "p10": 5.4,
+          "median": 5.4,
+          "p90": 5.4
+        },
+        "healthLoss": {
+          "p10": 979,
+          "median": 979,
+          "p90": 979
+        },
+        "medianStones": 0,
+        "medianKills": 0,
+        "medianContrib": 0,
+        "medianHits": 0
+      },
+      "after": {
+        "wins": 0,
+        "n": 20,
+        "seconds": {
+          "p10": 5.4,
+          "median": 5.4,
+          "p90": 5.4
+        },
+        "healthLoss": {
+          "p10": 979,
+          "median": 979,
+          "p90": 979
+        },
+        "medianStones": 0,
+        "medianKills": 0,
+        "medianContrib": 0,
+        "medianHits": 0
+      }
+    },
+    {
+      "fixture": {
+        "name": "controlled boss",
+        "floor": 30,
+        "S": 14,
+        "sj": 12,
+        "ss": 12
+      },
+      "policy": "idle",
+      "before": {
+        "wins": 0,
+        "n": 20,
+        "seconds": {
+          "p10": 5.4,
+          "median": 5.4,
+          "p90": 5.4
+        },
+        "healthLoss": {
+          "p10": 4725,
+          "median": 4725,
+          "p90": 4725
+        },
+        "medianStones": 0,
+        "medianKills": 0,
+        "medianContrib": 0,
+        "medianHits": 0
+      },
+      "after": {
+        "wins": 0,
+        "n": 20,
+        "seconds": {
+          "p10": 5.4,
+          "median": 5.4,
+          "p90": 5.4
+        },
+        "healthLoss": {
+          "p10": 4725,
+          "median": 4725,
+          "p90": 4725
+        },
+        "medianStones": 0,
+        "medianKills": 0,
+        "medianContrib": 0,
+        "medianHits": 0
+      }
+    },
+    {
+      "fixture": {
+        "name": "controlled boss",
+        "floor": 30,
+        "S": 14,
+        "sj": 12,
+        "ss": 12
+      },
+      "policy": "auto-2hz",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.95,
+          "median": 3.55,
+          "p90": 3.55
+        },
+        "healthLoss": {
+          "p10": 1143,
+          "median": 3429,
+          "p90": 3429
+        },
+        "medianStones": 151,
+        "medianKills": 1,
+        "medianContrib": 8,
+        "medianHits": 7
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.95,
+          "median": 3.55,
+          "p90": 3.55
+        },
+        "healthLoss": {
+          "p10": 1143,
+          "median": 3371.85,
+          "p90": 3371.85
+        },
+        "medianStones": 151,
+        "medianKills": 1,
+        "medianContrib": 8,
+        "medianHits": 7
+      }
+    },
+    {
+      "fixture": {
+        "name": "controlled boss",
+        "floor": 30,
+        "S": 14,
+        "sj": 12,
+        "ss": 12
+      },
+      "policy": "ward-body",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.95,
+          "median": 3.55,
+          "p90": 3.55
+        },
+        "healthLoss": {
+          "p10": 1143,
+          "median": 3429,
+          "p90": 3429
+        },
+        "medianStones": 151,
+        "medianKills": 1,
+        "medianContrib": 8,
+        "medianHits": 7
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.95,
+          "median": 3.55,
+          "p90": 3.55
+        },
+        "healthLoss": {
+          "p10": 1143,
+          "median": 3371.85,
+          "p90": 3371.85
+        },
+        "medianStones": 151,
+        "medianKills": 1,
+        "medianContrib": 8,
+        "medianHits": 7
+      }
+    },
+    {
+      "fixture": {
+        "name": "controlled boss",
+        "floor": 30,
+        "S": 14,
+        "sj": 12,
+        "ss": 12
+      },
+      "policy": "flame-body",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.95,
+          "median": 3.55,
+          "p90": 3.55
+        },
+        "healthLoss": {
+          "p10": 1143,
+          "median": 3429,
+          "p90": 3429
+        },
+        "medianStones": 151,
+        "medianKills": 1,
+        "medianContrib": 8,
+        "medianHits": 7
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.95,
+          "median": 3.55,
+          "p90": 3.55
+        },
+        "healthLoss": {
+          "p10": 1143,
+          "median": 3371.85,
+          "p90": 3371.85
+        },
+        "medianStones": 151,
+        "medianKills": 1,
+        "medianContrib": 8,
+        "medianHits": 7
+      }
+    },
+    {
+      "fixture": {
+        "name": "controlled boss",
+        "floor": 30,
+        "S": 14,
+        "sj": 12,
+        "ss": 12
+      },
+      "policy": "body",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.95,
+          "median": 3.55,
+          "p90": 3.55
+        },
+        "healthLoss": {
+          "p10": 1143,
+          "median": 3429,
+          "p90": 3429
+        },
+        "medianStones": 151,
+        "medianKills": 1,
+        "medianContrib": 8,
+        "medianHits": 7
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.55,
+          "median": 3.55,
+          "p90": 3.55
+        },
+        "healthLoss": {
+          "p10": 1143,
+          "median": 3886.2,
+          "p90": 3886.2
+        },
+        "medianStones": 151,
+        "medianKills": 1,
+        "medianContrib": 8,
+        "medianHits": 7
+      }
+    },
+    {
+      "fixture": {
+        "name": "controlled boss",
+        "floor": 30,
+        "S": 14,
+        "sj": 12,
+        "ss": 12
+      },
+      "policy": "calm-idle",
+      "before": {
+        "wins": 0,
+        "n": 20,
+        "seconds": {
+          "p10": 5.4,
+          "median": 5.4,
+          "p90": 5.4
+        },
+        "healthLoss": {
+          "p10": 4725,
+          "median": 4725,
+          "p90": 4725
+        },
+        "medianStones": 0,
+        "medianKills": 0,
+        "medianContrib": 0,
+        "medianHits": 0
+      },
+      "after": {
+        "wins": 0,
+        "n": 20,
+        "seconds": {
+          "p10": 5.4,
+          "median": 5.4,
+          "p90": 5.4
+        },
+        "healthLoss": {
+          "p10": 4725,
+          "median": 4725,
+          "p90": 4725
+        },
+        "medianStones": 0,
+        "medianKills": 0,
+        "medianContrib": 0,
+        "medianHits": 0
+      }
+    },
+    {
+      "fixture": {
+        "name": "veteran",
+        "floor": 46,
+        "S": 22,
+        "sj": 20,
+        "ss": 20
+      },
+      "policy": "idle",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.05,
+          "median": 1.05,
+          "p90": 1.05
+        },
+        "healthLoss": {
+          "p10": 0,
+          "median": 0,
+          "p90": 0
+        },
+        "medianStones": 57,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 0
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.05,
+          "median": 1.05,
+          "p90": 1.05
+        },
+        "healthLoss": {
+          "p10": 0,
+          "median": 0,
+          "p90": 0
+        },
+        "medianStones": 57,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 0
+      }
+    },
+    {
+      "fixture": {
+        "name": "veteran",
+        "floor": 46,
+        "S": 22,
+        "sj": 20,
+        "ss": 20
+      },
+      "policy": "auto-2hz",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 0.55,
+          "median": 0.55,
+          "p90": 0.55
+        },
+        "healthLoss": {
+          "p10": 0,
+          "median": 0,
+          "p90": 0
+        },
+        "medianStones": 57,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 1
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 0.55,
+          "median": 0.55,
+          "p90": 0.55
+        },
+        "healthLoss": {
+          "p10": 0,
+          "median": 0,
+          "p90": 0
+        },
+        "medianStones": 57,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 1
+      }
+    },
+    {
+      "fixture": {
+        "name": "veteran",
+        "floor": 46,
+        "S": 22,
+        "sj": 20,
+        "ss": 20
+      },
+      "policy": "ward-body",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 0.55,
+          "median": 0.55,
+          "p90": 0.55
+        },
+        "healthLoss": {
+          "p10": 0,
+          "median": 0,
+          "p90": 0
+        },
+        "medianStones": 57,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 1
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 0.55,
+          "median": 0.55,
+          "p90": 0.55
+        },
+        "healthLoss": {
+          "p10": 0,
+          "median": 0,
+          "p90": 0
+        },
+        "medianStones": 57,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 1
+      }
+    },
+    {
+      "fixture": {
+        "name": "veteran",
+        "floor": 46,
+        "S": 22,
+        "sj": 20,
+        "ss": 20
+      },
+      "policy": "flame-body",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 0.55,
+          "median": 0.55,
+          "p90": 0.55
+        },
+        "healthLoss": {
+          "p10": 0,
+          "median": 0,
+          "p90": 0
+        },
+        "medianStones": 57,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 1
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 0.55,
+          "median": 0.55,
+          "p90": 0.55
+        },
+        "healthLoss": {
+          "p10": 0,
+          "median": 0,
+          "p90": 0
+        },
+        "medianStones": 57,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 1
+      }
+    },
+    {
+      "fixture": {
+        "name": "veteran",
+        "floor": 46,
+        "S": 22,
+        "sj": 20,
+        "ss": 20
+      },
+      "policy": "body",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 0.55,
+          "median": 0.55,
+          "p90": 0.55
+        },
+        "healthLoss": {
+          "p10": 0,
+          "median": 0,
+          "p90": 0
+        },
+        "medianStones": 57,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 1
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 0.55,
+          "median": 0.55,
+          "p90": 0.55
+        },
+        "healthLoss": {
+          "p10": 0,
+          "median": 0,
+          "p90": 0
+        },
+        "medianStones": 57,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 1
+      }
+    },
+    {
+      "fixture": {
+        "name": "veteran",
+        "floor": 46,
+        "S": 22,
+        "sj": 20,
+        "ss": 20
+      },
+      "policy": "calm-idle",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.05,
+          "median": 1.05,
+          "p90": 1.05
+        },
+        "healthLoss": {
+          "p10": 0,
+          "median": 0,
+          "p90": 0
+        },
+        "medianStones": 57,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 0
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.05,
+          "median": 1.05,
+          "p90": 1.05
+        },
+        "healthLoss": {
+          "p10": 0,
+          "median": 0,
+          "p90": 0
+        },
+        "medianStones": 57,
+        "medianKills": 1,
+        "medianContrib": 1,
+        "medianHits": 0
+      }
+    }
+  ]
+}

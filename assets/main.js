@@ -162,6 +162,7 @@
   var huntStage = 0;        /* 0未接见闻，1待破招，2可复命，3已完成；轮回保留 */
   var huntChoice = '';
   var wardCharges = 0;
+  var mirrorStage = 0, mirrorChoice = ''; /* 渡口见闻；只保存因果，不保存战斗中的幻影 */
   var monAtkT = 0;           /* 妖兽扑咬计时 */
   var injuryT = 0;           /* 重伤剩余秒 */
   var epip = 0;              /* 生死顿悟次数（永久 +5%/次，轮回不清） */
@@ -302,6 +303,7 @@
         towerFloor: towerFloor, towerBest: towerBest, towerPlan: towerPlan,
         epipFrontier: epipFrontier, ph: ph, injuryT: injuryT,
         huntStage: huntStage, huntChoice: huntChoice, wardCharges: wardCharges,
+        mirrorStage: mirrorStage, mirrorChoice: mirrorChoice,
         epip: epip, cmp: cmp, sectId: sectId, sectLv: sectLv,
         contrib: contrib, missions: missions, accStones: accStones,
         kills: totalKills, muted: muted, questClaimed: questClaimed, ts: Date.now()
@@ -355,6 +357,8 @@
     d.huntStage = safeNumber(d.huntStage, 0, 3, true);
     d.huntChoice = d.huntChoice === 'ward' || d.huntChoice === 'insight' ? d.huntChoice : '';
     d.wardCharges = safeNumber(d.wardCharges, 0, XB.SHANXIAO.wardCap, true);
+    d.mirrorStage = safeNumber(d.mirrorStage, 0, 3, true);
+    d.mirrorChoice = d.mirrorChoice === 'calm' || d.mirrorChoice === 'insight' ? d.mirrorChoice : '';
     function levels(values, length, cap) {
       var result = [];
       for (var j = 0; j < length; j++) result.push(safeNumber(values && values[j], 0, cap, true));
@@ -597,6 +601,7 @@
     epip = Math.max(0, Math.min(XB.EPIPHANY_MAX, Number(d.epip) || 0));
     huntStage = safeNumber(d.huntStage, 0, 3, true); huntChoice = d.huntChoice || '';
     wardCharges = safeNumber(d.wardCharges, 0, XB.SHANXIAO.wardCap, true);
+    mirrorStage = safeNumber(d.mirrorStage, 0, 3, true); mirrorChoice = d.mirrorChoice || '';
     sectId = typeof d.sectId === 'string' && XB.getSect(d.sectId) ? d.sectId : '';
     sectLv = (d.sectLv && typeof d.sectLv === 'object') ? d.sectLv : {};
     contrib = Math.max(0, Number(d.contrib) || 0);
@@ -630,8 +635,10 @@
     var types = XB.MONSTER_TYPES;
     var idx = Math.floor(XD.srand(level * 13 + 7) * types.length) % types.length;
     var hpv = XB.towerHp(level);
+    var species = level === XB.SHANXIAO.unlockFloor ? 'shanxiao' : types[idx].id;
+    if (level >= XB.MIRRORFOX.unlockFloor && (species === 'fox' || level === XB.MIRRORFOX.unlockFloor)) species = 'mirrorfox';
     monster = {
-      type: level === XB.SHANXIAO.unlockFloor ? 'shanxiao' : types[idx].id,
+      type: species,
       boss: boss,
       level: level,
       atk: XB.towerAtk(level),
@@ -646,6 +653,7 @@
       hurtT: 0
     };
     monster.intent = XB.monsterIntent(monster.type, level);
+    monster.mirror = XB.mirrorState(monster.type, level);
   }
 
   function monsterCenter() {
@@ -800,6 +808,34 @@
     }
     return target;
   }
+  function openMirrorEvent() {
+    if (towerBest < XB.MIRRORFOX.unlockFloor) { XUI.toast('推进到第16层，解锁渡口狐灯'); return false; }
+    if (mirrorStage === 1) { XUI.toast('清除烈影与障影后击败镜狐；自动先清烈影，再清障影'); return false; }
+    if (mirrorStage === 3) { XUI.toast('渡口见闻已完成' + (mirrorChoice === 'calm' ? ' · 静心咒仍在护持' : '')); return false; }
+    return openFateEvent(mirrorStage === 0 ? XB.MIRROR_EVENTS.prepare : XB.MIRROR_EVENTS.return);
+  }
+  function resolveMirrorOption(event, option) {
+    var expected = event.id === 'mirror-prepare' ? 0 : 2;
+    if (mirrorStage !== expected) { fateEvent = null; modal = null; return; }
+    mirrorStage = expected === 0 ? 1 : 3;
+    if (option.apply === 'mirror-calm') mirrorChoice = 'calm';
+    if (option.apply === 'mirror-insight') {
+      mirrorChoice = 'insight'; var target = huntInsightTarget();
+      if (target >= 0) cmp[target] = Math.min(XB.INSIGHT_CAP, cmp[target] + 6);
+      else exp += fateExpReward();
+    }
+    if (option.apply === 'mirror-bond') bond += 1;
+    if (option.apply === 'mirror-sword') sgn += 1;
+    fateEvent = null; modal = null; checkBreakthroughAuto(); saveGame();
+    XUI.toast(expected === 0 ? '狐灯之约已记下 · 自动清除双影也可复命' : '灯灭而心明 · 此段因果已了');
+  }
+  function chooseMirrorTarget(target) {
+    if (!monster || monster.dyingT >= 0 || !monster.mirror.enabled || modal || (bt && bt.big)) return false;
+    if (['auto', 'flame', 'ward', 'body'].indexOf(target) < 0) return false;
+    if (monster.mirror.split && (target === 'flame' || target === 'ward') && !(monster.mirror[target] > 0)) return false;
+    monster.mirror.focus = target; hold.active = false;
+    return true;
+  }
   function resolveHuntOption(event, option) {
     var expected = event.id === 'hunt-prepare' ? 0 : 2;
     if (huntStage !== expected) { fateEvent = null; modal = null; return; }
@@ -822,6 +858,7 @@
     var opt = fateEvent.options[idx];
     if (!opt) return;
     if (fateEvent.id === 'hunt-prepare' || fateEvent.id === 'hunt-return') { resolveHuntOption(fateEvent, opt); return; }
+    if (fateEvent.id === 'mirror-prepare' || fateEvent.id === 'mirror-return') { resolveMirrorOption(fateEvent, opt); return; }
     var c = monster ? monsterCenter() : { x: 375, y: MON_BASE_Y - 210 };
     var key = opt.apply;
     /* 冒险选项有失败风险：幽窟可能空手而归，但不致命 */
@@ -883,7 +920,7 @@
 
   function fateOptionPreview(option) {
     var key = option.apply;
-    if (key === 'hunt-insight') {
+    if (key === 'hunt-insight' || key === 'mirror-insight') {
       var target = huntInsightTarget();
       return target >= 0 ? '《' + XB.GONGFA[target].name + '》领悟 +' + Math.min(6, XB.INSIGHT_CAP - cmp[target]) + '，立即生效' : '功法皆圆满：转得修为 +' + XB.fmt(fateExpReward());
     }
@@ -908,7 +945,7 @@
     }
     var isCrit = Math.random() < critRate();
     var dmg = clickDamage() * (isCrit ? critMult() : 1);
-    dealDamage(dmg);
+    dmg = dealDamage(dmg);
     addSlash(x, y);
     if (isCrit) {
       addFloat(c.x + (XD.srand(nowSec * 53) - 0.5) * 140, c.y - 90,
@@ -928,15 +965,22 @@
   }
 
   function dealDamage(dmg) {
-    if (!monster || monster.dyingT >= 0) return;
+    if (!monster || monster.dyingT >= 0) return 0;
+    var before = XB.mirrorTotalHp(monster.mirror, monster.hp);
     if (monster.intent && monster.intent.phase === 'staggered') dmg *= XB.SHANXIAO.exposedMult;
-    monster.hp -= dmg;
+    monster.hp = XB.mirrorDamage(monster.mirror, monster.hp, monster.maxHp, dmg);
+    var dealt = before - XB.mirrorTotalHp(monster.mirror, monster.hp);
     if (monster.hp <= 0) killMonster();
+    return dealt;
   }
 
   function killMonster() {
     monster.hp = 0;
     monster.dyingT = 0;
+    var completedMirror = mirrorStage === 1 && monster.mirror.enabled && monster.mirror.cleared === 2;
+    if (completedMirror) {
+      mirrorStage = 2; XUI.toast('双影已破 · 可到渡口复命');
+    }
     totalKills += 1;
     var c = monsterCenter();
     /* v4 历练产出：灵石小额补贴，主产出是修为/领悟/贡献 */
@@ -956,6 +1000,7 @@
     XAudio.kill();
     if (monster.boss) { shakeT = 0.4; XP.vibrate('long'); }
     checkBreakthroughAuto();
+    if (completedMirror) saveGame();
   }
 
   function advanceLevel() {
@@ -1035,6 +1080,7 @@
       XUI.toast('护山符挡住重击 · 剩余 ' + wardCharges + ' 张'); return;
     }
     var dmg = charged ? Math.min(monster.atk * multiplier, playerHpMax() * XB.SHANXIAO.damageCap) : monster.atk;
+    dmg *= XB.mirrorAttackMult(monster.mirror, mirrorChoice);
     ph -= dmg;
     var c = monsterCenter();
     addFloat(c.x - 120, MON_BASE_Y - 60, '-' + XB.fmt(dmg) + ' 气血', '#8f2b23', 30);
@@ -1480,7 +1526,7 @@
     monster = null;
     mode = 'home';
     towerFloor = 1; towerBest = 1; towerPlan = 'advance'; epipFrontier = 1; ph = playerHpMax();
-    injuryT = 0; epip = 0; huntStage = 0; huntChoice = ''; wardCharges = 0;
+    injuryT = 0; epip = 0; huntStage = 0; huntChoice = ''; wardCharges = 0; mirrorStage = 0; mirrorChoice = '';
     for (var ci2 = 0; ci2 < cmp.length; ci2++) cmp[ci2] = 0;
     for (var mi2 = 0; mi2 < mp.length; mi2++) mp[mi2] = 0;
     sectId = ''; sectLv = {}; contrib = 0;
@@ -1638,19 +1684,41 @@
   function drawMonsterIntent() {
     if (mode !== 'tower' || !monster || monster.dyingT >= 0) return;
     var intent = monster.intent, charging = intent.phase === 'charging';
-    if (!mobileUi && !intent.enabled) return;
+    var mirroring = monster.mirror.enabled;
+    if (!mobileUi && !intent.enabled && !mirroring) return;
     // This strip is outside worldFit(): names, health and warnings stay readable
     // even when short screens need to shrink only the creature illustration.
     var y = mobileUi ? hudTopL + 244 : hudTopL + 270;
     XUI.panel(20, y, 710, 84, {flat: true, r: 12, fill: 'rgba(244,236,220,0.96)'});
-    var title = XB.monsterName(monster.type, monster.boss, monster.level) + ' · ' + XB.fmt(Math.ceil(Math.max(0, monster.hp))) + '/' + XB.fmt(monster.maxHp);
+    var title = XB.monsterName(monster.type, monster.boss, monster.level) + ' · ' + XB.fmt(Math.ceil(XB.mirrorTotalHp(monster.mirror, monster.hp))) + '/' + XB.fmt(monster.maxHp);
     var detail = charging ? '镇岳重击 ' + intent.left.toFixed(1) + 's · 破招 ' + intent.hits + '/3 · 可按住/归山' :
       intent.phase === 'staggered' ? '破招成功 · 伤害 +20% · ' + intent.left.toFixed(1) + '秒' :
       intent.enabled ? '两击后举拳蓄势 · 挥剑3次破招 · 护符' + wardCharges : '按住妖怪连斩 · 气血不足可归山';
+    if (mirroring) detail = monster.mirror.split ?
+      (monster.mirror.flame > 0 ? '烈影增伤' : '烈影已散') + ' · ' + (monster.mirror.ward > 0 ? '障影护体' : '障影已散') + ' · 攻' + mirrorTargetName(XB.mirrorTarget(monster.mirror)) : '半血化双影 · 魔窟面板可预选目标';
     XUI.text(title, 375, y + 23, {size: mobileUi ? 30 : 24, weight: 700, color: IC.ink});
-    XUI.text(detail, 375, y + 55, {size: mobileUi ? 28 : 21, color: charging ? IC.cinnabar : IC.indigo});
-    XUI.bar(36, y + 74, 678, 7, charging ? intent.left / XB.SHANXIAO.windup : Math.max(0, monster.hp / monster.maxHp),
+    XUI.text(detail, 375, y + 55, {size: mobileUi ? Math.max(28, 14 / viewScale) : 21, color: charging ? IC.cinnabar : IC.indigo});
+    XUI.bar(36, y + 74, 678, 7, charging ? intent.left / XB.SHANXIAO.windup : XB.mirrorTotalHp(monster.mirror, monster.hp) / monster.maxHp,
       {fill: charging ? IC.cinnabar : IC.gold});
+  }
+
+  function mirrorTargetName(target) { return {auto: '自动', flame: '烈影', ward: '障影', body: '真身'}[target]; }
+  function drawMirrorTargets(x, y, w, h) {
+    var m = monster.mirror, ids = ['auto', 'flame', 'ward', 'body'], gap = 8, bw = (w - gap * 3) / 4;
+    var labels = ['自动', '炎·烈影', '盾·障影', '真身'];
+    for (var i = 0; i < ids.length; i++) {
+      var id = ids[i], empty = (id === 'flame' || id === 'ward') && m.split && m[id] <= 0;
+      var sub = id === 'auto' ? '先炎后盾' : id === 'body' ? XB.fmt(Math.ceil(Math.max(0, monster.hp))) :
+        !m.split ? '预选' : empty ? '已散' : XB.fmt(Math.ceil(m[id]));
+      if (XUI.button('mirror-target-' + id, x + i * (bw + gap), y, bw, h,
+        {label: labels[i], sub: sub, size: mobileUi ? Math.max(29, 14 / viewScale) : 21,
+          subSize: mobileUi ? Math.max(27, 13 / viewScale) : 17,
+          style: m.focus === id ? 'primary' : 'ghost', disabled: empty})) chooseMirrorTarget(id);
+    }
+  }
+  function mirrorEventLabel() {
+    return towerBest < XB.MIRRORFOX.unlockFloor ? '16层解锁 · 渡口狐灯' : mirrorStage === 2 ? '渡口复命 · 双影已破' :
+      mirrorStage === 1 ? '狐灯之约 · 清除双影再斩真身' : mirrorStage === 3 ? '狐灯见闻已完成' : '渡口狐灯 · 辨影与静心';
   }
 
   function drawBottomPanel() {
@@ -1673,7 +1741,8 @@
         for (var qi9 = 0; qi9 < qs.length; qi9++) {
           if (qs[qi9].unlocked && !questClaimed[qs[qi9].id] && qs[qi9].progress >= qs[qi9].goal) badge = true;
         }
-      } else if (t.id === 'tower' && (huntStage === 2 || (huntStage === 0 && towerBest >= XB.SHANXIAO.unlockFloor))) {
+      } else if (t.id === 'tower' && (huntStage === 2 || (huntStage === 0 && towerBest >= XB.SHANXIAO.unlockFloor) ||
+        mirrorStage === 2 || (mirrorStage === 0 && towerBest >= XB.MIRRORFOX.unlockFloor))) {
         badge = true;
       } else if (t.id === 'sect' && sectId) {
         for (var mi9 = 0; mi9 < 3; mi9++) if (missionDone(missions[mi9])) badge = true;
@@ -1831,13 +1900,19 @@
         });
       });
     } else if (activeTab === 'tower') {
-      mobileScroll('tower-info', px + 4, py + 4, pw - 8, ph - 8, 588, function () {
+      mobileScroll('tower-info', px + 4, py + 4, pw - 8, ph - 8, 704, function () {
         var farming = mode === 'tower' && towerPlan === 'temper';
         mobileText(farming ? '温养积累 · 循环 ' + temperRange() + ' 层' : '魔窟闯关 · 挑战新层', left, py + 36, {weight: 700, color: IC.cinnabar});
         mobileText('闯关进度：第 ' + towerFloor + ' 层' + (farming ? '（温养不推进）' : ' · 纪录 ' + towerBest), left, py + 82, {color: IC.ink55});
+        if (mode === 'tower' && monster && monster.mirror.enabled && monster.dyingT < 0) {
+          drawMirrorTargets(left, py + 112, pw - 40, th);
+          mobileText('分影前仅预选，半血生效。自动先炎后盾；只结算真身。', left, py + 230,
+            {size: 27, maxW: pw - 40, lineH: 34, color: IC.indigo});
+        } else {
         mobileText(injured() ? '重伤 ' + Math.ceil(injuryT) + '秒 · 战力与打坐 -30%' : farming ? '返回闯关会沿用当前气血；也可先归山养息' : '闭关回复气血，归山保留血量', left, py + 130, {size: 27, color: IC.indigo});
         mobileText(farming ? '温养只刷已通关的五层，积累领悟与贡献。想挑战新层，点“返回闯关”。' : '闯关挑战新层；温养只循环已通关的五层，不会自动推进。灵石主产线在坊市。', left, py + 190,
           {size: 29, maxW: pw - 40, lineH: 42, color: IC.ink55});
+        }
         mobileText('斩妖 ' + XB.fmt(totalKills) + ' · 顿悟 ' + epip + ' · 贡献 ' + XB.fmt(contrib), left, py + 304, {size: 28});
         if (mode === 'tower') {
           var aw = (pw - 56) / 2;
@@ -1854,6 +1929,7 @@
           if (mobileButton('tw-temper', left + w + 16, py + 354, w, towerBest >= 6 ? '温养 · 循环刷取' : '6层解锁温养', {sub: towerBest >= 6 ? temperRange() + '层 · 不推进' : '', style: 'gold', disabled: injured() || towerBest < 6})) enterTower('temper');
         }
         if (mobileButton('hunt-open', left, py + 470, pw - 40, towerBest < XB.SHANXIAO.unlockFloor ? '推进6层 · 解锁猎妖见闻' : huntStage === 2 ? '猎妖人 · 破招后复命' : huntStage === 3 ? '猎妖见闻已完成 · 护符' + wardCharges : huntStage === 1 ? '待破招 · 山魈举拳时挥剑3次' : '猎妖见闻 · 备战与破招', {style: 'gold', disabled: towerBest < XB.SHANXIAO.unlockFloor})) openHuntEvent();
+        if (mobileButton('mirror-open', left, py + 586, pw - 40, mirrorEventLabel(), {style: 'gold', disabled: towerBest < XB.MIRRORFOX.unlockFloor})) openMirrorEvent();
       });
     } else if (activeTab === 'sect') {
       drawMobileSect(px, py, pw, ph);
@@ -2047,14 +2123,21 @@
              (injured() ? ' · 重伤 ' + Math.ceil(injuryT) + 's（战力与打坐 -30%）' : ' · 闭关时自动回复'),
              px + pw / 2, py + 57, { size: 17, color: injured() ? '#8f2b23' : IC.ink55, serif: false });
     var iy = py + 84;
-    XUI.text('层产出：修为·领悟·贡献为主，灵石仅少量补贴；第 ' + XB.TOWER_MILESTONE +
+    if (inT && monster && monster.mirror.enabled && monster.dyingT < 0) {
+      drawMirrorTargets(px + 16, iy, pw - 32, 62);
+      XUI.text('自动先炎后盾；提前换目标，真身倒下结算一次', px + pw / 2, iy + 78, {size: 18, color: IC.indigo});
+    } else {
+      XUI.text('层产出：修为·领悟·贡献为主，灵石仅少量补贴；第 ' + XB.TOWER_MILESTONE +
              ' 层里程碑必掉装备', px + 16, iy, { size: 18, color: IC.ink55, align: 'left', serif: false });
     XUI.text(farming ? '温养不推进新层；返回闯关沿用当前气血，也可先归山养息' : '闯关推进新层；温养只循环已通关的五层，不会自动切回闯关',
              px + 16, iy + 26, { size: 18, color: IC.ink55, align: 'left', serif: false });
     XUI.text('累计斩妖 ' + XB.fmt(totalKills) + ' · 顿悟 x' + epip +
              ' · 贡献 ' + XB.fmt(contrib),
              px + 16, iy + 52, { size: 18, color: IC.indigo, align: 'left', serif: false });
-    if (XUI.button('hunt-open', px + 20, py + pnlH - 140, pw - 40, 50, {label: huntStage === 2 ? '猎妖人 · 破招后复命' : '猎妖见闻 · 护山符 ' + wardCharges, size: 23, disabled: towerBest < XB.SHANXIAO.unlockFloor})) openHuntEvent();
+    }
+    var eventW = (pw - 52) / 2;
+    if (XUI.button('hunt-open', px + 20, py + pnlH - 140, eventW, 50, {label: huntStage === 2 ? '猎妖人 · 复命' : '猎妖见闻 · 护符 ' + wardCharges, size: 21, disabled: towerBest < XB.SHANXIAO.unlockFloor})) openHuntEvent();
+    if (XUI.button('mirror-open', px + pw / 2 + 6, py + pnlH - 140, eventW, 50, {label: mirrorStage === 2 ? '渡口 · 双影复命' : '渡口狐灯', size: 21, disabled: towerBest < XB.MIRRORFOX.unlockFloor})) openMirrorEvent();
     if (inT) {
       var aw = (pw - 52) / 2;
       var ax = px + 20;
@@ -2818,8 +2901,7 @@
     var dps = curDps();
     if (dps > 0 && monster && monster.dyingT < 0 && !modal &&
         monster.spawnT >= 0.5 && !(bt && bt.big)) {
-      dealDamage(dps * dt);
-      dpsAccShow += dps * dt;
+      dpsAccShow += dealDamage(dps * dt);
       dpsFloatT += dt;
       if (dpsFloatT >= 0.7 && monster && monster.dyingT < 0) {
         if (dpsAccShow > 0) {
@@ -2912,7 +2994,7 @@
       ctx.save();
       if (mobileUi) { ctx.translate(375, MON_BASE_Y); ctx.scale(worldFit(), worldFit()); ctx.translate(-375, -MON_BASE_Y); }
       if (mode === 'tower' && monster) {
-        XD.drawMonster(ctx, monster, nowSec, mobileUi);
+        XD.drawMonster(ctx, monster, nowSec, mobileUi || monster.mirror.enabled);
       } else if (mode === 'home') {
         /* 场景随页签而变：妖塔只在「魔窟」页现身 */
         if (activeTab === 'tower') {
@@ -3136,6 +3218,9 @@
       state: function () {
         return {
           huntStage: huntStage, huntChoice: huntChoice, wardCharges: wardCharges,
+          mirrorStage: mirrorStage, mirrorChoice: mirrorChoice,
+          mirror: monster ? Object.assign({}, monster.mirror) : null,
+          monsterTotalHp: monster ? XB.mirrorTotalHp(monster.mirror, monster.hp) : null,
           monsterType: monster ? monster.type : null, intent: monster ? Object.assign({}, monster.intent) : null,
           scene: scene, saveError: saveError, lastSavedAt: lastSavedAt,
           stones: stones, exp: exp, S: S, level: level,
@@ -3219,7 +3304,8 @@
       openFateEvent: function (i) { return openFateEvent(i != null ? XB.FATE_EVENTS[i] : null); },
       fateOption: function (i) { resolveFateOption(i); },
       openHuntEvent: openHuntEvent,
-      setMonsterForTest: function (type, hp) { if (monster) { monster.type = type; monster.intent = XB.monsterIntent(type, level); if (hp) monster.hp = monster.maxHp = hp; } },
+      chooseMirrorTarget: chooseMirrorTarget, damageMonster: dealDamage, openMirrorEvent: openMirrorEvent,
+      setMonsterForTest: function (type, hp) { if (monster) { monster.type = type; monster.intent = XB.monsterIntent(type, level); monster.mirror = XB.mirrorState(type, level); if (hp) monster.hp = monster.maxHp = hp; } },
       storyOk: function () { if (modal === 'story') modal = null; },
       claimQuest: claimQuest,
       addBond: function (n) { bond += n; },

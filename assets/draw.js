@@ -570,6 +570,29 @@ var XD = (function () {
     }
 
     ctx.scale(sc, sc);
+    if (m.mirror && m.mirror.enabled && m.mirror.split && m.hp > 0) {
+      // Two small masks, not two complete animated monsters or new image decodes.
+      // Flame and shield shapes also distinguish them without relying on color.
+      ['flame', 'ward'].forEach(function (kind, index) {
+        if (m.mirror[kind] <= 0) return;
+        ctx.save(); ctx.translate(index ? 180 : -180, -160);
+        ctx.globalAlpha = alpha * 0.72;
+        ctx.fillStyle = index ? '#556b82' : '#a65b36';
+        ctx.beginPath();
+        ctx.moveTo(-45, 5); ctx.lineTo(-50, -58); ctx.lineTo(-16, -32);
+        ctx.lineTo(16, -32); ctx.lineTo(50, -58); ctx.lineTo(45, 5);
+        ctx.lineTo(0, 45); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = '#f4ecdc'; ctx.lineWidth = 4; ctx.beginPath();
+        if (index) {
+          ctx.moveTo(-20, -13); ctx.lineTo(20, -13); ctx.lineTo(17, 12);
+          ctx.lineTo(0, 27); ctx.lineTo(-17, 12); ctx.closePath();
+        } else {
+          ctx.moveTo(0, -24); ctx.lineTo(18, 6); ctx.lineTo(9, 23);
+          ctx.lineTo(-13, 23); ctx.lineTo(-21, 4); ctx.lineTo(-8, -4); ctx.closePath();
+        }
+        ctx.stroke(); ctx.restore();
+      });
+    }
     /* 出场淡入时整体略下沉 */
     ctx.translate(0, (1 - appear) * 30);
     /* 受击后仰 */
@@ -589,7 +612,7 @@ var XD = (function () {
       ctx.rotate(lean); ctx.drawImage(shanxiaoArt, -artW / 2, -artH, artW, artH);
     } else fn(ctx, 1, srand(Math.floor(t * 10) + m.seed) * 4 - 2, t);
     /* 朱红眼（原生剪影回退） */
-    var eyes = illustrated ? [] : MON_EYES[m.type] || [];
+    var eyes = illustrated ? [] : MON_EYES[m.type === 'mirrorfox' ? 'fox' : m.type] || [];
     for (var ei = 0; ei < eyes.length; ei++) {
       var e = eyes[ei];
       eyeRed(ctx, e.x, e.y, e.r, e.slit);
