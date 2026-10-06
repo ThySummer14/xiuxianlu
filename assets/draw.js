@@ -549,7 +549,7 @@ var XD = (function () {
    *   hurtT (受击白闪)
    * }
    */
-  function drawMonster(ctx, m, t) {
+  function drawMonster(ctx, m, t, hideHud) {
     var appear = m.spawnT < 1 ? easeOut(m.spawnT) : 1;
     var alpha = 1;
     if (m.dyingT >= 0) alpha = Math.max(0, 1 - m.dyingT / 0.7);
@@ -597,7 +597,7 @@ var XD = (function () {
     ctx.restore();
 
     /* 血条与名号（不受妖兽缩放影响） */
-    drawMonsterHud(ctx, m, t);
+    if (!hideHud) drawMonsterHud(ctx, m, t);
   }
 
   function drawMonsterHud(ctx, m, t) {

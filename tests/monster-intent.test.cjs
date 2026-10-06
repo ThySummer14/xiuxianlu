@@ -83,3 +83,12 @@ test('closing a paused dialog restores the full warning instead of an immediate 
  const g=encounter();charge(g);g.step(3);g.api.openModal('settings');const hp=g.api.snapshot().ph;g.step(2);assert.equal(g.api.snapshot().ph,hp);
  g.api.closeModal();g.step(.05);assert.ok(g.state().intent.left>=3.1);assert.equal(g.api.snapshot().ph,hp);
 });
+test('short portrait enemy health and names stay native-sized when the creature shrinks',()=>{
+ for(const [width,height] of [[360,480],[390,600],[500,760]]){
+  const g=createGame({width,height,save:{level:6,towerFloor:6,towerBest:6}});g.api.enterTower('advance');g.api.setMonsterForTest('shanxiao',1000);
+  let hidden=false;const draw=g.sandbox.XD.drawMonster;g.sandbox.XD.drawMonster=(c,m,t,hide)=>{hidden=hide;return draw(c,m,t,hide);};
+  g.uiTexts.length=0;g.render();assert.ok(hidden);assert.ok(g.api.layout().worldScale<1);
+  const label=g.uiTexts.find(t=>String(t.text).includes('山魈')&&String(t.text).includes('1000/1000'));
+  assert.ok(label,'native enemy HP/name');assert.ok(label.opt.size*g.api.layout().scale>=14);
+ }
+});

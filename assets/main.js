@@ -1624,16 +1624,21 @@
   ];
 
   function drawMonsterIntent() {
-    if (mode !== 'tower' || !monster || !monster.intent.enabled || monster.dyingT >= 0) return;
+    if (mode !== 'tower' || !monster || monster.dyingT >= 0) return;
     var intent = monster.intent, charging = intent.phase === 'charging';
+    if (!mobileUi && !intent.enabled) return;
+    // This strip is outside worldFit(): names, health and warnings stay readable
+    // even when short screens need to shrink only the creature illustration.
     var y = mobileUi ? hudTopL + 244 : hudTopL + 270;
     XUI.panel(20, y, 710, 84, {flat: true, r: 12, fill: 'rgba(244,236,220,0.96)'});
-    var title = charging ? '镇岳重击 · ' + intent.left.toFixed(1) + '秒 · 破招 ' + intent.hits + '/3' :
-      intent.phase === 'staggered' ? '破招成功 · 伤害 +20% · ' + intent.left.toFixed(1) + '秒' : '山魈 · 两击后举拳蓄势';
-    XUI.text(title, 375, y + 25, {size: mobileUi ? 29 : 24, weight: 700, color: charging ? IC.cinnabar : IC.indigo});
-    XUI.text(charging ? '挥剑3次可打断（可按住） · 也可归山' : '护山符 ' + wardCharges + ' 张 · 蓄力时命中3次破招', 375, y + 55,
-      {size: mobileUi ? 26 : 21, color: IC.ink55});
-    if (charging) XUI.bar(36, y + 74, 678, 7, intent.left / XB.SHANXIAO.windup, {fill: IC.cinnabar});
+    var title = XB.monsterName(monster.type, monster.boss, monster.level) + ' · ' + XB.fmt(Math.ceil(Math.max(0, monster.hp))) + '/' + XB.fmt(monster.maxHp);
+    var detail = charging ? '镇岳重击 ' + intent.left.toFixed(1) + 's · 破招 ' + intent.hits + '/3 · 可按住/归山' :
+      intent.phase === 'staggered' ? '破招成功 · 伤害 +20% · ' + intent.left.toFixed(1) + '秒' :
+      intent.enabled ? '两击后举拳蓄势 · 挥剑3次破招 · 护符' + wardCharges : '按住妖怪连斩 · 气血不足可归山';
+    XUI.text(title, 375, y + 23, {size: mobileUi ? 30 : 24, weight: 700, color: IC.ink});
+    XUI.text(detail, 375, y + 55, {size: mobileUi ? 28 : 21, color: charging ? IC.cinnabar : IC.indigo});
+    XUI.bar(36, y + 74, 678, 7, charging ? intent.left / XB.SHANXIAO.windup : Math.max(0, monster.hp / monster.maxHp),
+      {fill: charging ? IC.cinnabar : IC.gold});
   }
 
   function drawBottomPanel() {
@@ -2882,7 +2887,7 @@
       ctx.save();
       if (mobileUi) { ctx.translate(375, MON_BASE_Y); ctx.scale(worldFit(), worldFit()); ctx.translate(-375, -MON_BASE_Y); }
       if (mode === 'tower' && monster) {
-        XD.drawMonster(ctx, monster, nowSec);
+        XD.drawMonster(ctx, monster, nowSec, mobileUi);
       } else if (mode === 'home') {
         /* 场景随页签而变：妖塔只在「魔窟」页现身 */
         if (activeTab === 'tower') {
