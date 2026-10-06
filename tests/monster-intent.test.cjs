@@ -89,6 +89,6 @@ test('short portrait enemy health and names stay native-sized when the creature 
   let hidden=false;const draw=g.sandbox.XD.drawMonster;g.sandbox.XD.drawMonster=(c,m,t,hide)=>{hidden=hide;return draw(c,m,t,hide);};
   g.uiTexts.length=0;g.render();assert.ok(hidden);assert.ok(g.api.layout().worldScale<1);
   const label=g.uiTexts.find(t=>String(t.text).includes('山魈')&&String(t.text).includes('1000/1000'));
-  assert.ok(label,'native enemy HP/name');assert.ok(label.opt.size*g.api.layout().scale>=14);
+  assert.ok(label,'native enemy HP/name');assert.ok(label.opt.size*g.api.layout().scale>=14-1e-6);
  }
 });

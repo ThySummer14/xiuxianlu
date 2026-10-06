@@ -49,6 +49,26 @@
   var hudTopL = 20;              /* 顶部 HUD 逻辑 y（避让胶囊/状态栏） */
   var safeBottomL = 0;
   var mobileUi = false;
+  var compactUi = false, compactFrames = null;
+
+  // CSS-pixel budgets: keep text/touches native-sized and fit only the scenery.
+  function shortLayout(w, h, top, bottom, battle) {
+    var margin = 8, gap = 4, side = w >= 560 && w > h * 1.25;
+    var y = Math.max(margin, top + 4), end = h - Math.max(margin, bottom + 4);
+    var panelW = side ? Math.min(340, Math.max(296, w * 0.38)) : w - margin * 2;
+    var sceneW = side ? w - panelW - margin * 3 : w - margin * 2;
+    var panelH = battle ? 176 : Math.min(280, h * 0.5);
+    var panel = {x: side ? w - margin - panelW : margin, y: side ? y : end - panelH,
+      w: panelW, h: side ? end - y : panelH};
+    var hud = {x: margin, y: y, w: sceneW, h: 92};
+    var enemy = {x: margin, y: y + hud.h + gap, w: sceneW, h: 44};
+    var world = {x: margin, y: enemy.y + enemy.h + 6, w: sceneW,
+      h: Math.max(1, (side ? end : panel.y - 6) - (enemy.y + enemy.h + 6))};
+    return {side: side, hud: hud, enemy: enemy, world: world, panel: panel,
+      info: {x: panel.x + 4, y: panel.y + 48, w: panel.w - 8, h: 24}};
+  }
+  function logicalRect(r) { return {x: r.x / viewScale, y: r.y / viewScale, w: r.w / viewScale, h: r.h / viewScale}; }
+  function worldCenterX() { return compactUi ? (compactFrames.world.x + compactFrames.world.w / 2) / viewScale : 375; }
 
   function resize() {
     var dpr = XP.dpr;
@@ -59,26 +79,30 @@
     cv.style && (cv.style.height = ch + 'px');
     /* 宽度贴合 + 逻辑高度自适应：画布铺满视口，不再信箱留白。
        矮胖窗口（桌面）以最小高度定缩放，左右由页面底色补白。 */
-    mobileUi = cw <= 600;
+    mobileUi = cw <= 600 || (ch <= 680 && cw <= 1200 && cw > ch);
+    compactUi = mobileUi && ch <= 680;
     viewScale = mobileUi ? cw / VIEW_W : Math.min(cw / VIEW_W, ch / H_MIN);
     var logicalH = ch / viewScale;
     VIEW_H = mobileUi ? logicalH : Math.min(H_MAX, Math.max(H_MIN, logicalH));
+    compactFrames = compactUi ? shortLayout(cw, ch, XP.safeTop, XP.safeBottom, mode === 'tower') : null;
     viewOffsetX = (cw - VIEW_W * viewScale) / 2;
     viewOffsetY = (ch - VIEW_H * viewScale) / 2;
     XD.setView(VIEW_W, VIEW_H);
     if (typeof XUI !== 'undefined' && XUI.setViewSize) XUI.setViewSize(VIEW_W, VIEW_H);
     MON_BASE_Y = VIEW_H - (mobileUi ? mobilePanelHeight() + 28 + XP.safeBottom / viewScale : 430);
+    if (compactUi) MON_BASE_Y = (compactFrames.world.y + compactFrames.world.h - 4) / viewScale;
     if (typeof XUI !== 'undefined') XUI.cancelPointer();
     if (hold) hold.active = false;
     activePointerId = null;
     resetArmed = false; rebirthArmed = false;
-    if (monster) monster.y = MON_BASE_Y;
+    if (monster) { monster.y = MON_BASE_Y; monster.x = worldCenterX(); }
     /* 微信小游戏：顶部让出状态栏 + 胶囊按钮高度 */
     hudTopL = Math.min(160, Math.max(20,
       (XP.safeTop + (XP.isWx ? 46 : 4)) / viewScale));
     safeBottomL = Math.min(160, XP.safeBottom / viewScale);
-    if (XUI.setToastLayout) XUI.setToastLayout(mobileUi ? MON_BASE_Y - 12 : VIEW_H - 500, mobileUi ? 29 : 21);
-    resize._dpr = dpr;
+    if (XUI.setToastLayout) XUI.setToastLayout(mobileUi ? MON_BASE_Y - 12 : VIEW_H - 500,
+      compactUi ? 13 / viewScale : mobileUi ? 29 : 21, compactUi ? logicalRect(compactFrames.info) : null);
+    resize._dpr = dpr; resize._battle = mode === 'tower';
   }
   XP.onResize(resize);
   resize();
@@ -644,7 +668,7 @@
       atk: XB.towerAtk(level),
       scale: boss ? 1.42 : (1 + XD.srand(level * 29) * 0.12),
       seed: level * 101,
-      x: VIEW_W / 2,
+      x: worldCenterX(),
       y: MON_BASE_Y,
       maxHp: hpv,
       hp: hpv,
@@ -934,6 +958,7 @@
   /* ---------- 战斗 ---------- */
   function attackAt(x, y) {
     if (!monster || monster.dyingT >= 0 || (bt && bt.big) || modal) return false;
+    if (compactUi) { var area = logicalRect(compactFrames.world); if (x < area.x || x > area.x + area.w || y < area.y || y > area.y + area.h) return false; }
     var c = monsterCenter();
     var dx = x - c.x;
     var dy = y - c.y;
@@ -1541,13 +1566,13 @@
   var IC = XUI.C;
 
   function drawTitle() {
-    var ts = (VIEW_H - 1334) / 2;   /* 动态高度下标题块整体居中 */
+    var u = 1 / viewScale, ts = (VIEW_H - 1334) / 2;   /* 动态高度下标题块整体居中 */
     ctx.fillStyle = 'rgba(244,236,220,0.72)';
     ctx.fillRect(0, 0, VIEW_W, VIEW_H);
 
-    XUI.text('修 仙 放 置 · 水 墨', 375, 330 + ts, { size: 28, color: IC.indigo });
+    XUI.text('修 仙 放 置 · 水 墨', 375, compactUi ? XP.vh * .16 * u : 330 + ts, { size: compactUi ? 14 * u : 28, color: IC.indigo });
     /* 朱砂边框题字 */
-    var bx = 375, by = 470 + ts, bw = 540, bh = 180;
+    var bx = 375, by = compactUi ? XP.vh * .33 * u : 470 + ts, bw = compactUi ? Math.min(350, XP.vw - 32) * u : 540, bh = compactUi ? 82 * u : 180;
     ctx.fillStyle = 'rgba(244,236,220,0.6)';
     ctx.fillRect(bx - bw / 2, by - bh / 2, bw, bh);
     ctx.strokeStyle = 'rgba(176,58,48,0.85)';
@@ -1556,18 +1581,19 @@
     ctx.strokeStyle = 'rgba(201,160,90,0.8)';
     ctx.lineWidth = 1;
     ctx.strokeRect(bx - bw / 2 + 8, by - bh / 2 + 8, bw - 16, bh - 16);
-    XUI.text('斩妖·修仙录', 375, by - 6, { size: 92, weight: 900, color: IC.ink });
-    XUI.text('v4.5 · 破境与传承', 375, by + 56, { size: 26, color: IC.ink55, serif: false });
+    XUI.text('斩妖·修仙录', 375, by - 6, { size: compactUi ? Math.min(40, (XP.vw - 48) / 7) * u : 92, weight: 900, color: IC.ink });
+    XUI.text('v4.5 · 破境与传承', 375, by + (compactUi ? 26 * u : 56), { size: compactUi ? 13 * u : 26, color: IC.ink55, serif: false });
 
     var hasSave = titleSave && titleSave.hasSave;
     XUI.text(hasSave
       ? '境界 ' + XB.realmName(titleSave.S) + ' · 魔窟第 ' + titleSave.level + ' 层'
       : '打坐证道 · 历练斩妖 · 得道飞升',
-      375, 640 + ts, { size: 27, color: IC.ink55 });
+      375, compactUi ? by + 68 * u : 640 + ts, { size: compactUi ? 13 * u : 27, color: IC.ink55 });
 
-    if (XUI.button('start', 375 - 195, 716 + ts, 390, 102, {
+    var startW = compactUi ? Math.min(280, XP.vw - 32) * u : 390, startY = compactUi ? by + 94 * u : 716 + ts;
+    if (XUI.button('start', 375 - startW / 2, startY, startW, compactUi ? 44 * u : 102, {
       label: hasSave ? '继 续 修 行' : (titleSave.hasRawSave ? '存档需要恢复' : '开 始 修 行'),
-      style: 'primary', size: 36
+      style: 'primary', size: compactUi ? 16 * u : 36
     })) {
       XAudio.init();
       if (titleSave.hasRawSave && !hasSave) { openVault(); return; }
@@ -1581,8 +1607,8 @@
       enterPlay(!!sv);
       if (offlineInfo) saveGame();   /* 结算后立即存新时间戳 */
     }
-    if (titleSave.hasRecovery && XUI.button('title-vault', 235, 826 + ts, 280, mobileUi ? mobileTouchH() : 48, {label: '存档保险箱', size: mobileUi ? 30 : 21})) openVault();
-    XUI.text('平日打坐修行 · 魔窟历练证剑 · 宗门求得道', 375, (titleSave.hasRecovery ? (mobileUi ? 966 : 906) : 884) + ts, { size: 23, color: '#c9a05a' });
+    if (titleSave.hasRecovery && XUI.button('title-vault', 375 - (compactUi ? 100 * u : 140), compactUi ? startY + 52 * u : 826 + ts, compactUi ? 200 * u : 280, mobileUi ? mobileTouchH() : 48, {label: '存档保险箱', size: compactUi ? 14 * u : mobileUi ? 30 : 21})) openVault();
+    XUI.text('平日打坐修行 · 魔窟历练证剑 · 宗门求得道', 375, compactUi ? startY + (titleSave.hasRecovery ? 112 : 64) * u : (titleSave.hasRecovery ? (mobileUi ? 966 : 906) : 884) + ts, { size: compactUi ? 11 * u : 23, color: '#c9a05a' });
   }
 
   /* ---------- 顶部 HUD ---------- */
@@ -1688,31 +1714,40 @@
     if (!mobileUi && !intent.enabled && !mirroring) return;
     // This strip is outside worldFit(): names, health and warnings stay readable
     // even when short screens need to shrink only the creature illustration.
-    var y = mobileUi ? hudTopL + 244 : hudTopL + 270;
-    XUI.panel(20, y, 710, 84, {flat: true, r: 12, fill: 'rgba(244,236,220,0.96)'});
+    var u = 1 / viewScale, r = compactUi ? logicalRect(compactFrames.enemy) : null;
+    var y = compactUi ? r.y : mobileUi ? hudTopL + 244 : hudTopL + 270;
+    XUI.panel(compactUi ? r.x : 20, y, compactUi ? r.w : 710, compactUi ? r.h : 84,
+      {flat: true, r: compactUi ? 6 * u : 12, fill: 'rgba(244,236,220,0.96)'});
     var title = XB.monsterName(monster.type, monster.boss, monster.level) + ' · ' + XB.fmt(Math.ceil(XB.mirrorTotalHp(monster.mirror, monster.hp))) + '/' + XB.fmt(monster.maxHp);
+    if (compactUi && r.w * viewScale < 300) title = XB.monsterName(monster.type, monster.boss, monster.level) + ' · ' + XB.fmt(Math.ceil(XB.mirrorTotalHp(monster.mirror, monster.hp)));
     var detail = charging ? '镇岳重击 ' + intent.left.toFixed(1) + 's · 破招 ' + intent.hits + '/3 · 可按住/归山' :
       intent.phase === 'staggered' ? '破招成功 · 伤害 +20% · ' + intent.left.toFixed(1) + '秒' :
       intent.enabled ? '两击后举拳蓄势 · 挥剑3次破招 · 护符' + wardCharges : '按住妖怪连斩 · 气血不足可归山';
     if (mirroring) detail = monster.mirror.split ?
       (monster.mirror.flame > 0 ? '烈影增伤' : '烈影已散') + ' · ' + (monster.mirror.ward > 0 ? '障影护体' : '障影已散') + ' · 攻' + mirrorTargetName(XB.mirrorTarget(monster.mirror)) : '半血化双影 · 魔窟面板可预选目标';
-    XUI.text(title, 375, y + 23, {size: mobileUi ? 30 : 24, weight: 700, color: IC.ink});
-    XUI.text(detail, 375, y + 55, {size: mobileUi ? Math.max(28, 14 / viewScale) : 21, color: charging ? IC.cinnabar : IC.indigo});
-    XUI.bar(36, y + 74, 678, 7, charging ? intent.left / XB.SHANXIAO.windup : XB.mirrorTotalHp(monster.mirror, monster.hp) / monster.maxHp,
+    if (compactUi && r.w * viewScale < 300 && !mirroring) detail = charging ?
+      '镇岳' + intent.left.toFixed(1) + 's · ' + intent.hits + '/3剑 · 按住破招' :
+      intent.phase === 'staggered' ? '破招成功 · 伤害+20%' : intent.enabled ?
+      '两击后蓄力 · 三剑破招 · 护符' + wardCharges : '按住连斩 · 气血不足可归山';
+    if (compactUi && mirroring && !monster.mirror.split) detail = '分影前仅预选 · 半血生效';
+    var center = compactUi ? r.x + r.w / 2 : 375;
+    XUI.text(title, center, y + (compactUi ? 11 * u : 23), {size: compactUi ? 14 * u : mobileUi ? 30 : 24, weight: 700, color: IC.ink});
+    XUI.text(detail, center, y + (compactUi ? 29 * u : 55), {size: compactUi ? 14 * u : mobileUi ? Math.max(28, 14 / viewScale) : 21, color: charging ? IC.cinnabar : IC.indigo});
+    XUI.bar(compactUi ? r.x + 6 * u : 36, y + (compactUi ? 41 * u : 74), compactUi ? r.w - 12 * u : 678, compactUi ? 3 * u : 7, charging ? intent.left / XB.SHANXIAO.windup : XB.mirrorTotalHp(monster.mirror, monster.hp) / monster.maxHp,
       {fill: charging ? IC.cinnabar : IC.gold});
   }
 
   function mirrorTargetName(target) { return {auto: '自动', flame: '烈影', ward: '障影', body: '真身'}[target]; }
   function drawMirrorTargets(x, y, w, h) {
-    var m = monster.mirror, ids = ['auto', 'flame', 'ward', 'body'], gap = 8, bw = (w - gap * 3) / 4;
+    var m = monster.mirror, ids = ['auto', 'flame', 'ward', 'body'], gap = compactUi ? 4 / viewScale : 8, bw = (w - gap * 3) / 4;
     var labels = ['自动', '炎·烈影', '盾·障影', '真身'];
     for (var i = 0; i < ids.length; i++) {
       var id = ids[i], empty = (id === 'flame' || id === 'ward') && m.split && m[id] <= 0;
       var sub = id === 'auto' ? '先炎后盾' : id === 'body' ? XB.fmt(Math.ceil(Math.max(0, monster.hp))) :
         !m.split ? '预选' : empty ? '已散' : XB.fmt(Math.ceil(m[id]));
       if (XUI.button('mirror-target-' + id, x + i * (bw + gap), y, bw, h,
-        {label: labels[i], sub: sub, size: mobileUi ? Math.max(29, 14 / viewScale) : 21,
-          subSize: mobileUi ? Math.max(27, 13 / viewScale) : 17,
+        {label: labels[i], sub: sub, size: compactUi ? 14 / viewScale : mobileUi ? Math.max(29, 14 / viewScale) : 21,
+          subSize: compactUi ? 12 / viewScale : mobileUi ? Math.max(27, 13 / viewScale) : 17,
           style: m.focus === id ? 'primary' : 'ghost', disabled: empty})) chooseMirrorTarget(id);
     }
   }
@@ -1722,6 +1757,7 @@
   }
 
   function drawBottomPanel() {
+    if (compactUi) { drawCompactPanel(); return; }
     var panelH = mobileUi ? mobilePanelHeight() : 408;
     var py = VIEW_H - panelH - 16 - safeBottomL;
     var px = 16;
@@ -1804,15 +1840,17 @@
   }
 
   /* Phone UI uses CSS-sized targets instead of shrinking desktop controls. */
-  function mobileTouchH() { return Math.max(96, 44 / viewScale); }
+  function mobileTouchH() { return compactUi ? 44 / viewScale : Math.max(96, 44 / viewScale); }
   function mobileText(s, x, y, opt) {
     opt = Object.assign({size: Math.max(30, 14 / viewScale), align: 'left', serif: false}, opt || {});
+    if (compactUi) { opt.size = Math.max(14 / viewScale, Math.min(opt.size, 18 / viewScale)); if (opt.lineH) opt.lineH = Math.max(opt.size * 1.2, Math.min(opt.lineH, 24 / viewScale)); }
     if (!opt.lineH) opt.lineH = opt.size * 1.35;
     return XUI.text(s, x, y, opt);
   }
   function mobileButton(id, x, y, w, label, opt) {
-    return XUI.button(id, x, y, w, mobileTouchH(), Object.assign({label: label,
-      size: Math.max(30, 14 / viewScale), subSize: Math.max(26, 12 / viewScale)}, opt || {}));
+    var options = Object.assign({label: label, size: Math.max(30, 14 / viewScale), subSize: Math.max(26, 12 / viewScale)}, opt || {});
+    if (compactUi) { options.size = 14 / viewScale; options.subSize = 12 / viewScale; }
+    return XUI.button(id, x, y, w, mobileTouchH(), options);
   }
   function mobileScroll(id, x, y, w, h, contentH, draw) {
     var sc = XUI.scrollArea(id, x, y, w, Math.max(1, h), contentH);
@@ -1827,9 +1865,76 @@
     return sc;
   }
   function mobilePanelHeight() { return Math.min(720, Math.max(480, VIEW_H * 0.48)); }
-  function worldFit() { return mobileUi ? Math.max(0.3, Math.min(1, (MON_BASE_Y - hudTopL - 310) / 450)) : 1; }
+  function compactText(value, x, y, opt) {
+    XUI.text(value, x, y, Object.assign({size: 14 / viewScale, align: 'left', serif: false}, opt || {}));
+  }
+  function drawCompactHUD() {
+    var r = logicalRect(compactFrames.hud), u = 1 / viewScale, gate = atRealmGate() && canBreakthrough();
+    XUI.panel(r.x, r.y, r.w, r.h, {flat: true, r: 10 * u});
+    compactText(XB.realmName(S), r.x + 8 * u, r.y + 12 * u, {weight: 700, size: 15 * u});
+    var place = mode === 'tower' && towerPlan === 'temper' ? '温养' + level + '/闯关' + towerFloor : '闯关第' + towerFloor + '层';
+    compactText(place, r.x + r.w - 8 * u, r.y + 12 * u, {align: 'right', color: IC.indigo});
+    var bw = r.w - 88 * u, x = r.x + 8 * u;
+    XUI.bar(x, r.y + 24 * u, bw, 18 * u, exp / expNeed(), {fill: '#c9a05a'});
+    compactText('修为 ' + XB.fmt(Math.min(exp, expNeed())) + '/' + XB.fmt(expNeed()), x + bw / 2, r.y + 33 * u, {align: 'center', size: 13 * u});
+    XUI.bar(x, r.y + 46 * u, bw, 18 * u, Math.max(0, ph) / playerHpMax(), {fill: injured() ? '#a0524a' : '#7d9a6a'});
+    compactText('气血 ' + XB.fmt(Math.max(0, Math.round(ph))) + '/' + XB.fmt(playerHpMax()), x + bw / 2, r.y + 55 * u, {align: 'center', size: 13 * u});
+    if (XUI.button('bt-break', r.x + r.w - 72 * u, r.y + 24 * u, 64 * u, 44 * u,
+      {label: gate ? '渡劫' : Math.floor(Math.min(100, exp / expNeed() * 100)) + '%', size: 14 * u, style: gate ? 'primary' : 'ghost', disabled: !gate})) startBreak(true);
+    compactText(saveError ? '保存失败 · 设置中可导出' : '剑侍 ' + XB.fmtRate(curDps()) + '/秒 · 灵石 ' + XB.fmt(stones),
+      x, r.y + 80 * u, {size: 13 * u, color: saveError ? IC.cinnabar : IC.indigo});
+  }
+  function drawCompactPanel() {
+    var p = logicalRect(compactFrames.panel), u = 1 / viewScale, gap = 4 * u, bw = (p.w - gap * 5) / 6;
+    XUI.panel(p.x, p.y, p.w, p.h, {flat: true, r: 8 * u});
+    var tabs = [['cult', '修行'], ['tower', '魔窟'], ['gongfa', '功法'], ['market', '坊市']];
+    for (var i = 0; i < tabs.length; i++) {
+      if (XUI.button('tab-' + tabs[i][0], p.x + i * (bw + gap), p.y, bw, 44 * u,
+        {label: tabs[i][1], size: 14 * u, style: activeTab === tabs[i][0] ? 'primary' : 'ghost'})) {
+        if (tabs[i][0] === 'market' && !marketUnlocked()) XUI.toast('魔窟第 ' + XB.MARKET_UNLOCK_LEVEL + ' 层或筑基解锁坊市');
+        else activeTab = tabs[i][0];
+      }
+    }
+    if (XUI.button('compact-more', p.x + 4 * (bw + gap), p.y, bw, 44 * u, {label: '详情', size: 14 * u})) openModal('navigation');
+    if (XUI.button('settings', p.x + 5 * (bw + gap), p.y, bw, 44 * u, {label: '设置', size: 14 * u})) openModal('settings');
+    if (activeTab === 'tower') drawCompactTowerPanel(p.x, p.y + 48 * u, p.w, p.h - 52 * u);
+    else {
+      compactText('修为 +' + XB.fmtRate(medRate()) + '/秒 · 坊市 +' + XB.fmtRate(curMarketRate()) + '/秒', p.x + 6 * u, p.y + 60 * u, {size: 13 * u, color: IC.indigo});
+      drawMobilePanel(p.x, p.y + 76 * u, p.w, p.h - 80 * u);
+    }
+    panelRect = {x: p.x, y: p.y, w: p.w, h: p.h};
+  }
+  function drawCompactTowerPanel(x, y, w, h) {
+    var u = 1 / viewScale, gap = 4 * u, farming = mode === 'tower' && towerPlan === 'temper';
+    compactText(farming ? temperRange() + '循环' : '魔窟闯关', x + 4 * u, y + 12 * u, {weight: 700});
+    compactText('闯关' + towerFloor + (farming ? ' · 温养不推进' : ' · 纪录' + towerBest), x + w - 4 * u, y + 12 * u,
+      {align: 'right', size: 13 * u, color: IC.indigo});
+    var row = y + 28 * u, footer = y + 76 * u;
+    if (mode === 'tower') {
+      if (monster && monster.mirror.enabled && monster.dyingT < 0) drawMirrorTargets(x, row, w, 44 * u);
+      else compactText('按住妖怪连斩；山魈举拳时，三次挥剑可破招', x + 6 * u, row + 5 * u,
+        {maxW: w - 12 * u, baseline: 'top', lineH: 18 * u, color: IC.indigo});
+      var aw = (w - gap * 2) / 3;
+      if (mobileButton('tw-leave', x, footer, aw, '归山', {style: 'ghost'})) leaveTower();
+      if (farming) {
+        if (mobileButton('tw-resume', x + aw + gap, footer, aw, '返回闯关', {style: 'primary'})) resumeAdvance();
+      } else if (mobileButton('compact-cult', x + aw + gap, footer, aw, '修行面板')) activeTab = 'cult';
+      if (mobileButton('compact-encounters', x + (aw + gap) * 2, footer, aw, '见闻')) openModal('encounters');
+    } else {
+      var half = (w - gap) / 2;
+      if (mobileButton('tw-enter', x, row, half, injured() ? '将养' + Math.ceil(injuryT) + '秒' : '闯关·第' + towerFloor + '层', {style: 'primary', disabled: injured()})) enterTower('advance');
+      if (mobileButton('tw-temper', x + half + gap, row, half, '温养积累', {sub: towerBest >= 6 ? temperRange() + '层·不推进' : '6层解锁', disabled: injured() || towerBest < 6})) enterTower('temper');
+      if (mobileButton('hunt-open', x, footer, half, huntStage === 2 ? '猎妖人·复命' : '猎妖见闻', {disabled: towerBest < XB.SHANXIAO.unlockFloor})) openHuntEvent();
+      if (mobileButton('mirror-open', x + half + gap, footer, half, mirrorStage === 2 ? '渡口·复命' : '渡口狐灯', {disabled: towerBest < XB.MIRRORFOX.unlockFloor})) openMirrorEvent();
+    }
+  }
+  function worldFit() {
+    if (compactUi) { var area = logicalRect(compactFrames.world), actor = monster ? monster.scale : 1; return Math.max(0.05, Math.min(1, area.h / (460 * actor), area.w / (540 * actor))); }
+    return mobileUi ? Math.max(0.3, Math.min(1, (MON_BASE_Y - hudTopL - 310) / 450)) : 1;
+  }
 
   function drawMobileHUD() {
+    if (compactUi) { drawCompactHUD(); return; }
     var y = hudTopL, need = expNeed(), hp = playerHpMax(), ready = canBreakthrough(), gate = atRealmGate();
     XUI.panel(16, y, 718, 44, {flat: true, r: 12});
     XUI.panel(16, y + 244, 718, 76, {flat: true, r: 12});
@@ -2354,16 +2459,16 @@
   function drawMobileModals() {
     if (modal === 'fate' && !fateEvent) modal = null;
     if (!modal) return false;
-    var supported = ['story', 'fate', 'vault', 'restore', 'settings', 'realm', 'offline'];
+    var supported = ['story', 'fate', 'vault', 'restore', 'settings', 'realm', 'offline', 'navigation', 'encounters'];
     if (supported.indexOf(modal) < 0) return false;
     if (modal === 'restore' && !pendingRestore) { modal = null; return true; }
     if (modal === 'offline' && !offlineInfo) { modal = null; return true; }
 
-    var current = modal, x = 16, w = VIEW_W - 32, pad = 24, gap = 16;
-    var size = Math.max(30, 14 / viewScale), small = Math.max(28, 13 / viewScale);
-    var titleSize = Math.max(38, 18 / viewScale), bh = mobileTouchH();
-    var top = Math.max(16, hudTopL), bottom = VIEW_H - safeBottomL - 16;
-    var bx = x + pad, bw = w - pad * 2, headerH = Math.max(80, titleSize * 1.9);
+    var u = 1 / viewScale, current = modal, x = compactUi ? 8 * u : 16, w = VIEW_W - x * 2, pad = compactUi ? 12 * u : 24, gap = compactUi ? 10 * u : 16;
+    var size = compactUi ? 14 * u : Math.max(30, 14 / viewScale), small = compactUi ? 13 * u : Math.max(28, 13 / viewScale);
+    var titleSize = compactUi ? 18 * u : Math.max(38, 18 / viewScale), bh = mobileTouchH();
+    var top = compactUi ? compactFrames.hud.y * u : Math.max(16, hudTopL), bottom = VIEW_H - safeBottomL - (compactUi ? 8 * u : 16);
+    var bx = x + pad, bw = w - pad * 2, headerH = compactUi ? 44 * u : Math.max(80, titleSize * 1.9);
     var blocks = [], footer = [], title = '', scrollId = 'mobile-' + current + '-body';
     var bodyH = 0, contentH = 12, bodyScroll = null;
 
@@ -2396,7 +2501,23 @@
       return false;
     }
 
-    if (current === 'story') {
+    if (current === 'navigation') {
+      title = '面板与详情';
+      paragraph('当前境界：' + XB.realmName(S) + '\n挥剑 ' + XB.fmt(clickDamage()) + ' · 剑侍 ' + XB.fmtRate(curDps()) + '/秒\n打坐 +' + XB.fmtRate(medRate()) + '/秒 · 坊市 +' + XB.fmtRate(curMarketRate()) + '/秒');
+      PANEL_TABS.forEach(function (tab) {
+        actions([action('nav-' + tab.id, tab.label, function () {
+          if (tab.id === 'market' && !marketUnlocked()) { XUI.toast('坊市尚未解锁'); return; }
+          activeTab = tab.id; modal = null;
+        })]);
+      });
+      footer = [action('compact-back', mode === 'tower' ? '返回战斗' : '关闭', function () { if (mode === 'tower') activeTab = 'tower'; modal = null; })];
+    } else if (current === 'encounters') {
+      title = '历练见闻';
+      paragraph('闯关进度第' + towerFloor + '层 · 温养不推进新层');
+      actions([action('hunt-open', huntStage === 2 ? '猎妖人·破招后复命' : '猎妖见闻', function () { modal = null; openHuntEvent(); }, {disabled: towerBest < XB.SHANXIAO.unlockFloor})]);
+      actions([action('mirror-open', mirrorEventLabel(), function () { modal = null; openMirrorEvent(); }, {disabled: towerBest < XB.MIRRORFOX.unlockFloor})]);
+      footer = [action('compact-back', '返回战斗', function () { activeTab = 'tower'; modal = null; })];
+    } else if (current === 'story') {
       title = '· ' + XB.REALM_LIST[storyRealm] + ' ·';
       paragraph(XB.REALM_STORY[storyRealm] || '前路无名，自行落笔。');
       if (storyRealm > 0) {
@@ -2967,6 +3088,7 @@
   }
 
   function render(dt) {
+    if (compactUi && resize._battle !== (mode === 'tower')) resize();
     var dpr = resize._dpr || 1;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, cv.width, cv.height);
@@ -2992,13 +3114,14 @@
       var sceneCy = monster ? monsterCenter().y : MON_BASE_Y - 210;
       XD.drawTide(ctx, tideStrength(), nowSec, sceneCy);
       ctx.save();
-      if (mobileUi) { ctx.translate(375, MON_BASE_Y); ctx.scale(worldFit(), worldFit()); ctx.translate(-375, -MON_BASE_Y); }
+      if (compactUi) { var worldClip = logicalRect(compactFrames.world); ctx.beginPath(); ctx.rect(worldClip.x, worldClip.y, worldClip.w, worldClip.h); ctx.clip(); }
+      if (mobileUi) { ctx.translate(worldCenterX(), MON_BASE_Y); ctx.scale(worldFit(), worldFit()); ctx.translate(-worldCenterX(), -MON_BASE_Y); }
       if (mode === 'tower' && monster) {
         XD.drawMonster(ctx, monster, nowSec, mobileUi || monster.mirror.enabled);
       } else if (mode === 'home') {
         /* 场景随页签而变：妖塔只在「魔窟」页现身 */
         if (activeTab === 'tower') {
-          XD.drawTower(ctx, 375, MON_BASE_Y, nowSec, towerBest);
+          XD.drawTower(ctx, worldCenterX(), MON_BASE_Y, nowSec, towerBest);
           var gy = MON_BASE_Y - 402;
           if (!mobileUi) {
           XUI.text(injured() ? '重伤未愈 · 塔门封闭' : '魔窟妖塔 · 以战养道',
@@ -3011,20 +3134,20 @@
           else if (XUI.tapped('tw-gate')) enterTower('advance');
           }
         } else if (activeTab === 'cult') {
-          XD.drawCenser(ctx, 375, MON_BASE_Y, nowSec);
+          XD.drawCenser(ctx, worldCenterX(), MON_BASE_Y, nowSec);
         } else if (activeTab === 'sect') {
-          XD.drawPaifang(ctx, 375, MON_BASE_Y, nowSec, sectId ? XB.getSect(sectId).name : '');
+          XD.drawPaifang(ctx, worldCenterX(), MON_BASE_Y, nowSec, sectId ? XB.getSect(sectId).name : '');
         } else if (activeTab === 'gongfa') {
           var cols = [];
           for (var gi9 = 0; gi9 < XB.GONGFA.length; gi9++) {
             if (XB.realmIdx(S) >= XB.GONGFA[gi9].unlock)
               cols.push(XB.GONGFA[gi9].name);
           }
-          XD.drawScroll(ctx, 375, MON_BASE_Y, nowSec, cols.slice(0, 8));
+          XD.drawScroll(ctx, worldCenterX(), MON_BASE_Y, nowSec, cols.slice(0, 8));
         } else if (activeTab === 'market') {
-          XD.drawStall(ctx, 375, MON_BASE_Y, nowSec);
+          XD.drawStall(ctx, worldCenterX(), MON_BASE_Y, nowSec);
         } else {
-          XD.drawPath(ctx, 375, MON_BASE_Y, nowSec);
+          XD.drawPath(ctx, worldCenterX(), MON_BASE_Y, nowSec);
         }
       }
       ctx.restore();
@@ -3214,7 +3337,7 @@
         for (var i = 0; i < steps; i++) updateCore(per);
         if (!noRender) render(per);   /* 必须传 dt：否则 drawToasts 等依赖渲染计时的逻辑会被 NaN 污染 */
       },
-      layout: function () { return {width: VIEW_W, height: VIEW_H, scale: viewScale, mobile: mobileUi, safeBottom: safeBottomL, hudTop: hudTopL, worldFloor: MON_BASE_Y, worldScale: worldFit()}; },
+      layout: function () { return {width: VIEW_W, height: VIEW_H, scale: viewScale, mobile: mobileUi, safeBottom: safeBottomL, hudTop: hudTopL, worldFloor: MON_BASE_Y, worldScale: worldFit(), compact: compactUi, frames: compactFrames ? JSON.parse(JSON.stringify(compactFrames)) : null}; },
       state: function () {
         return {
           huntStage: huntStage, huntChoice: huntChoice, wardCharges: wardCharges,

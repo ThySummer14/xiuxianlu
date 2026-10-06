@@ -440,7 +440,8 @@ var XUI = (function () {
   var viewH = 1334;
   function setViewSize(w, h) { viewH = h; clearTextLayoutCache(); }
   var toastTop = 834, toastSize = 21;
-  function setToastLayout(top, size) { toastTop = top; toastSize = size; }
+  var toastBox = null;
+  function setToastLayout(top, size, box) { toastTop = top; toastSize = size; toastBox = box || null; }
   var toasts = [];   /* {txt, t, born} */
   function toast(txt) {
     toasts.push({ txt: txt, t: 0, born: Date.now() });
@@ -457,6 +458,20 @@ var XUI = (function () {
          绝不允许 toast 变成常驻贴图 */
       if (!(tt.t <= 1.8) || (tt.born && nowMs - tt.born > 2400)) { toasts.splice(i, 1); continue; }
       var a = tt.t < 0.15 ? tt.t / 0.15 : (tt.t > 1.45 ? (1.8 - tt.t) / 0.35 : 1);
+      if (toastBox) {
+        // Use the existing status row; a toast never covers enemy names or controls.
+        // Only the newest message is shown in this compact row. Full dialogs stay scrollable.
+        if (i !== toasts.length - 1) continue;
+        var room = Math.max(1, toastBox.w - toastSize * 1.5);
+        var compactLines = wrap(tt.txt, room - textW('…', toastSize, true, 500), toastSize, true, 500);
+        var label = (compactLines[0] || '') + (compactLines.length > 1 ? '…' : '');
+        ctx.save(); ctx.beginPath(); ctx.rect(toastBox.x, toastBox.y, toastBox.w, toastBox.h); ctx.clip();
+        ctx.globalAlpha = a; ctx.fillStyle = 'rgba(47,42,36,0.92)';
+        ctx.fillRect(toastBox.x, toastBox.y, toastBox.w, toastBox.h);
+        text(label, toastBox.x + toastBox.w / 2, toastBox.y + toastBox.h / 2,
+          {size: toastSize, color: C.paper, serif: false, weight: 500});
+        ctx.restore(); continue;
+      }
       var w = Math.min(690, textW(tt.txt, toastSize, false, 600) + 56);
       var lines = wrap(tt.txt, w - 40, toastSize, true, 500);
       var h = lines.length * toastSize * 1.4 + 24;

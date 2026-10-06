@@ -14,7 +14,7 @@ python3 -m http.server 8000
 需要 Node.js 20+，没有第三方测试依赖：
 
 ```sh
-node scripts/check.cjs # 所有生产脚本语法检查 + 169项单进程回归测试
+node scripts/check.cjs # 所有生产脚本语法检查 + 180项单进程回归测试
 node scripts/characterize.cjs
 node scripts/simulate.cjs --seconds=3600 --policy=active
 node scripts/balance-matrix.cjs # 40次模拟，单进程，可能需要数分钟
@@ -58,3 +58,7 @@ node scripts/text-layout-study.cjs # 有界换行缓存与未缓存布局的输�
 ## 镜狐与渡口狐灯
 
 16层起的镜狐会在半血时分出烈影和障影，可提前预选目标，也可让剑侍自动先清烈影再清障影。幻影使用原层级血量预算，真身倒下只结算一次奖励。配套见闻提供静心咒与即时领悟，以及复命后的修行/挥剑成长选择。[玩法与数值对照](docs/mirror-fox.md)。
+
+## 短屏战斗视野
+
+短竖屏使用紧凑HUD与固定战斗操作区，横屏使用左战斗/右控制栏；目标和归山按钮至少44px，通知不会覆盖敌名。[高度预算与回归范围](docs/short-battle-layout.md)。

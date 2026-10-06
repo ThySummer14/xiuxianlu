@@ -79,8 +79,8 @@ test('new target controls remain44px at320px and never move or overlap the leave
 test('Android release/leave selects once; drag/cancel or a second finger cannot change the chosen target',()=>{
  for(const action of ['tap','drag','cancel','second']){
   const g=createGame({width:320,height:480,save:{S:8,level:16,towerFloor:16,towerBest:16}});g.api.enterTower('advance');g.api.setMonsterForTest('mirrorfox',10000);g.api.switchTab('tower');g.render();const r=g.uiControls.get('mirror-target-ward'),v=g.scrollViews.get('tower-info');
-  g.sandbox.XUI.wheel(v.x+20,v.y+20,Math.max(0,r.y-v.y-10)/3);g.render();const scale=g.api.layout().scale;
-  const e={pointerId:1,isPrimary:true,pointerType:'touch',clientX:(r.x+r.w/2)*scale,clientY:(r.y-v.state.off+r.h/2)*scale,preventDefault(){}};
+  if(v)g.sandbox.XUI.wheel(v.x+20,v.y+20,Math.max(0,r.y-v.y-10)/3);g.render();const scale=g.api.layout().scale;
+  const e={pointerId:1,isPrimary:true,pointerType:'touch',clientX:(r.x+r.w/2)*scale,clientY:(r.y-(v?v.state.off:0)+r.h/2)*scale,preventDefault(){}};
   g.canvasEvent('pointerdown',e);if(action==='drag')g.canvasEvent('pointermove',{...e,clientY:e.clientY-65});if(action==='cancel')g.canvasEvent('pointercancel',e);if(action==='second'){const second={...e,pointerId:2,isPrimary:false};g.canvasEvent('pointerdown',second);g.canvasEvent('pointerup',second);g.frame(16);assert.equal(g.state().mirror.focus,'auto');}
   g.canvasEvent('pointerup',e);g.canvasEvent('pointerleave',e);g.frame(16);g.frame(16);assert.equal(g.state().mirror.focus,(action==='tap'||action==='second')?'ward':'auto',action);assert.equal(g.state().mode,'tower');
  }

@@ -31,7 +31,7 @@ test('phone shows the loop range, untouched frontier and a44px direct action; re
  for(const [width,height]of[[360,800],[390,480],[430,932]]){
   const g=farmer({width,height});g.api.switchTab('tower');g.render();const v=g.scrollViews.get('tower-info'),r=g.uiControls.get('tw-resume');assert.ok(r);assert.ok(r.h*g.api.layout().scale>=44);
   assert.ok(g.uiTexts.some(t=>String(t.text).includes('21–25')));assert.ok(g.uiTexts.some(t=>String(t.text).includes('26')&&String(t.text).includes('温养不推进')));
-  g.sandbox.XUI.wheel(v.x+20,v.y+20,(r.y-v.y-10)/3);g.render();const s=g.api.layout().scale,off=v.state.off;
+  if(v)g.sandbox.XUI.wheel(v.x+20,v.y+20,(r.y-v.y-10)/3);g.render();const s=g.api.layout().scale,off=v?v.state.off:0;
   const e={pointerId:1,isPrimary:true,pointerType:'touch',clientX:(r.x+r.w/2)*s,clientY:(r.y-off+r.h/2)*s,preventDefault(){}};
   function tap(){g.canvasEvent('pointerdown',e);g.canvasEvent('pointerup',e);g.canvasEvent('pointerleave',e);g.frame(16);g.frame(16);}
   tap();assert.equal(g.state().towerPlan,'advance');assert.equal(g.state().level,26);tap();assert.equal(g.state().mode,'tower');assert.equal(g.state().towerPlan,'advance');
