@@ -48,6 +48,7 @@
   var viewOffsetY = 0;
   var hudTopL = 20;              /* 顶部 HUD 逻辑 y（避让胶囊/状态栏） */
   var safeBottomL = 0;
+  var mobileUi = false;
 
   function resize() {
     var dpr = XP.dpr;
@@ -58,19 +59,25 @@
     cv.style && (cv.style.height = ch + 'px');
     /* 宽度贴合 + 逻辑高度自适应：画布铺满视口，不再信箱留白。
        矮胖窗口（桌面）以最小高度定缩放，左右由页面底色补白。 */
-    viewScale = Math.min(cw / VIEW_W, ch / H_MIN);
+    mobileUi = cw <= 600;
+    viewScale = mobileUi ? cw / VIEW_W : Math.min(cw / VIEW_W, ch / H_MIN);
     var logicalH = ch / viewScale;
-    VIEW_H = Math.min(H_MAX, Math.max(H_MIN, logicalH));
+    VIEW_H = mobileUi ? logicalH : Math.min(H_MAX, Math.max(H_MIN, logicalH));
     viewOffsetX = (cw - VIEW_W * viewScale) / 2;
     viewOffsetY = (ch - VIEW_H * viewScale) / 2;
     XD.setView(VIEW_W, VIEW_H);
     if (typeof XUI !== 'undefined' && XUI.setViewSize) XUI.setViewSize(VIEW_W, VIEW_H);
-    MON_BASE_Y = VIEW_H - 430;
+    MON_BASE_Y = VIEW_H - (mobileUi ? mobilePanelHeight() + 28 + XP.safeBottom / viewScale : 430);
+    if (typeof XUI !== 'undefined') XUI.cancelPointer();
+    if (hold) hold.active = false;
+    activePointerId = null;
+    resetArmed = false; rebirthArmed = false;
     if (monster) monster.y = MON_BASE_Y;
     /* 微信小游戏：顶部让出状态栏 + 胶囊按钮高度 */
     hudTopL = Math.min(160, Math.max(20,
       (XP.safeTop + (XP.isWx ? 46 : 4)) / viewScale));
     safeBottomL = Math.min(160, XP.safeBottom / viewScale);
+    if (XUI.setToastLayout) XUI.setToastLayout(mobileUi ? MON_BASE_Y - 12 : VIEW_H - 500, mobileUi ? 29 : 21);
     resize._dpr = dpr;
   }
   XP.onResize(resize);
@@ -631,9 +638,9 @@
   }
 
   function monsterCenter() {
-    return { x: monster.x, y: monster.y - 175 * monster.scale };
+    return { x: monster.x, y: monster.y - 175 * monster.scale * worldFit() };
   }
-  function monsterRadius() { return 235 * monster.scale * 1.18; }
+  function monsterRadius() { return 235 * monster.scale * 1.18 * worldFit(); }
 
   /* ---------- 特效 ---------- */
   function addSlash(x, y) {
@@ -1450,8 +1457,8 @@
       enterPlay(!!sv);
       if (offlineInfo) saveGame();   /* 结算后立即存新时间戳 */
     }
-    if (titleSave.hasRecovery && XUI.button('title-vault', 235, 826 + ts, 280, 48, {label: '存档保险箱', size: 21})) openVault();
-    XUI.text('平日打坐修行 · 魔窟历练证剑 · 宗门求得道', 375, (titleSave.hasRecovery ? 906 : 884) + ts, { size: 23, color: '#c9a05a' });
+    if (titleSave.hasRecovery && XUI.button('title-vault', 235, 826 + ts, 280, mobileUi ? mobileTouchH() : 48, {label: '存档保险箱', size: mobileUi ? 30 : 21})) openVault();
+    XUI.text('平日打坐修行 · 魔窟历练证剑 · 宗门求得道', 375, (titleSave.hasRecovery ? (mobileUi ? 966 : 906) : 884) + ts, { size: 23, color: '#c9a05a' });
   }
 
   /* ---------- 顶部 HUD ---------- */
@@ -1459,6 +1466,7 @@
    * 胶囊行 → 主卡片（境界/双条/渡劫按钮）→ chip 行 + 右侧战报
    * 高度恒定，塔内外不重排 */
   function drawTopHUD() {
+    if (mobileUi) { drawMobileHUD(); return; }
     var y = hudTopL;
 
     /* 场景 pill */
@@ -1550,14 +1558,14 @@
   ];
 
   function drawBottomPanel() {
-    var panelH = 408;
+    var panelH = mobileUi ? mobilePanelHeight() : 408;
     var py = VIEW_H - panelH - 16 - safeBottomL;
     var px = 16;
     var pw = VIEW_W - 32;
 
     /* 页签行：图标 + 文字双行 */
-    var tabW = 100;
-    var tabH = 70;
+    var tabW = mobileUi ? (pw - mobileTouchH() - 6 * 5) / 6 : 100;
+    var tabH = mobileUi ? mobileTouchH() : 70;
     var tabGap = 5;
     for (var i = 0; i < PANEL_TABS.length; i++) {
       var t = PANEL_TABS[i];
@@ -1577,11 +1585,11 @@
         fill: act ? IC.paperHi : 'rgba(244,236,220,0.55)',
         border: act ? 'rgba(47,42,36,0.6)' : 'rgba(47,42,36,0.3)'
       });
-      XUI.text(t.icon, tx + tabW / 2, py + 22, {
-        size: 22, weight: 700, color: act ? IC.cinnabar : IC.ink30
+      XUI.text(t.icon, tx + tabW / 2, py + (mobileUi ? 28 : 22), {
+        size: mobileUi ? 29 : 22, weight: 700, color: act ? IC.cinnabar : IC.ink30
       });
-      XUI.text(t.label, tx + tabW / 2, py + 48, {
-        size: 20, weight: 700, color: act ? IC.ink : IC.ink30, serif: false
+      XUI.text(t.label, tx + tabW / 2, py + (mobileUi ? 68 : 48), {
+        size: mobileUi ? 28 : 20, weight: 700, color: act ? IC.ink : IC.ink30, serif: false
       });
       if (badge) {
         ctx.fillStyle = IC.cinnabar;
@@ -1599,7 +1607,7 @@
       }
     }
     /* 设置按钮 */
-    if (XUI.button('settings', px + pw - 56, py, 56, tabH, { label: '☰', size: 28, r: 14 })) {
+    if (XUI.button('settings', px + pw - (mobileUi ? mobileTouchH() : 56), py, mobileUi ? mobileTouchH() : 56, tabH, { label: '☰', size: 28, r: 14 })) {
       openModal('settings');
     }
 
@@ -1611,20 +1619,192 @@
     ctx.fillStyle = IC.paperHi;
     ctx.fillRect(px + 1, bodyY + 1, pw - 2, 18);
 
-    if (activeTab === 'cult') drawCultPanel(px, bodyY, pw, bodyH);
+    if (mobileUi) drawMobilePanel(px, bodyY, pw, bodyH);
+    else if (activeTab === 'cult') drawCultPanel(px, bodyY, pw, bodyH);
     else if (activeTab === 'tower') drawTowerPanel(px, bodyY, pw, bodyH);
     else if (activeTab === 'sect') drawSectPanel(px, bodyY, pw, bodyH);
     else if (activeTab === 'gongfa') drawGongfaPanel(px, bodyY, pw, bodyH);
     else if (activeTab === 'market') drawMarketPanel(px, bodyY, pw, bodyH);
     else drawQuestPanel(px, bodyY, pw, bodyH);
 
-    panelRect = { x: px, y: py, w: pw, h: panelH + tabH };
+    panelRect = { x: px, y: py, w: pw, h: panelH };
   }
   var panelRect = null;
 
   /* 页签命中区域（非按钮自绘控件） */
   function rectsTab(x, y, w, h, id) {
     XUI.register('tab-' + id, x, y, w, h);
+  }
+
+  /* Phone UI uses CSS-sized targets instead of shrinking desktop controls. */
+  function mobileTouchH() { return Math.max(96, 44 / viewScale); }
+  function mobileText(s, x, y, opt) {
+    opt = Object.assign({size: Math.max(30, 14 / viewScale), align: 'left', serif: false}, opt || {});
+    if (!opt.lineH) opt.lineH = opt.size * 1.35;
+    return XUI.text(s, x, y, opt);
+  }
+  function mobileButton(id, x, y, w, label, opt) {
+    return XUI.button(id, x, y, w, mobileTouchH(), Object.assign({label: label,
+      size: Math.max(30, 14 / viewScale), subSize: Math.max(26, 12 / viewScale)}, opt || {}));
+  }
+  function mobileScroll(id, x, y, w, h, contentH, draw) {
+    var sc = XUI.scrollArea(id, x, y, w, Math.max(1, h), contentH);
+    ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, Math.max(1, h)); ctx.clip();
+    ctx.translate(0, -sc.off); XUI.beginScroll(sc);
+    draw(sc); XUI.endScroll(); ctx.restore();
+    if (contentH > h) {
+      var thumbH = Math.max(32, h * h / contentH);
+      ctx.fillStyle = 'rgba(47,42,36,0.12)'; ctx.fillRect(x + w - 6, y + 3, 5, h - 6);
+      ctx.fillStyle = 'rgba(138,106,48,0.7)'; ctx.fillRect(x + w - 6, y + sc.off / Math.max(1, contentH - h) * (h - thumbH), 5, thumbH);
+    }
+    return sc;
+  }
+  function mobilePanelHeight() { return Math.min(720, Math.max(480, VIEW_H * 0.48)); }
+  function worldFit() { return mobileUi ? Math.max(0.3, Math.min(1, (MON_BASE_Y - hudTopL - 310) / 450)) : 1; }
+
+  function drawMobileHUD() {
+    var y = hudTopL, need = expNeed(), hp = playerHpMax(), ready = canBreakthrough(), gate = atRealmGate();
+    mobileText(mode === 'tower' ? (towerPlan === 'temper' ? '温养' : '魔窟') + ' · ' + level + '层' : '山门 · ' + (injured() ? '将养' : '闭关'), 24, y + 22, {weight: 700});
+    mobileText('灵石 ' + XB.fmt(stones), 726, y + 22, {align: 'right', color: '#8a6a30', weight: 700});
+    XUI.panel(16, y + 50, 718, 186, {flat: true, r: 16});
+    mobileText(XB.realmName(S) + (rb ? ' · ' + rb + '世' : ''), 36, y + 78, {weight: 700});
+    XUI.bar(36, y + 108, 498, 40, exp / need, {fill: '#c9a05a'});
+    mobileText('修为 ' + XB.fmt(Math.min(exp, need)) + '/' + XB.fmt(need), 285, y + 128, {align: 'center', size: 27});
+    XUI.bar(36, y + 166, 498, 40, Math.max(0, ph) / hp, {fill: injured() ? '#a0524a' : '#7d9a6a'});
+    mobileText('气血 ' + XB.fmt(Math.max(0, Math.round(ph))) + '/' + XB.fmt(hp), 285, y + 186, {align: 'center', size: 27});
+    if (XUI.button('bt-break', 556, y + 108, 158, 104, {label: gate && ready ? '渡劫' : Math.floor(Math.min(100, exp / need * 100)) + '%',
+      sub: gate && ready ? '战力×' + XB.REALM_GATE_MULT : (S >= XB.MAX_STAGE ? '圆满' : '修行中'), size: 32, subSize: 26,
+      style: gate && ready ? 'primary' : 'ghost', disabled: !(gate && ready)})) startBreak(true);
+    mobileText(saveError ? '保存失败 · 请从设置导出备份' : '修为 +' + XB.fmtRate(medRate()) + '/s · 坊市 +' + XB.fmtRate(curMarketRate()) + '/s', 24, y + 262,
+      {size: 27, color: saveError ? IC.cinnabar : IC.indigo});
+    mobileText('攻 ' + XB.fmt(clickDamage()) + ' · 秒伤 ' + XB.fmt(curDps()) + (tide.left > 0 ? ' · 潮汐 ' + Math.ceil(tide.left) + 's' : ''), 24, y + 296,
+      {size: 26, color: IC.ink55});
+  }
+
+  function drawMobilePanel(px, py, pw, ph) {
+    var th = mobileTouchH(), left = px + 20, right = px + pw - 20;
+    if (activeTab === 'cult') {
+      var cards = [
+        ['sj', '剑诀', sj, '基础伤害 +16%', XB.costSwordJue(sj)],
+        ['ss', '剑侍', ss, '基础秒伤 +18%', XB.costSwordShi(ss)],
+        ['ls', '灵兽', ls, '点击+25% · 暴击+0.4%/级', XB.costBeast(ls)],
+        ['tn', '吐纳术', tn, '闭关修为 +' + (6 / (1 + .06 * tn)).toFixed(1) + '%', XB.costTuna(tn)]
+      ];
+      var cw = (pw - 36) / 2, ch = Math.max(246, th + 148);
+      mobileScroll('cult-list', px + 4, py + 4, pw - 8, ph - 8, 2 * (ch + 12) + 12, function () {
+        cards.forEach(function (c, i) {
+          var x = px + 12 + i % 2 * (cw + 12), y = py + 12 + Math.floor(i / 2) * (ch + 12);
+          XUI.panel(x, y, cw, ch, {flat: true, r: 12});
+          mobileText(c[1], x + 16, y + 28, {weight: 700});
+          mobileText('Lv.' + c[2], x + cw - 16, y + 28, {align: 'right', size: 27, color: IC.ink55});
+          mobileText(c[3], x + 16, y + 72, {size: 27, maxW: cw - 32, lineH: 34, color: IC.indigo});
+          if (mobileButton('buy-' + c[0], x + 12, y + ch - th - 12, cw - 24, XB.fmt(c[4]) + ' 灵石', {style: 'primary', disabled: stones < c[4]})) buyUpgrade(c[0]);
+        });
+      });
+    } else if (activeTab === 'gongfa') {
+      var rowH = 180;
+      mobileScroll('gongfa-list', px + 4, py + 4, pw - 8, ph - 8, XB.GONGFA.length * rowH + 12, function () {
+        XB.GONGFA.forEach(function (g, i) {
+          var y = py + 12 + i * rowH, locked = XB.realmIdx(S) < g.unlock, cost = XB.gongfaCost(g, gf[i]);
+          XUI.panel(px + 12, y, pw - 24, rowH - 12, {flat: true, r: 12});
+          mobileText('《' + g.name + '》' + (locked ? '' : gf[i] + '层'), left + 8, y + 32, {weight: 700, size: 30});
+          mobileText(locked ? XB.REALM_LIST[g.unlock] + '期解锁' : g.desc, left + 8, y + 78,
+            {size: 27, maxW: pw - 260, lineH: 35, color: IC.ink55});
+          if (!locked && mobileButton('gf-' + i, right - 188, y + 55, 188, XB.fmt(cost), {sub: '灵石', style: 'gold', disabled: stones < cost})) buyGongfa(i);
+        });
+      });
+    } else if (activeTab === 'market') {
+      if (!marketUnlocked()) { mobileText('魔窟第 ' + XB.MARKET_UNLOCK_LEVEL + ' 层或筑基解锁坊市', px + pw / 2, py + ph / 2, {align: 'center'}); return; }
+      mobileText('坊市 · 每秒 +' + XB.fmtRate(curMarketRate()) + ' 灵石', left, py + 32, {color: '#8a6a30', weight: 700});
+      mobileScroll('market-list', px + 4, py + 58, pw - 8, ph - 64, XB.MARKET_SHOPS.length * 222 + 12, function () {
+        XB.MARKET_SHOPS.forEach(function (shop, i) {
+          var y = py + 66 + i * 222, cost = XB.marketCost(i, mk[i]), single = [0, 0, 0, 0, 0]; single[i] = 1;
+          var per = XB.marketRate(single, S, gEff('map'), daoMult(), mp) * sectMarket() * marketEarningsMult();
+          XUI.panel(px + 12, y, pw - 24, 210, {flat: true, r: 12});
+          mobileText(shop.name + ' · ' + mk[i] + '间 · 配方' + mp[i] + '阶', left + 8, y + 30, {weight: 700});
+          mobileText('每间 +' + XB.fmtRate(per) + '/s · 回本按当前产出', left + 8, y + 70, {size: 27, color: IC.ink55});
+          var w = (pw - 56) / 2;
+          if (mobileButton('mk-' + i, left, y + 100, w, '置办 ' + XB.fmt(cost), {sub: '回本 ' + XB.formatDur(cost / per), style: 'gold', disabled: stones < cost})) buyMarket(i);
+          var pc = XB.marketProfitCost(i, mp[i], S), n = XB.MARKET_PROFIT_UP[mp[i] + 1], can = n != null && mk[i] >= n;
+          if (mobileButton('mkp-' + i, left + w + 16, y + 100, w, n == null ? '已至顶层' : can ? '升阶 ' + XB.fmt(pc) : '需' + n + '间',
+            {sub: can ? '回本 ' + XB.formatDur(pc / (mk[i] * per * (XB.MARKET_PROFIT_R - 1))) : '扩大经营后解锁', style: 'primary', disabled: !can || stones < pc})) buyMarketProfit(i);
+        });
+      });
+    } else if (activeTab === 'tower') {
+      mobileScroll('tower-info', px + 4, py + 4, pw - 8, ph - 8, 480, function () {
+        mobileText('魔窟妖塔 · 以战养道', left, py + 36, {weight: 700, color: IC.cinnabar});
+        mobileText('当前 ' + level + ' 层 · 纪录 ' + towerBest + ' 层', left, py + 82, {color: IC.ink55});
+        mobileText(injured() ? '重伤 ' + Math.ceil(injuryT) + '秒 · 战力与打坐 -30%' : '闭关回复气血，归山保留血量', left, py + 130, {size: 27, color: IC.indigo});
+        mobileText('推进争取装备与新机缘；卡关可温养，积累领悟和贡献。灵石主产线在坊市。', left, py + 190,
+          {size: 29, maxW: pw - 40, lineH: 42, color: IC.ink55});
+        mobileText('斩妖 ' + XB.fmt(totalKills) + ' · 顿悟 ' + epip + ' · 贡献 ' + XB.fmt(contrib), left, py + 304, {size: 28});
+        if (mode === 'tower') {
+          if (mobileButton('tw-leave', left, py + 354, pw - 40, '归山养息', {style: 'ghost'})) leaveTower();
+        } else {
+          var w = (pw - 56) / 2;
+          if (mobileButton('tw-enter', left, py + 354, w, '闯关 · 第' + towerFloor + '层', {style: 'primary', disabled: injured()})) enterTower('advance');
+          if (mobileButton('tw-temper', left + w + 16, py + 354, w, towerBest >= 6 ? '温养 · 积累' : '6层解锁温养', {style: 'gold', disabled: injured() || towerBest < 6})) enterTower('temper');
+        }
+      });
+    } else if (activeTab === 'sect') {
+      drawMobileSect(px, py, pw, ph);
+    } else {
+      mobileText('行囊 · 总战力 +' + XB.fmt(totalPower()), left, py + 30, {color: '#8a6a30', weight: 700});
+      var equipment = XB.EQUIP_SLOTS.map(function (sl) { return XB.SLOT_NAMES[sl] + (eq[sl] ? '+' + XB.fmt(Math.round(eq[sl].power)) : '空'); }).join(' · ');
+      mobileText(equipment, left, py + 73, {size: 26});
+      var qs = questList(), top = py + 106;
+      mobileScroll('quest-list', px + 4, top, pw - 8, ph - 112, qs.length * 174 + 12, function () {
+        qs.forEach(function (q, i) {
+          var y = top + 8 + i * 174, done = !!questClaimed[q.id], locked = !q.unlocked && !done, ready = !locked && !done && q.progress >= q.goal;
+          XUI.panel(px + 12, y, pw - 24, 162, {flat: true, r: 12});
+          mobileText((done ? '✓ ' : '') + q.title, left + 8, y + 30, {weight: 700});
+          mobileText(locked ? '需先完成前置仙途' : q.desc + ' · ' + Math.min(q.progress, q.goal) + '/' + q.goal, left + 8, y + 74,
+            {size: 27, maxW: pw - 260, lineH: 35, color: IC.ink55});
+          if (!locked && mobileButton('quest-' + q.id, right - 188, y + 54, 188, done ? '已领取' : '+' + XB.fmt(q.reward),
+            {sub: done ? '' : '灵石', style: ready ? 'primary' : 'gold', disabled: done || !ready})) claimQuest(q.id);
+        });
+      });
+    }
+  }
+
+  function drawMobileSect(px, py, pw, ph) {
+    var th = mobileTouchH();
+    if (!sectId) {
+      var cw = (pw - 36) / 2, rh = 256;
+      mobileScroll('sect-list', px + 4, py + 4, pw - 8, ph - 8, 2 * (rh + 12) + 12, function () {
+        XB.SECTS.forEach(function (s, i) {
+          var x = px + 12 + i % 2 * (cw + 12), y = py + 12 + Math.floor(i / 2) * (rh + 12);
+          XUI.panel(x, y, cw, rh, {flat: true, r: 12});
+          mobileText(s.name, x + cw / 2, y + 32, {align: 'center', weight: 700});
+          mobileText(s.passive, x + 16, y + 78, {size: 27, maxW: cw - 32, lineH: 35, color: IC.indigo});
+          if (mobileButton('join-' + s.id, x + 12, y + rh - th - 12, cw - 24, '拜入宗门', {style: 'gold'})) joinSect(s.id);
+        });
+      }); return;
+    }
+    var sect = XB.getSect(sectId);
+    mobileText(sect.name, px + 20, py + 30, {weight: 700, color: IC.cinnabar});
+    mobileText('贡献 ' + XB.fmt(contrib), px + pw - 20, py + 30, {align: 'right', color: '#8a6a30'});
+    var top = py + 58;
+    mobileScroll('sect-list', px + 4, top, pw - 8, ph - 64, sect.arts.length * 190 + 3 * 166 + 52, function () {
+      sect.arts.forEach(function (art, i) {
+        var y = top + 8 + i * 190, lv = sectArtLv(art.id), cost = XB.sectArtCost(art, lv), locked = S < art.reqS;
+        XUI.panel(px + 12, y, pw - 24, 178, {flat: true, r: 12});
+        mobileText('《' + art.name + '》' + lv + '层', px + 28, y + 30, {weight: 700});
+        mobileText(locked ? '需 ' + XB.realmName(art.reqS) : art.desc, px + 28, y + 76, {size: 27, maxW: pw - 270, lineH: 35, color: IC.ink55});
+        if (mobileButton('art-' + art.id, px + pw - 208, y + 60, 188, XB.fmt(cost), {sub: '贡献', style: 'gold', disabled: locked || contrib < cost})) learnArt(art.id);
+      });
+      var start = top + sect.arts.length * 190;
+      mobileText('宗门任务 · 缴令后换新令', px + 20, start + 26, {size: 28, color: IC.indigo});
+      missions.forEach(function (m, i) {
+        if (!m) return;
+        var y = start + 54 + i * 166, cur = missionCur(m), need = missionNeed(m), done = missionDone(m), name = '历练';
+        XB.MISSION_KINDS.forEach(function (k) { if (k.kind === m.kind) name = k.text(m.kind === 'floor' || m.kind === 'shop' ? m.need : need); });
+        XUI.panel(px + 12, y, pw - 24, 154, {flat: true, r: 12});
+        mobileText(name, px + 28, y + 34, {size: 29, maxW: pw - 264, lineH: 36});
+        mobileText(Math.floor(cur) + '/' + need, px + 28, y + 112, {size: 27, color: IC.ink55});
+        if (mobileButton('mis-' + i, px + pw - 208, y + 42, 188, done ? '+' + m.contrib : '修行中', {sub: '贡献', style: done ? 'primary' : 'ghost', disabled: !done})) claimMission(i);
+      });
+    });
   }
 
   function drawCultPanel(px, py, pw, ph) {
@@ -1972,12 +2152,205 @@
     return { x: x, y: y, w: w, h: h };
   }
 
+  /* 手机弹窗：正文独立滚动，确认/关闭按钮始终留在安全区内。 */
+  function drawMobileModals() {
+    if (modal === 'fate' && !fateEvent) modal = null;
+    if (!modal) return false;
+    var supported = ['story', 'fate', 'vault', 'restore', 'settings', 'realm', 'offline'];
+    if (supported.indexOf(modal) < 0) return false;
+    if (modal === 'restore' && !pendingRestore) { modal = null; return true; }
+    if (modal === 'offline' && !offlineInfo) { modal = null; return true; }
+
+    var current = modal, x = 16, w = VIEW_W - 32, pad = 24, gap = 16;
+    var size = Math.max(30, 14 / viewScale), small = Math.max(28, 13 / viewScale);
+    var titleSize = Math.max(38, 18 / viewScale), bh = mobileTouchH();
+    var top = Math.max(16, hudTopL), bottom = VIEW_H - safeBottomL - 16;
+    var bx = x + pad, bw = w - pad * 2, headerH = Math.max(80, titleSize * 1.9);
+    var blocks = [], footer = [], title = '', scrollId = 'mobile-' + current + '-body';
+    var bodyH = 0, contentH = 12, bodyScroll = null;
+
+    function paragraph(value, opt) {
+      opt = opt || {};
+      var font = opt.size || size, lineH = font * 1.45;
+      var lines = XUI.wrap(String(value), bw, font, opt.serif === false, opt.weight);
+      var h = Math.max(1, lines.length) * lineH;
+      blocks.push({ kind: 'text', value: String(value), opt: opt, size: font, lineH: lineH, h: h });
+      contentH += h + gap;
+    }
+    function actions(items) {
+      blocks.push({ kind: 'actions', items: items, h: bh });
+      contentH += bh + gap;
+    }
+    function action(id, label, run, opt) {
+      opt = opt || {}; opt.id = id; opt.label = label; opt.run = run; return opt;
+    }
+    function closeAction(id, label) {
+      return action(id, label || '关闭', function () { modal = null; });
+    }
+    function drawActions(items, y) {
+      var aw = (bw - gap * (items.length - 1)) / items.length;
+      for (var ai = 0; ai < items.length; ai++) {
+        var item = items[ai];
+        if (XUI.button(item.id, bx + ai * (aw + gap), y, aw, bh, {
+          label: item.label, size: size, style: item.style || 'ghost', disabled: !!item.disabled
+        })) { item.run(); return true; }
+      }
+      return false;
+    }
+
+    if (current === 'story') {
+      title = '· ' + XB.REALM_LIST[storyRealm] + ' ·';
+      paragraph(XB.REALM_STORY[storyRealm] || '前路无名，自行落笔。');
+      if (storyRealm > 0) {
+        var rewards = XB.breakthroughPreview(storyRealm * 4 - 1);
+        paragraph('战力与修行 ×' + XB.fmtRate(rewards.powerMult) + ' · 气血回满',
+          { color: IC.cinnabar, weight: 700 });
+        paragraph(rewards.unlocks.length ? '新功法 · ' + rewards.unlocks.join('、') : '再入魔窟，试一试旧日的大妖',
+          { color: IC.indigo });
+      }
+      paragraph('第 ' + (storyRealm + 1) + ' 卷 · ' + XB.REALM_LIST[storyRealm], { size: small, color: IC.ink55 });
+      footer = [action('story-ok', '继续修行', function () { modal = null; }, { style: 'primary' })];
+    } else if (current === 'fate') {
+      title = '机缘 · ' + fateEvent.title;
+      paragraph(fateEvent.text);
+      /* 拿住选项快照，结算清空 fateEvent 后不再读取它。 */
+      var options = fateEvent.options || [];
+      for (var fi = 0; fi < options.length; fi++) {
+        (function (idx, option) {
+          paragraph(fateOptionPreview(option), { size: small, color: IC.indigo });
+          actions([action('fate-' + idx, option.label, function () { resolveFateOption(idx); },
+            { style: idx === 0 ? 'primary' : 'gold' })]);
+        })(fi, options[fi]);
+      }
+      paragraph('机缘只在一念之间', { size: small, color: IC.ink55 });
+    } else if (current === 'vault') {
+      title = '存档保险箱';
+      paragraph(saveError || backupError ? '本地写入有异常，请先导出再离开' : '仅保存在此浏览器，清理网站数据会删除进度',
+        { size: small, color: saveError || backupError ? IC.cinnabar : IC.ink55 });
+      actions([
+        action('vault-export', scene === SCENE_PLAY ? '导出当前存档' : '导出原始存档', exportCurrentSave,
+          { disabled: !XP.canExportText() || (scene !== SCENE_PLAY && !XP.storageGet(STORE_KEY)) }),
+        action('vault-import', '导入备份文件', importSaveFile, { disabled: !XP.canImportText() })
+      ]);
+      paragraph(XP.canExportText() ? '导出请确认下载；导入会先预览，不会直接覆盖' : '此平台可恢复本机备份；文件操作请使用网页版',
+        { size: small, color: IC.ink55 });
+      for (var vi = 0; vi < vaultEntries.length; vi++) {
+        (function (idx, entry) {
+          paragraph(entry.label, { weight: 700, color: IC.indigo });
+          paragraph(entry.data ? XB.realmName(entry.data.S) + ' · 灵石 ' + XB.fmt(entry.data.stones) :
+            (entry.raw ? '当前无法读取，可导出留存' : '尚无备份'), { size: small, color: IC.ink55 });
+          paragraph(vaultDate(entry.data), { size: small, color: IC.ink55 });
+          actions([
+            action('vault-restore-' + idx, '查看恢复', function () { previewBackup(idx); }, { style: 'gold', disabled: !entry.data }),
+            action('vault-export-' + idx, '导出', function () { exportVaultBackup(idx); }, { disabled: !entry.raw || !XP.canExportText() })
+          ]);
+        })(vi, vaultEntries[vi]);
+      }
+      paragraph('恢复前先保留当前进度；恢复后从现在计时', { size: small, color: IC.ink55 });
+      footer = [closeAction('vault-close')];
+    } else if (current === 'restore') {
+      title = '确认恢复备份';
+      var selected = parseBackup(pendingRestore.raw);
+      paragraph(pendingRestore.label, { color: IC.indigo, weight: 700 });
+      paragraph(selected ? XB.realmName(selected.S) + ' · 灵石 ' + XB.fmt(selected.stones) : '备份已不可读取',
+        { color: IC.cinnabar, weight: 700 });
+      paragraph(vaultDate(selected), { size: small, color: IC.ink55 });
+      paragraph('这会替换当前修行。当前进度会先留存，之后可从「恢复前的进度」撤回。\n不会重复领取这份旧档的离线收益。',
+        { color: IC.ink55 });
+      if (vaultMessage) paragraph(vaultMessage, { color: IC.cinnabar, weight: 700 });
+      footer = [
+        action('restore-confirm', '确认恢复', confirmBackupRestore, { style: 'danger', disabled: !selected }),
+        action('restore-cancel', '返回', cancelBackupRestore)
+      ];
+    } else if (current === 'settings') {
+      title = '设置';
+      actions([action('mute', muted ? '音效：关' : '音效：开', function () {
+        muted = !muted; XAudio.setMuted(muted); saveGame();
+      })]);
+      actions([action('card', '保存境界卡', saveRealmCard)]);
+      actions([action('realm', '境界画卷', function () { modal = 'realm'; })]);
+      actions([action('vault', '存档保险箱 · 导出与恢复', openVault)]);
+      actions([action('reset', resetArmed ? '再点一次，清除全部进度' : '重修（清档重开）', function () {
+        if (!resetArmed) { resetArmed = true; resetArmT = 3; }
+        else { clearSave(); freshState(); modal = null; XUI.toast('已重修，从头再来'); }
+      }, { style: resetArmed ? 'danger' : 'ghost' })]);
+      paragraph(saveError ? '保存失败，请先导出本次修行' : '仅此浏览器保存 · 建议定期导出备份',
+        { size: small, color: saveError ? IC.cinnabar : IC.ink55 });
+      footer = [closeAction('close')];
+    } else if (current === 'realm') {
+      title = rebirthArmed ? '确认轮回转世' : '境界画卷';
+      scrollId = 'realm-list';
+      paragraph('当前 ' + XB.realmName(S) + '\n道基 +' + dj + ' · 仙缘 +' + bond + ' · 剑心 +' + sgn,
+        { size: small, color: IC.ink55 });
+      if (canRebirth()) {
+        var gain = XB.daoJiGain(S);
+        paragraph('轮回可得 +' + gain + ' 道基\n本次永久收益 ×' + XB.fmtRate(XB.daoJiMult(dj + gain) / daoMult()) + ' · 道基每点 +12%',
+          { size: small, color: IC.cinnabar });
+        if (rebirthArmed) {
+          paragraph('重修：境界、灵石、装备、修行升级、普通功法、坊市归零。', { color: IC.cinnabar, weight: 700 });
+          paragraph('保留：道基、宗门功法、贡献、顿悟、仙缘、剑心。', { color: IC.indigo });
+          paragraph(Math.ceil(rebirthArmT) + ' 秒内再次确认，开始下一世。', { size: small, color: IC.ink55 });
+        }
+        footer.push(action('rebirth', rebirthArmed ? '确认转世' : '轮回转世', function () {
+          if (!rebirthArmed) {
+            rebirthArmed = true; rebirthArmT = 5;
+            if (bodyScroll) { bodyScroll.off = 0; bodyScroll.v = 0; }
+          } else doRebirth();
+        }, { style: rebirthArmed ? 'danger' : 'primary' }));
+      } else {
+        paragraph('修至渡劫初期（' + (XB.REBIRTH_UNLOCK_S + 1) + '/' + (XB.MAX_STAGE + 1) + '）解锁轮回转世',
+          { size: small, color: IC.ink55 });
+      }
+      if (!rebirthArmed) {
+        for (var r = 0; r < XB.REALM_LIST.length; r++) {
+          var cur = r === XB.realmIdx(S), passed = r < XB.realmIdx(S);
+          paragraph((r + 1) + '. ' + XB.REALM_LIST[r] + '　' + (cur ? '当前' : (passed ? '已参悟' : '未至')),
+            { weight: cur ? 800 : 500, color: cur ? IC.cinnabar : IC.ink55 });
+        }
+      }
+      footer.push(closeAction('realm-close', rebirthArmed ? '暂不转世' : '合上画卷'));
+    } else if (current === 'offline') {
+      title = '闭关归来';
+      paragraph('闭关 ' + XB.formatDur(offlineInfo.seconds), { color: IC.ink55 });
+      if (offlineInfo.expGain > 0) paragraph('打坐修为 +' + XB.fmt(offlineInfo.expGain), { color: IC.cinnabar, weight: 700 });
+      if (offlineInfo.stoneGain > 0) paragraph('坊市入账 +' + XB.fmt(offlineInfo.stoneGain) + ' 灵石',
+        { color: IC.goldDeep || '#8a6a30', weight: 700 });
+      paragraph(offlineInfo.injuryRemaining > 0 ? '继续养伤 ' + Math.ceil(offlineInfo.injuryRemaining) + '秒' : '闭关养息 · 气血已恢复',
+        { color: IC.indigo });
+      paragraph('前 2 小时全额收益，其后 50%，24 小时封顶\n打坐效率越高，闭关收获越丰', { size: small, color: IC.ink55 });
+      footer = [action('offline-ok', '收下', dismissOffline, { style: 'primary' })];
+    }
+
+    XUI.modalBackdrop(current === 'settings' || current === 'realm' ? 'dismiss' : current + '-bg', VIEW_W, VIEW_H);
+    XUI.panel(x, top, w, bottom - top, { r: 20, fill: IC.paper, border: 'rgba(47,42,36,0.7)' });
+    XUI.text(title, bx, top + headerH / 2, { size: titleSize, weight: 800, align: 'left', color: IC.cinnabar });
+    var bodyY = top + headerH, footerY = bottom - pad - bh;
+    bodyH = Math.max(1, (footer.length ? footerY - gap : bottom - pad) - bodyY);
+    var acted = false;
+    bodyScroll = mobileScroll(scrollId, bx, bodyY, bw, bodyH, contentH, function () {
+      var y = bodyY + 12;
+      for (var bi = 0; bi < blocks.length; bi++) {
+        var block = blocks[bi];
+        if (block.kind === 'text') {
+          XUI.text(block.value, bx, y, { size: block.size, lineH: block.lineH, maxW: bw,
+            weight: block.opt.weight, color: block.opt.color || IC.ink, serif: block.opt.serif,
+            align: 'left', baseline: 'top' });
+        } else if (drawActions(block.items, y)) { acted = true; break; }
+        y += block.h + gap;
+      }
+    });
+    if ((!acted || modal === current) && footer.length) drawActions(footer, footerY);
+    return true;
+  }
+
   function drawModals() {
     if (!modal && storyQueue.length) {
       storyRealm = storyQueue.shift();
       storySeen[storyRealm] = 1;
       modal = 'story';
     }
+
+    if (mobileUi && drawMobileModals()) return;
 
     if (modal === 'story') {
       XUI.modalBackdrop('story-bg', VIEW_W, VIEW_H);
@@ -2415,6 +2788,8 @@
       XD.drawBackground(ctx, XB.realmIdx(S), nowSec, prevForBg, bgTrans, MON_BASE_Y);
       var sceneCy = monster ? monsterCenter().y : MON_BASE_Y - 210;
       XD.drawTide(ctx, tideStrength(), nowSec, sceneCy);
+      ctx.save();
+      if (mobileUi) { ctx.translate(375, MON_BASE_Y); ctx.scale(worldFit(), worldFit()); ctx.translate(-375, -MON_BASE_Y); }
       if (mode === 'tower' && monster) {
         XD.drawMonster(ctx, monster, nowSec);
       } else if (mode === 'home') {
@@ -2422,6 +2797,7 @@
         if (activeTab === 'tower') {
           XD.drawTower(ctx, 375, MON_BASE_Y, nowSec, towerBest);
           var gy = MON_BASE_Y - 402;
+          if (!mobileUi) {
           XUI.text(injured() ? '重伤未愈 · 塔门封闭' : '魔窟妖塔 · 以战养道',
                    375, gy - 16, { size: 19, color: injured() ? '#8f2b23' : IC.ink55, serif: false });
           XUI.register('tw-gate', 375 - 130, MON_BASE_Y - 330, 260, 330);
@@ -2430,6 +2806,7 @@
             style: 'primary', size: 23, disabled: injured()
           })) enterTower('advance');
           else if (XUI.tapped('tw-gate')) enterTower('advance');
+          }
         } else if (activeTab === 'cult') {
           XD.drawCenser(ctx, 375, MON_BASE_Y, nowSec);
         } else if (activeTab === 'sect') {
@@ -2447,6 +2824,7 @@
           XD.drawPath(ctx, 375, MON_BASE_Y, nowSec);
         }
       }
+      ctx.restore();
       var i;
       for (i = 0; i < slashes.length; i++) XD.drawSlash(ctx, slashes[i]);
       for (i = 0; i < smokes.length; i++) XD.drawSmoke(ctx, smokes[i]);
@@ -2530,18 +2908,25 @@
   }
 
   if (!XP.isWx) {
+    var activePointerId = null;
     cv.addEventListener('pointerdown', function (ev) {
+      if (ev.isPrimary === false || activePointerId !== null) return;
+      activePointerId = ev.pointerId;
       onDown(ev.clientX, ev.clientY);
       ev.preventDefault();
     }, { passive: false });
     cv.addEventListener('pointermove', function (ev) {
+      if (ev.pointerId !== activePointerId) return;
       onMove(ev.clientX, ev.clientY);
     }, { passive: true });
     cv.addEventListener('pointerup', function (ev) {
+      if (ev.pointerId !== activePointerId) return;
+      activePointerId = null;
       onUp(ev.clientX, ev.clientY);
     }, { passive: true });
+    cv.addEventListener('pointercancel', function () { activePointerId = null; XUI.cancelPointer(); hold.active = false; }, { passive: true });
     cv.addEventListener('pointerleave', function () {
-      hold.active = false;
+      activePointerId = null; XUI.cancelPointer(); hold.active = false;
     }, { passive: true });
     cv.addEventListener('wheel', function (ev) {
       var p = toLogical(ev.clientX, ev.clientY);
@@ -2576,7 +2961,7 @@
   XP.onHide(function () {
     if (scene !== SCENE_PLAY || hiddenAt) return;
     hiddenAt = Date.now();
-    hold.active = false;
+    activePointerId = null; hold.active = false;
     rebirthArmed = false; resetArmed = false;
     XUI.cancelPointer();
     saveGame();
@@ -2617,6 +3002,7 @@
         for (var i = 0; i < steps; i++) updateCore(per);
         if (!noRender) render(per);   /* 必须传 dt：否则 drawToasts 等依赖渲染计时的逻辑会被 NaN 污染 */
       },
+      layout: function () { return {width: VIEW_W, height: VIEW_H, scale: viewScale, mobile: mobileUi, safeBottom: safeBottomL, hudTop: hudTopL, worldFloor: MON_BASE_Y, worldScale: worldFit()}; },
       state: function () {
         return {
           scene: scene, saveError: saveError, lastSavedAt: lastSavedAt,

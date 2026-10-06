@@ -14,7 +14,7 @@ python3 -m http.server 8000
 需要 Node.js 20+，没有第三方测试依赖：
 
 ```sh
-node scripts/check.cjs # 所有生产脚本语法检查 + 80项单进程回归测试
+node scripts/check.cjs # 所有生产脚本语法检查 + 100项单进程回归测试
 node scripts/characterize.cjs
 node scripts/simulate.cjs --seconds=3600 --policy=active
 node scripts/balance-matrix.cjs # 40次模拟，单进程，可能需要数分钟
@@ -34,3 +34,7 @@ node scripts/session-study.cjs # 渲染节奏、24小时上限和重复归来测
 ## 存档保护
 
 设置里的「存档保险箱」可导出/导入JSON文件、预览本机备份，并在明确确认后恢复。恢复前会保留当前进度，允许撤回；写入失败会提示且不覆盖修行。损坏存档可从标题页进入保险箱。见[恢复说明](docs/save-recovery.md)。
+
+## 手机竖屏
+
+360 / 390 / 430px 宽与 360×480 短屏有独立布局；主要操作至少 44 CSS px，列表和弹窗可滑动，关闭/确认按钮留在安全区。旋转或切换后台会取消未完成手势，避免误购。浏览器视觉验收记录见[手机适配说明](docs/mobile-ui.md)。

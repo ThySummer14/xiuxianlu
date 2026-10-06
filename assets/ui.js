@@ -315,7 +315,7 @@ var XUI = (function () {
     var mainSize = opt.size || Math.min(26, h * 0.44);
     if (opt.sub) {
       text(opt.label, cx, cy - h * 0.16, { size: mainSize, color: dis ? C.ink30 : txtCol, weight: 700 });
-      text(opt.sub, cx, cy + h * 0.22, { size: Math.max(16, mainSize * 0.62), color: dis ? C.ink30 : txtCol, serif: false });
+      text(opt.sub, cx, cy + h * 0.22, { size: opt.subSize || Math.max(16, mainSize * 0.62), color: dis ? C.ink30 : txtCol, serif: false });
     } else {
       text(opt.label, cx, cy, { size: mainSize, color: dis ? C.ink30 : txtCol, weight: 700 });
     }
@@ -385,6 +385,8 @@ var XUI = (function () {
   /* ---------- Toast（贴底部面板上方，不挡主视野） ---------- */
   var viewH = 1334;
   function setViewSize(w, h) { viewH = h; }
+  var toastTop = 834, toastSize = 21;
+  function setToastLayout(top, size) { toastTop = top; toastSize = size; }
   var toasts = [];   /* {txt, t, born} */
   function toast(txt) {
     toasts.push({ txt: txt, t: 0, born: Date.now() });
@@ -401,20 +403,23 @@ var XUI = (function () {
          绝不允许 toast 变成常驻贴图 */
       if (!(tt.t <= 1.8) || (tt.born && nowMs - tt.born > 2400)) { toasts.splice(i, 1); continue; }
       var a = tt.t < 0.15 ? tt.t / 0.15 : (tt.t > 1.45 ? (1.8 - tt.t) / 0.35 : 1);
-      var w = Math.min(620, textW(tt.txt, 21, false, 600) + 56);
+      var w = Math.min(690, textW(tt.txt, toastSize, false, 600) + 56);
+      var lines = wrap(tt.txt, w - 40, toastSize, true, 500);
+      var h = lines.length * toastSize * 1.4 + 24;
       var x = 375 - w / 2;
-      var y = viewH - 500 - i * 54;
+      var y = toastTop - h - i * (h + 10);
       ctx.save();
       ctx.globalAlpha = a;
-      XD.roundRectPath(ctx, x, y, w, 44, 22);
+      XD.roundRectPath(ctx, x, y, w, h, 18);
       ctx.fillStyle = 'rgba(47,42,36,0.82)';
       ctx.fill();
-      text(tt.txt, 375, y + 23, { size: 21, color: C.paper, serif: false, weight: 500 });
+      text(tt.txt, 375, y + 12, { size: toastSize, maxW: w - 40, lineH: toastSize * 1.4, baseline: 'top', color: C.paper, serif: false, weight: 500 });
       ctx.restore();
     }
   }
 
   return {
+    setToastLayout: setToastLayout,
     C: C,
     fSerif: fSerif,
     fSans: fSans,

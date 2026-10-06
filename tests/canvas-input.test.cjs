@@ -6,7 +6,7 @@ function pointerClick(g,x,y){g.sandbox.XUI.pointerDown(x,y);g.sandbox.XUI.pointe
 
 test('a scrolled technique purchase hits the visible technique, never a different hidden row',()=>{
   const g=createGame({save:{S:36,stones:1e7}});g.api.switchTab('gongfa');g.render();
-  const view=g.scrollViews.get('gongfa-list');g.sandbox.XUI.wheel(view.x+40,view.y+100,100);g.render();
+  const view=g.scrollViews.get('gongfa-list');const target=g.uiControls.get('gf-4');g.sandbox.XUI.wheel(view.x+40,view.y+100,(target.y-view.y-30)/3);g.render();
   const row=g.uiControls.get('gf-4');const off=g.scrollViews.get('gongfa-list').state.off;
   assert.ok(row.y-off>=view.y&&row.y-off+row.h<=view.y+view.h);
   pointerClick(g,row.x+row.w/2,row.y-off+row.h/2);
@@ -37,7 +37,7 @@ test('a modal opened between press and release cancels the background purchase',
   u.pointerUp(row.x+row.w/2,row.y+row.h/2);g.render();assert.equal(g.state().sj,0);
 });
 test('the realm list can be dragged inside its modal without hitting the backdrop',()=>{
-  const g=createGame();g.api.openModal('realm');g.render();const v=g.scrollViews.get('realm-list'),u=g.sandbox.XUI;
+  const g=createGame({width:360,height:480});g.api.openModal('realm');g.render();const v=g.scrollViews.get('realm-list'),u=g.sandbox.XUI;
   u.pointerDown(v.x+80,v.y+240);u.pointerMove(v.x+80,v.y+80);u.pointerUp(v.x+80,v.y+80);g.render();
   assert.ok(g.scrollViews.get('realm-list').state.off>0);assert.equal(g.state().modal,'realm');
 });
@@ -63,7 +63,7 @@ test('backgrounding clears a held purchase gesture',()=>{
 test('scrolled purchases remain correct at short desktop and tall phone logical layouts',()=>{
   for(const [width,height] of [[960,600],[390,844]]) {
     const g=createGame({width,height,save:{S:36,stones:1e7}});g.api.switchTab('gongfa');g.render();
-    const v=g.scrollViews.get('gongfa-list');g.sandbox.XUI.wheel(v.x+40,v.y+100,100);g.render();
+    const v=g.scrollViews.get('gongfa-list');const target=g.uiControls.get('gf-4');g.sandbox.XUI.wheel(v.x+40,v.y+100,(target.y-v.y-30)/3);g.render();
     const row=g.uiControls.get('gf-4'),off=g.scrollViews.get('gongfa-list').state.off;
     pointerClick(g,row.x+row.w/2,row.y-off+row.h/2);assert.equal(g.state().gf[4],1);
   }

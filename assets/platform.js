@@ -60,13 +60,29 @@ var XP = (function () {
       });
     }
     if (typeof window !== 'undefined') {
-      vw = window.innerWidth || vw;
-      vh = window.innerHeight || vh;
-      window.addEventListener('resize', function () {
-        vw = window.innerWidth || vw;
-        vh = window.innerHeight || vh;
-        _fire(resizeCbs);
-      });
+      function readWebViewport() {
+        var vv = window.visualViewport;
+        vw = (vv && vv.width) || window.innerWidth || vw;
+        vh = (vv && vv.height) || window.innerHeight || vh;
+        // env() follows browser chrome, display cutouts and gesture navigation.
+        if (document.body && window.getComputedStyle) {
+          var probe = document.createElement('div');
+          probe.style.cssText = 'position:fixed;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)';
+          document.body.appendChild(probe);
+          var style = window.getComputedStyle(probe);
+          safeTop = parseFloat(style.paddingTop) || 0;
+          safeBottom = parseFloat(style.paddingBottom) || 0;
+          probe.remove();
+        }
+        if (typeof location !== 'undefined' && location.search) {
+          var top = location.search.match(/[?&]top=(\d+)/);
+          if (top) safeTop = Math.max(safeTop, parseInt(top[1], 10) || 0);
+        }
+      }
+      readWebViewport();
+      function onWebResize() { readWebViewport(); _fire(resizeCbs); }
+      window.addEventListener('resize', onWebResize);
+      if (window.visualViewport) window.visualViewport.addEventListener('resize', onWebResize);
     }
     /* URL ?top=NN 可强制下移 HUD（小红书容器内嵌时用） */
     if (typeof location !== 'undefined' && location.search) {
@@ -218,8 +234,8 @@ var XP = (function () {
     dpr: dpr,
     get vw() { return vw; },
     get vh() { return vh; },
-    safeTop: safeTop,
-    safeBottom: safeBottom,
+    get safeTop() { return safeTop; },
+    get safeBottom() { return safeBottom; },
     applyDpr: applyDpr,
     storageGet: storageGet,
     storageSet: storageSet,
