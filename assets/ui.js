@@ -304,7 +304,10 @@ var XUI = (function () {
     ctx.fill();
     var f = Math.max(0, Math.min(1, frac));
     if (f > 0) {
-      XD.roundRectPath(ctx, x + 1.5, y + 1.5, Math.max(h - 3, (w - 3) * f), h - 3, (h - 3) / 2);
+      // A native-sized thin bar can be <3 logical units in landscape.
+      // Canvas arcTo rejects negative radii; retain a positive inner track.
+      var inset = Math.min(1.5, h / 4), innerH = h - inset * 2;
+      XD.roundRectPath(ctx, x + inset, y + inset, Math.max(innerH, (w - inset * 2) * f), innerH, innerH / 2);
       ctx.fillStyle = opt.fill || C.gold;
       ctx.fill();
     }

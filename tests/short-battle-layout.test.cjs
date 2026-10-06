@@ -44,3 +44,16 @@ test('smallest landscape keeps live split and charge warnings inside the enemy s
   const detail=g.uiTexts.find(t=>String(t.text).includes(type==='mirrorfox'?'烈影增伤':'按住破招'));assert.ok(detail);ctx.font=detail.opt.size+'px sans-serif';assert.ok(ctx.measureText(detail.text).width*l.scale<=r.w-12+1e-6);assert.ok(detail.opt.size*l.scale>=14-1e-6);
  }
 });
+
+test('thin native bars retain valid arc radii at fractional logical heights',()=>{
+ const g=createGame({width:844,height:390});g.render();const u=g.sandbox.XUI;
+ for(const h of [.1,.5,1,2,3/g.api.layout().scale,3,4,18])for(const fraction of [0,.01,.5,1])assert.doesNotThrow(()=>u.bar(0,0,100,h,fraction));
+});
+test('live landscape details opens, scrolls, closes and returns to battle without any rendering error',()=>{
+ for(const[w,h]of[[844,390],[1000,500],[1180,480]]){
+  const g=combat(w,h);g.api.setMonsterForTest('shanxiao',100000);g.render();tap(g,'compact-more');assert.equal(g.state().modal,'navigation');
+  for(let i=0;i<10;i++)g.frame(1000/60);assert.deepEqual(Array.from(g.state().errs),[]);assert.ok(g.uiTexts.some(t=>t.text==='面板与详情'));assert.ok(g.uiControls.has('compact-back'));
+  const v=g.scrollViews.get('mobile-navigation-body');g.sandbox.XUI.wheel(v.x+10,v.y+10,120);g.render();tap(g,'compact-back');assert.equal(g.state().modal,null);assert.equal(g.state().mode,'tower');
+  tap(g,'compact-encounters');assert.equal(g.state().modal,'encounters');g.render();tap(g,'compact-back');assert.equal(g.state().modal,null);assert.deepEqual(Array.from(g.state().errs),[]);
+ }
+});

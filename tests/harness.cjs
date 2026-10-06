@@ -20,6 +20,9 @@ function createGame(options = {}) {
   const noop = () => {};
   const gradient = { addColorStop: noop };
   const context = new Proxy({
+    // Canvas's native arcTo contract: a negative radius throws, unlike a no-op.
+    // https://html.spec.whatwg.org/multipage/canvas.html#dom-context-2d-arcto
+    arcTo: (...args)=>{if(args.every(Number.isFinite)&&args[4]<0)throw new DOMException('Negative arc radius','IndexSizeError');},
     drawImage: (...args)=>imageDraws.push(args),
     measureText: function (text) { const size = parseFloat(String(this.font || '24px').match(/([\d.]+)px/)[1]); return {width: Array.from(String(text)).reduce((n,c)=>n+(c.charCodeAt(0)>255?1:.55)*size,0)}; },
     createLinearGradient: () => gradient, createRadialGradient: () => gradient,
