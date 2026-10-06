@@ -14,12 +14,13 @@ python3 -m http.server 8000
 需要 Node.js 20+，没有第三方测试依赖：
 
 ```sh
-node scripts/check.cjs # 所有生产脚本语法检查 + 140项单进程回归测试
+node scripts/check.cjs # 所有生产脚本语法检查 + 151项单进程回归测试
 node scripts/characterize.cjs
 node scripts/simulate.cjs --seconds=3600 --policy=active
 node scripts/balance-matrix.cjs # 40次模拟，单进程，可能需要数分钟
 node scripts/rebirth-study.cjs # 完整首世、配对轮回与无机缘/纯闭关测试
 node scripts/session-study.cjs # 渲染节奏、24小时上限和重复归来测试
+node scripts/text-layout-study.cjs # 有界换行缓存与未缓存布局的输出/调用对照
 ```
 
 测试加载真实 production 脚本，使用确定性随机数、模拟时间、Canvas 空实现；验证核心游戏行为与存档兼容性，**不代表浏览器视觉/输入验收**。
@@ -48,3 +49,7 @@ node scripts/session-study.cjs # 渲染节奏、24小时上限和重复归来测
 ## 温养与闯关
 
 温养是已通关五层的循环积累模式，不会自动推进新层；面板会显示具体循环区间与保留的闯关进度。要继续推进，可直接点「返回闯关」，或先归山养息再点「闯关」。当前气血与存档进度都会保留。[进度说明](docs/temper-mode.md)。
+
+## 文本布局性能
+
+界面复用相同字体、文本和宽度的换行结果，缓存有容量/文本长度/总量限制，并在字体加载与resize时失效。模拟对照中重复测量调用减少98.33%，文字绘制输出及游戏状态保持一致；这不是手机FPS实测。[方法与边界](docs/text-layout-performance.md)。

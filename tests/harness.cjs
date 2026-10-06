@@ -13,7 +13,7 @@ function createGame(options = {}) {
   let seed = options.seed || 42;
   let frameCallback=null,rafTime=1;
   const downloads=[],objectUrls=new Map(),timers=[],images=[],imageDraws=[];
-  const listeners={},canvasListeners={},viewportListeners={};
+  const listeners={},canvasListeners={},viewportListeners={},fontListeners={},fontReady=[];
   const listen = target => (name,fn) => { (target[name] ||= []).push(fn); };
   const math = Object.create(Math);
   math.random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
@@ -31,9 +31,10 @@ function createGame(options = {}) {
     setTimeout: options.downloads ? fn=>{timers.push(fn);} : noop, clearTimeout: noop, requestAnimationFrame: cb => { frameCallback=cb; },
     innerWidth: options.width || 375, innerHeight: options.height || 667, devicePixelRatio: 1,
     addEventListener: listen(listeners), navigator: {}, location: { search: '' },
-    document: { getElementById: () => canvas, createElement: () => canvas, addEventListener: noop },
+    document: { documentElement: {lang:'zh-CN',dir:'ltr'}, getElementById: () => canvas, createElement: () => canvas, addEventListener: noop },
     localStorage: { getItem: k => storage.get(k) || null, setItem: (k, v) => { if(storageFailure&&storageFailure(k,v))throw new Error('QuotaExceededError'); storage.set(k, v); }, removeItem: k => storage.delete(k) },
   };
+  if(options.fonts) sandbox.document.fonts={status:'loaded',addEventListener:listen(fontListeners),ready:{then:fn=>{fontReady.push(fn);}}};
   if(options.downloads) {
     sandbox.Blob=Blob;
     sandbox.URL={createObjectURL:blob=>{const url='blob:test-'+(objectUrls.size+1);objectUrls.set(url,blob);return url;},revokeObjectURL:url=>objectUrls.delete(url)};
@@ -71,6 +72,8 @@ function createGame(options = {}) {
   sandbox.XUI.scrollArea=(id,x,y,w,h,contentH)=>{const state=originalScroll(id,x,y,w,h,contentH);scrollViews.set(id,{x,y,w,h,state});return state;};
   const api = sandbox.__test;
   return {
+    fontEvent: name => (fontListeners[name]||[]).forEach(fn=>fn()),
+    fontsReady: () => {while(fontReady.length)fontReady.shift()();},
     images, imageDraws,
     downloads, flushTimers: () => {while(timers.length)timers.shift()();}, objectUrls,
     failWrites: predicate => {storageFailure=predicate;},

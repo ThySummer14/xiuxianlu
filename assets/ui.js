@@ -148,6 +148,7 @@ var XUI = (function () {
    * 帧流程
    * ============================================================ */
   function beginFrame(c, dt) {
+    if (ctx !== c) clearTextLayoutCache();
     ctx = c;
     nowT += (typeof dt === 'number' && dt > 0 && dt < 1) ? dt : 0.016;
     frameTaps = taps.splice(0, taps.length);
@@ -225,8 +226,50 @@ var XUI = (function () {
     return ctx.measureText(str).width;
   }
 
+  // Cache only line layout, never pixels, time, prices or game state.
+  var TEXT_CACHE_LIMIT = 128;
+  var TEXT_CACHE_MAX_LENGTH = 2048;
+  var TEXT_CACHE_BUDGET = 32768;
+  var textLayouts = new Map();
+  var textLayoutUnits = 0;
+  function clearTextLayoutCache() { textLayouts.clear(); textLayoutUnits = 0; }
+  function textCacheInfo() {
+    return {entries: textLayouts.size, units: textLayoutUnits, limit: TEXT_CACHE_LIMIT,
+      maxTextLength: TEXT_CACHE_MAX_LENGTH, budget: TEXT_CACHE_BUDGET};
+  }
+  function textLayoutKey(str, maxW) {
+    function prop(object, key) { var value = object && object[key]; return typeof value === 'string' ? value : ''; }
+    var root = typeof document !== 'undefined' ? document.documentElement : null;
+    // Transform, color, alignment and baseline do not change measured line width.
+    return JSON.stringify([ctx.font, str, maxW, prop(ctx, 'direction'), prop(ctx, 'fontKerning'),
+      prop(ctx, 'fontStretch'), prop(ctx, 'fontVariantCaps'), prop(ctx, 'letterSpacing'),
+      prop(ctx, 'wordSpacing'), prop(ctx, 'textRendering'), prop(ctx, 'lang'),
+      prop(ctx.canvas, 'lang'), prop(ctx.canvas, 'dir'), prop(root, 'lang'), prop(root, 'dir')]);
+  }
+  if (typeof document !== 'undefined' && document.fonts) {
+    if (typeof document.fonts.addEventListener === 'function') {
+      document.fonts.addEventListener('loading', clearTextLayoutCache);
+      document.fonts.addEventListener('loadingdone', clearTextLayoutCache);
+      document.fonts.addEventListener('loadingerror', clearTextLayoutCache);
+    }
+    if (document.fonts.ready && typeof document.fonts.ready.then === 'function')
+      document.fonts.ready.then(clearTextLayoutCache, clearTextLayoutCache);
+  }
+
+  function fontsLoading() {
+    return typeof document !== 'undefined' && document.fonts && document.fonts.status === 'loading';
+  }
+
   function wrap(str, maxW, size, noSerif, weight) {
     ctx.font = noSerif ? fSans(size, weight) : fSerif(size, weight);
+    var canCache = typeof str === 'string' && str.length <= TEXT_CACHE_MAX_LENGTH &&
+      typeof maxW === 'number' && isFinite(maxW) && maxW > 0 && !fontsLoading();
+    var key = canCache ? textLayoutKey(str, maxW) : null;
+    if (key !== null && textLayouts.has(key)) {
+      var hit = textLayouts.get(key);
+      textLayouts.delete(key); textLayouts.set(key, hit); // Least-recently-used eviction.
+      return hit.lines.slice(); // Preserve the old API's independently mutable results.
+    }
     var lines = [];
     var cur = '';
     for (var i = 0; i < str.length; i++) {
@@ -240,6 +283,17 @@ var XUI = (function () {
       }
     }
     if (cur) lines.push(cur);
+    if (key !== null && !fontsLoading()) {
+      // Account for both source/key text and line-array overhead; not an unbounded log.
+      var units = key.length + str.length + lines.length * 4;
+      if (units <= TEXT_CACHE_BUDGET) {
+        while (textLayouts.size && (textLayouts.size >= TEXT_CACHE_LIMIT || textLayoutUnits + units > TEXT_CACHE_BUDGET)) {
+          var oldest = textLayouts.keys().next().value;
+          textLayoutUnits -= textLayouts.get(oldest).units; textLayouts.delete(oldest);
+        }
+        textLayouts.set(key, {lines: lines.slice(), units: units}); textLayoutUnits += units;
+      }
+    }
     return lines;
   }
 
@@ -384,7 +438,7 @@ var XUI = (function () {
 
   /* ---------- Toast（贴底部面板上方，不挡主视野） ---------- */
   var viewH = 1334;
-  function setViewSize(w, h) { viewH = h; }
+  function setViewSize(w, h) { viewH = h; clearTextLayoutCache(); }
   var toastTop = 834, toastSize = 21;
   function setToastLayout(top, size) { toastTop = top; toastSize = size; }
   var toasts = [];   /* {txt, t, born} */
@@ -436,6 +490,7 @@ var XUI = (function () {
     text: text,
     textW: textW,
     wrap: wrap,
+    clearTextLayoutCache: clearTextLayoutCache, textCacheInfo: textCacheInfo,
     bar: bar,
     button: button,
     chip: chip,
