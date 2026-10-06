@@ -36,3 +36,19 @@ This asset does not contain gameplay affordances. Keep hit targets and numeric s
 - The generated and compressed image itself was inspected. The underlying hotfixed mobile interface passed cloud Chromium narrow-window mouse and screenshot checks. The composed illustration still needs a separate rendered review after this release; no physical-phone testing is claimed.
 
 - Integrated on top of Android hotfix43d8e9be. The pointerdown/move/up/cancel/leave handler block is byte-identical to that hotfix. Image success/failure during an active touch cannot change hitbox geometry, capture input, or clear its queued tap.
+
+## Stone-armored Shanxiao, v2
+
+- Asset: `assets/art/shanxiao-stone-v2.webp`,768×702 RGBA,152,284 bytes (about149KiB).
+- Original built-in image generation; no external/franchise reference. A second built-in edit retained the same design while repairing tight hand/foot framing. Final source alpha bounds were(65,33)–(1274,1159) inside1312×1199, so all extremities are inside the image. Both generated versions were inspected; final sprite retains real alpha0–255. Pillow only resized and encoded the selected image to WebP.
+- Visual role: native monster rendering replaces only the山魈 silhouette with this illustration after successful loading. The existing silhouette stays as an error/loading fallback. Warning text, countdown, health and input remain separate Canvas logic.
+
+### Initial prompt
+
+Use case: stylized-concept. Asset type: one original full-body enemy sprite for a Chinese cultivation fantasy Canvas game, intended to be placed on a pale mist landscape. Subject: a formidable mountain spirit called Zhenyue Shanxiao, a stocky non-human ape-like forest demon with weathered slate-and-jade stone plates across its shoulders and forearms, coarse charcoal fur, expressive amber eyes, two short worn stone brow ridges, powerful grounded limbs. It is raising one heavy fist while bracing with the other in a clearly readable anticipatory stance, preparing a slow earth-shaking strike. Refined Chinese ink outlines and restrained mineral pigments, nuanced hand-painted dry-brush stone and fur texture, jade/indigo/charcoal palette with tiny warm cinnabar accents. Three-quarter front view; complete body including head, both hands and both feet visible; compact readable silhouette; no cropped extremities. Match an elegant ivory-parchment, ink-and-mineral landscape game, not photorealism, not glossy 3D, not generic chibi cartoon. Genuine transparent background, isolated creature only. No ground, environment, cast shadow, dust cloud, particles, halo, frame, text, calligraphy, letters, numbers, logos, UI or watermark. Leave a modest transparent margin around the creature. Original creature design, no franchise imitation.
+
+### Framing edit prompt
+
+Refine this production enemy sprite non-destructively. Preserve the exact creature design, face, mineral-painted ink style, raised-fist pose, colors, armor, fur and four limbs. Extend the framing so the entire creature is comfortably inside the canvas with at least8% fully transparent margin on every side, especially below both feet and outside the hands. Repair only any tiny cropped edge of a foot/hand as needed. Keep a genuine transparent background. No ground/shadow, added objects, text, border, halo or UI. Do not change the pose or turn it into a different creature.
+
+The actual final margins are recorded above; the generated result did not meet the requested8% uniformly, but it did restore complete, uncropped limbs.

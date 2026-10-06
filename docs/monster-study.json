@@ -1,0 +1,702 @@
+{
+  "baseline": "36626d3556f44ff01c655e302d34f934448ee4e2",
+  "notes": [
+    "Actual HP/attack/player stats; one controlled Shanxiao encounter, 20 RNG seeds per case.",
+    "Boss case forces the Shanxiao species onto real floor20 boss stats; it is a mechanics fixture, not a promised spawn.",
+    "Steady input is2 clicks/second; reactive input only supplies3 comfortably spaced hits during the warning.",
+    "Ward-idle starts with the one-off encounter reward of2 talismans; not available on every run.",
+    "First enemy only; these numbers are combat evidence, not a complete campaign balance claim."
+  ],
+  "results": [
+    {
+      "fixture": {
+        "name": "first Shanxiao",
+        "floor": 6,
+        "S": 0,
+        "sj": 0,
+        "ss": 0
+      },
+      "policy": "idle",
+      "before": {
+        "wins": 0,
+        "n": 20,
+        "seconds": {
+          "p10": 12.15,
+          "median": 12.15,
+          "p90": 12.15
+        },
+        "healthLoss": {
+          "p10": 120,
+          "median": 120,
+          "p90": 120
+        },
+        "medianHits": 0,
+        "medianInterruptions": 0
+      },
+      "after": {
+        "wins": 0,
+        "n": 20,
+        "seconds": {
+          "p10": 17.2,
+          "median": 17.2,
+          "p90": 17.2
+        },
+        "healthLoss": {
+          "p10": 120,
+          "median": 120,
+          "p90": 120
+        },
+        "medianHits": 0,
+        "medianInterruptions": 0
+      }
+    },
+    {
+      "fixture": {
+        "name": "first Shanxiao",
+        "floor": 6,
+        "S": 0,
+        "sj": 0,
+        "ss": 0
+      },
+      "policy": "steady-2hz",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 2.05,
+          "median": 2.55,
+          "p90": 4.55
+        },
+        "healthLoss": {
+          "p10": 14,
+          "median": 14,
+          "p90": 42
+        },
+        "medianHits": 5,
+        "medianInterruptions": 0
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 2.05,
+          "median": 2.55,
+          "p90": 4.55
+        },
+        "healthLoss": {
+          "p10": 14,
+          "median": 14,
+          "p90": 28
+        },
+        "medianHits": 5,
+        "medianInterruptions": 0
+      }
+    },
+    {
+      "fixture": {
+        "name": "first Shanxiao",
+        "floor": 6,
+        "S": 0,
+        "sj": 0,
+        "ss": 0
+      },
+      "policy": "reactive",
+      "before": null,
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 5.55,
+          "median": 11.55,
+          "p90": 12.05
+        },
+        "healthLoss": {
+          "p10": 28,
+          "median": 56,
+          "p90": 56
+        },
+        "medianHits": 4,
+        "medianInterruptions": 1
+      }
+    },
+    {
+      "fixture": {
+        "name": "first Shanxiao",
+        "floor": 6,
+        "S": 0,
+        "sj": 0,
+        "ss": 0
+      },
+      "policy": "ward-idle",
+      "before": null,
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 21.4,
+          "median": 21.4,
+          "p90": 21.4
+        },
+        "healthLoss": {
+          "p10": 84,
+          "median": 84,
+          "p90": 84
+        },
+        "medianHits": 0,
+        "medianInterruptions": 0
+      }
+    },
+    {
+      "fixture": {
+        "name": "next-floor lesson",
+        "floor": 7,
+        "S": 0,
+        "sj": 1,
+        "ss": 1
+      },
+      "policy": "idle",
+      "before": {
+        "wins": 0,
+        "n": 20,
+        "seconds": {
+          "p10": 10.8,
+          "median": 10.8,
+          "p90": 10.8
+        },
+        "healthLoss": {
+          "p10": 120,
+          "median": 120,
+          "p90": 120
+        },
+        "medianHits": 0,
+        "medianInterruptions": 0
+      },
+      "after": {
+        "wins": 0,
+        "n": 20,
+        "seconds": {
+          "p10": 14.5,
+          "median": 14.5,
+          "p90": 14.5
+        },
+        "healthLoss": {
+          "p10": 120,
+          "median": 120,
+          "p90": 120
+        },
+        "medianHits": 0,
+        "medianInterruptions": 0
+      }
+    },
+    {
+      "fixture": {
+        "name": "next-floor lesson",
+        "floor": 7,
+        "S": 0,
+        "sj": 1,
+        "ss": 1
+      },
+      "policy": "steady-2hz",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 2.05,
+          "median": 2.55,
+          "p90": 4.55
+        },
+        "healthLoss": {
+          "p10": 17,
+          "median": 17,
+          "p90": 51
+        },
+        "medianHits": 5,
+        "medianInterruptions": 0
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 2.05,
+          "median": 2.55,
+          "p90": 4.55
+        },
+        "healthLoss": {
+          "p10": 17,
+          "median": 17,
+          "p90": 34
+        },
+        "medianHits": 5,
+        "medianInterruptions": 0
+      }
+    },
+    {
+      "fixture": {
+        "name": "next-floor lesson",
+        "floor": 7,
+        "S": 0,
+        "sj": 1,
+        "ss": 1
+      },
+      "policy": "reactive",
+      "before": null,
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 5.55,
+          "median": 11.55,
+          "p90": 12.05
+        },
+        "healthLoss": {
+          "p10": 34,
+          "median": 68,
+          "p90": 68
+        },
+        "medianHits": 4,
+        "medianInterruptions": 1
+      }
+    },
+    {
+      "fixture": {
+        "name": "next-floor lesson",
+        "floor": 7,
+        "S": 0,
+        "sj": 1,
+        "ss": 1
+      },
+      "policy": "ward-idle",
+      "before": null,
+      "after": {
+        "wins": 0,
+        "n": 20,
+        "seconds": {
+          "p10": 21.75,
+          "median": 21.75,
+          "p90": 21.75
+        },
+        "healthLoss": {
+          "p10": 120,
+          "median": 120,
+          "p90": 120
+        },
+        "medianHits": 0,
+        "medianInterruptions": 0
+      }
+    },
+    {
+      "fixture": {
+        "name": "established cultivator",
+        "floor": 12,
+        "S": 4,
+        "sj": 4,
+        "ss": 4
+      },
+      "policy": "idle",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 8.25,
+          "median": 8.25,
+          "p90": 8.25
+        },
+        "healthLoss": {
+          "p10": 204,
+          "median": 204,
+          "p90": 204
+        },
+        "medianHits": 0,
+        "medianInterruptions": 0
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 8.25,
+          "median": 8.25,
+          "p90": 8.25
+        },
+        "healthLoss": {
+          "p10": 122.4,
+          "median": 122.4,
+          "p90": 122.4
+        },
+        "medianHits": 0,
+        "medianInterruptions": 0
+      }
+    },
+    {
+      "fixture": {
+        "name": "established cultivator",
+        "floor": 12,
+        "S": 4,
+        "sj": 4,
+        "ss": 4
+      },
+      "policy": "steady-2hz",
+      "before": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 0.55,
+          "median": 2.05,
+          "p90": 2.05
+        },
+        "healthLoss": {
+          "p10": 0,
+          "median": 34,
+          "p90": 34
+        },
+        "medianHits": 4,
+        "medianInterruptions": 0
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 0.55,
+          "median": 2.05,
+          "p90": 2.05
+        },
+        "healthLoss": {
+          "p10": 0,
+          "median": 34,
+          "p90": 34
+        },
+        "medianHits": 4,
+        "medianInterruptions": 0
+      }
+    },
+    {
+      "fixture": {
+        "name": "established cultivator",
+        "floor": 12,
+        "S": 4,
+        "sj": 4,
+        "ss": 4
+      },
+      "policy": "reactive",
+      "before": null,
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 4.55,
+          "median": 5.05,
+          "p90": 5.05
+        },
+        "healthLoss": {
+          "p10": 68,
+          "median": 68,
+          "p90": 68
+        },
+        "medianHits": 2,
+        "medianInterruptions": 0
+      }
+    },
+    {
+      "fixture": {
+        "name": "established cultivator",
+        "floor": 12,
+        "S": 4,
+        "sj": 4,
+        "ss": 4
+      },
+      "policy": "ward-idle",
+      "before": null,
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 8.25,
+          "median": 8.25,
+          "p90": 8.25
+        },
+        "healthLoss": {
+          "p10": 68,
+          "median": 68,
+          "p90": 68
+        },
+        "medianHits": 0,
+        "medianInterruptions": 0
+      }
+    },
+    {
+      "fixture": {
+        "name": "controlled boss Shanxiao",
+        "floor": 20,
+        "S": 8,
+        "sj": 8,
+        "ss": 8
+      },
+      "policy": "idle",
+      "before": {
+        "wins": 0,
+        "n": 20,
+        "seconds": {
+          "p10": 4.4,
+          "median": 4.4,
+          "p90": 4.4
+        },
+        "healthLoss": {
+          "p10": 979,
+          "median": 979,
+          "p90": 979
+        },
+        "medianHits": 0,
+        "medianInterruptions": 0
+      },
+      "after": {
+        "wins": 0,
+        "n": 20,
+        "seconds": {
+          "p10": 7.55,
+          "median": 7.55,
+          "p90": 7.55
+        },
+        "healthLoss": {
+          "p10": 979,
+          "median": 979,
+          "p90": 979
+        },
+        "medianHits": 0,
+        "medianInterruptions": 0
+      }
+    },
+    {
+      "fixture": {
+        "name": "controlled boss Shanxiao",
+        "floor": 20,
+        "S": 8,
+        "sj": 8,
+        "ss": 8
+      },
+      "policy": "steady-2hz",
+      "before": {
+        "wins": 4,
+        "n": 20,
+        "seconds": {
+          "p10": 2.55,
+          "median": 4.4,
+          "p90": 4.4
+        },
+        "healthLoss": {
+          "p10": 540,
+          "median": 979,
+          "p90": 979
+        },
+        "medianHits": 8,
+        "medianInterruptions": 0
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 2.55,
+          "median": 4.55,
+          "p90": 6.05
+        },
+        "healthLoss": {
+          "p10": 540,
+          "median": 540,
+          "p90": 540
+        },
+        "medianHits": 9,
+        "medianInterruptions": 1
+      }
+    },
+    {
+      "fixture": {
+        "name": "controlled boss Shanxiao",
+        "floor": 20,
+        "S": 8,
+        "sj": 8,
+        "ss": 8
+      },
+      "policy": "reactive",
+      "before": null,
+      "after": {
+        "wins": 0,
+        "n": 20,
+        "seconds": {
+          "p10": 8.2,
+          "median": 8.2,
+          "p90": 8.2
+        },
+        "healthLoss": {
+          "p10": 979,
+          "median": 979,
+          "p90": 979
+        },
+        "medianHits": 3,
+        "medianInterruptions": 1
+      }
+    },
+    {
+      "fixture": {
+        "name": "controlled boss Shanxiao",
+        "floor": 20,
+        "S": 8,
+        "sj": 8,
+        "ss": 8
+      },
+      "policy": "ward-idle",
+      "before": null,
+      "after": {
+        "wins": 0,
+        "n": 20,
+        "seconds": {
+          "p10": 8.65,
+          "median": 8.65,
+          "p90": 8.65
+        },
+        "healthLoss": {
+          "p10": 979,
+          "median": 979,
+          "p90": 979
+        },
+        "medianHits": 0,
+        "medianInterruptions": 0
+      }
+    },
+    {
+      "fixture": {
+        "name": "first natural Shanxiao boss",
+        "floor": 40,
+        "S": 18,
+        "sj": 16,
+        "ss": 16
+      },
+      "policy": "idle",
+      "before": {
+        "wins": 0,
+        "n": 20,
+        "seconds": {
+          "p10": 3.3,
+          "median": 3.3,
+          "p90": 3.3
+        },
+        "healthLoss": {
+          "p10": 13495,
+          "median": 13495,
+          "p90": 13495
+        },
+        "medianHits": 0,
+        "medianInterruptions": 0
+      },
+      "after": {
+        "wins": 0,
+        "n": 20,
+        "seconds": {
+          "p10": 6.45,
+          "median": 6.45,
+          "p90": 6.45
+        },
+        "healthLoss": {
+          "p10": 13495,
+          "median": 13495,
+          "p90": 13495
+        },
+        "medianHits": 0,
+        "medianInterruptions": 0
+      }
+    },
+    {
+      "fixture": {
+        "name": "first natural Shanxiao boss",
+        "floor": 40,
+        "S": 18,
+        "sj": 16,
+        "ss": 16
+      },
+      "policy": "steady-2hz",
+      "before": {
+        "wins": 10,
+        "n": 20,
+        "seconds": {
+          "p10": 1.55,
+          "median": 2.05,
+          "p90": 3.3
+        },
+        "healthLoss": {
+          "p10": 4828,
+          "median": 4828,
+          "p90": 13495
+        },
+        "medianHits": 4,
+        "medianInterruptions": 0
+      },
+      "after": {
+        "wins": 20,
+        "n": 20,
+        "seconds": {
+          "p10": 1.55,
+          "median": 2.05,
+          "p90": 3.55
+        },
+        "healthLoss": {
+          "p10": 4828,
+          "median": 4828,
+          "p90": 9656
+        },
+        "medianHits": 4,
+        "medianInterruptions": 0
+      }
+    },
+    {
+      "fixture": {
+        "name": "first natural Shanxiao boss",
+        "floor": 40,
+        "S": 18,
+        "sj": 16,
+        "ss": 16
+      },
+      "policy": "reactive",
+      "before": null,
+      "after": {
+        "wins": 5,
+        "n": 20,
+        "seconds": {
+          "p10": 4.05,
+          "median": 7.1,
+          "p90": 7.1
+        },
+        "healthLoss": {
+          "p10": 9656,
+          "median": 13495,
+          "p90": 13495
+        },
+        "medianHits": 3,
+        "medianInterruptions": 1
+      }
+    },
+    {
+      "fixture": {
+        "name": "first natural Shanxiao boss",
+        "floor": 40,
+        "S": 18,
+        "sj": 16,
+        "ss": 16
+      },
+      "policy": "ward-idle",
+      "before": null,
+      "after": {
+        "wins": 0,
+        "n": 20,
+        "seconds": {
+          "p10": 7.55,
+          "median": 7.55,
+          "p90": 7.55
+        },
+        "healthLoss": {
+          "p10": 13495,
+          "median": 13495,
+          "p90": 13495
+        },
+        "medianHits": 0,
+        "medianInterruptions": 0
+      }
+    }
+  ]
+}

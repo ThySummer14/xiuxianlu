@@ -44,6 +44,18 @@ var XD = (function () {
     ctx.restore(); return true;
   }
 
+  var shanxiaoArt = null, shanxiaoReady = false;
+  try {
+    if (typeof wx !== 'undefined' && wx.createImage) shanxiaoArt = wx.createImage();
+    else if (typeof Image !== 'undefined') shanxiaoArt = new Image();
+    if (shanxiaoArt) {
+      shanxiaoArt.decoding = 'async';
+      shanxiaoArt.onload = function () { shanxiaoReady = (shanxiaoArt.naturalWidth || shanxiaoArt.width) > 0; };
+      shanxiaoArt.onerror = function () { shanxiaoReady = false; };
+      shanxiaoArt.src = 'assets/art/shanxiao-stone-v2.webp';
+    }
+  } catch (e) { shanxiaoReady = false; }
+
   /* ---------- 伪随机 ---------- */
   function srand(seed) {
     var x = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
@@ -569,9 +581,15 @@ var XD = (function () {
 
     /* 剪影本体 */
     var fn = MON_DRAWERS[m.type] || drawFox;
-    fn(ctx, 1, srand(Math.floor(t * 10) + m.seed) * 4 - 2, t);
-    /* 朱红眼 */
-    var eyes = MON_EYES[m.type] || [];
+    var illustrated = m.type === 'shanxiao' && shanxiaoReady;
+    if (illustrated) {
+      var iw = shanxiaoArt.naturalWidth || shanxiaoArt.width, ih = shanxiaoArt.naturalHeight || shanxiaoArt.height;
+      var artH = 345, artW = artH * iw / ih;
+      var lean = m.intent && m.intent.phase === 'charging' ? -0.035 * Math.sin(t * 8) : 0;
+      ctx.rotate(lean); ctx.drawImage(shanxiaoArt, -artW / 2, -artH, artW, artH);
+    } else fn(ctx, 1, srand(Math.floor(t * 10) + m.seed) * 4 - 2, t);
+    /* 朱红眼（原生剪影回退） */
+    var eyes = illustrated ? [] : MON_EYES[m.type] || [];
     for (var ei = 0; ei < eyes.length; ei++) {
       var e = eyes[ei];
       eyeRed(ctx, e.x, e.y, e.r, e.slit);
@@ -1243,7 +1261,7 @@ var XD = (function () {
     setView: setView,
     bandOf: bandOf,
     drawBackground: drawBackground,
-    artStatus: function () { return {ready: sanctuaryReady, failed: sanctuaryFailed}; },
+    artStatus: function () { return {ready: sanctuaryReady, failed: sanctuaryFailed, monsterReady: shanxiaoReady}; },
     drawMonster: drawMonster,
     drawSlash: drawSlash,
     drawSmoke: drawSmoke,

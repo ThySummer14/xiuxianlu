@@ -14,7 +14,7 @@ python3 -m http.server 8000
 需要 Node.js 20+，没有第三方测试依赖：
 
 ```sh
-node scripts/check.cjs # 所有生产脚本语法检查 + 113项单进程回归测试
+node scripts/check.cjs # 所有生产脚本语法检查 + 129项单进程回归测试
 node scripts/characterize.cjs
 node scripts/simulate.cjs --seconds=3600 --policy=active
 node scripts/balance-matrix.cjs # 40次模拟，单进程，可能需要数分钟
@@ -40,3 +40,7 @@ node scripts/session-study.cjs # 渲染节奏、24小时上限和重复归来测
 360 / 390 / 430px 宽与 360×480 短屏有独立布局；主要操作至少 44 CSS px，列表和弹窗可滑动，关闭/确认按钮留在安全区。旋转或切换后台会取消未完成手势，避免误购。浏览器视觉验收记录见[手机适配说明](docs/mobile-ui.md)。
 
 首批原创生图已用于炼气至金丹的山门环境：257KiB WebP 异步加载，失败时自动回到程序化背景。其余境界保留不同原生场景；所有数值和按钮继续原生绘制。[美术方向与提示词](docs/art-direction.md)。
+
+## 猎妖见闻
+
+魔窟第6层起，山魈的第三击改为3.2秒蓄势。挥剑3次可打断并制造1.5秒破绽，也可归山。魔窟面板下方的「猎妖见闻」提供护山符/领悟的备战选择，破招后可复命，奖励不可重复领取。玩法与数值对照见[山魈与见闻设计](docs/combat-encounters.md)。

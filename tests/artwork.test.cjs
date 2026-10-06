@@ -3,17 +3,17 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const {createGame}=require('./harness.cjs');
 test('optional sanctuary loads once, renders at preserved aspect, and leaves game state untouched',()=>{
   const g=createGame({images:true,width:360,height:800,save:{S:0,stones:500}}),before=g.state();
-  assert.equal(g.images.length,1);assert.equal(g.images[0].url,'assets/art/sanctuary-dawn-v1.webp');
+  assert.equal(g.images.length,2);assert.equal(g.images[0].url,'assets/art/sanctuary-dawn-v1.webp');
   assert.equal(g.sandbox.XD.artStatus().ready,false);g.images[0].onload();g.render();
   assert.equal(g.sandbox.XD.artStatus().ready,true);assert.ok(g.imageDraws.length>0);
   const [,x,y,w,h]=g.imageDraws.at(-1);assert.ok(Number.isFinite(x)&&Number.isFinite(y));assert.equal(w/h,1024/1536);
   for(const key of ['S','stones','exp','tn','ph','dj'])assert.equal(g.state()[key],before[key]);
-  g.resize(390,480);assert.equal(g.images.length,1);
+  g.resize(390,480);assert.equal(g.images.length,2);
 });
 test('blocked or unsupported artwork keeps the procedural game playable without retry storms',()=>{
   const g=createGame({images:true,save:{stones:500}});g.images[0].onerror();g.render();
   assert.equal(g.sandbox.XD.artStatus().failed,true);assert.equal(g.imageDraws.length,0);g.api.buy('sj');assert.equal(g.state().sj,1);
-  for(let i=0;i<30;i++)g.render();assert.equal(g.images.length,1);
+  for(let i=0;i<30;i++)g.render();assert.equal(g.images.length,2);
   const noImage=createGame();noImage.render();assert.equal(noImage.state().errs.length,0);
 });
 test('later realm scenery retains its distinct native progression background',()=>{
@@ -41,5 +41,5 @@ for(const outcome of ['onload','onerror'])test(`art ${outcome} during touch leav
  g.images[0][outcome]();g.uiControls.clear();g.render();assert.equal(geometry(),before);
  g.canvasEvent('pointerup',e);g.canvasEvent('pointerleave',e);g.frame(16);g.frame(16);assert.equal(g.state().scene,'play');
  g.api.closeModal();g.render();const buy=physicalEvent(g,'buy-sj');g.canvasEvent('pointerdown',buy);g.canvasEvent('pointerup',buy);g.canvasEvent('pointerleave',buy);g.frame(16);
- assert.equal(g.state().sj,1);assert.equal(g.images.length,1);assert.equal(g.state().errs.length,0);
+ assert.equal(g.state().sj,1);assert.equal(g.images.length,2);assert.equal(g.state().errs.length,0);
 });

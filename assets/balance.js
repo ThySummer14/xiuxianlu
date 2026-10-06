@@ -549,6 +549,51 @@ var XB = (function () {
     return m + '分钟';
   }
 
+  /* Mountain-spirit intent: a slower, readable third strike, never extra attacks. */
+  var SHANXIAO = {unlockFloor: 6, windup: 3.2, hits: 3, hitSpacing: 0.22,
+    damageMult: 1.6, damageCap: 0.35, stagger: 1.5, exposedMult: 1.2, wardCap: 3};
+  function monsterIntent(type, floor) {
+    return {enabled: type === 'shanxiao' && floor >= SHANXIAO.unlockFloor,
+      phase: 'ready', timer: 0, left: 0, attacks: 0, hits: 0, lastHit: -1e9};
+  }
+  function advanceIntent(intent, dt, gap) {
+    if (intent.phase === 'charging' || intent.phase === 'staggered') {
+      intent.left = Math.max(0, intent.left - dt);
+      if (intent.left > 1e-9) return 0;
+      var charged = intent.phase === 'charging';
+      intent.phase = 'ready'; intent.timer = 0; intent.hits = 0;
+      if (charged) { intent.attacks++; return SHANXIAO.damageMult; }
+      return 0;
+    }
+    intent.timer += dt;
+    if (intent.timer + 1e-9 < gap) return 0;
+    intent.timer = Math.max(0, intent.timer - gap);
+    if (intent.enabled && intent.attacks % 3 === 2) {
+      intent.phase = 'charging'; intent.left = SHANXIAO.windup; intent.hits = 0; intent.lastHit = -1e9;
+      return 0;
+    }
+    intent.attacks++; return 1;
+  }
+  function strikeIntent(intent, now) {
+    if (!intent || intent.phase !== 'charging' || now - intent.lastHit + 1e-9 < SHANXIAO.hitSpacing) return false;
+    intent.lastHit = now; intent.hits++;
+    if (intent.hits < SHANXIAO.hits) return false;
+    intent.phase = 'staggered'; intent.left = SHANXIAO.stagger; intent.timer = 0; intent.attacks++;
+    return true;
+  }
+  var HUNT_EVENTS = {
+    prepare: {id: 'hunt-prepare', title: '山道猎妖人',
+      text: '猎妖人指着岩壁上三道拳印：“山魈两击之后必蓄势。见它举拳，三次挥剑便能打断。”\n他只剩两张护山符，也愿将破招心得传你。',
+      options: [
+        {label: '带上护山符', desc: '获得2张符，自动抵消山魈蓄力重击；最多持有3张', apply: 'hunt-ward'},
+        {label: '当场参悟破招心得', desc: '一部已解锁功法领悟最多 +6；若皆圆满则转为修为，不获得护符', apply: 'hunt-insight'}]},
+    return: {id: 'hunt-return', title: '三剑破镇岳',
+      text: '你将拳影中的破绽讲给猎妖人听。他把旧剑谱摊在石上：“今日以后，你已不是只会硬闯山门的后生。”',
+      options: [
+        {label: '将破绽化为剑心', desc: '剑心 +1（挥剑伤害永久 +2%）', apply: 'hunt-sword'},
+        {label: '以经验换取护山符', desc: '护山符补满至3张，留作以后闯关之用', apply: 'hunt-refill'}]}
+  };
+
   /* ================= 妖兽种类 ================= */
   var MONSTER_TYPES = [
     { id: 'fox',      name: '狐妖' },
@@ -652,6 +697,7 @@ var XB = (function () {
     fmt: fmt,
     fmtRate: fmtRate,
     formatDur: formatDur,
+    SHANXIAO: SHANXIAO, monsterIntent: monsterIntent, advanceIntent: advanceIntent, strikeIntent: strikeIntent, HUNT_EVENTS: HUNT_EVENTS,
     MONSTER_TYPES: MONSTER_TYPES,
     monsterName: monsterName,
     TOWER_UNLOCK_LEVEL: TOWER_UNLOCK_LEVEL,
