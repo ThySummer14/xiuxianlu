@@ -1003,8 +1003,20 @@
     level = towerPlan === 'temper' ? temperFloor : towerFloor;
     monAtkT = 0;
     spawnMonster();
-    XUI.toast((towerPlan === 'temper' ? '温养历练·' : '入魔窟·') + '第 ' + level + ' 层');
+    XUI.toast(towerPlan === 'temper' ? '温养循环 ' + temperRange() + ' 层 · 不推进新层' : '入魔窟·第 ' + level + ' 层');
     saveGame();
+  }
+  function temperRange() {
+    var start = mode === 'tower' && towerPlan === 'temper' ? temperFloor : XB.temperStart(towerBest, curDps(), playerHpMax());
+    return start + '–' + (start + 4);
+  }
+  function resumeAdvance() {
+    if (mode !== 'tower' || towerPlan !== 'temper' || injured() || (bt && bt.big)) return false;
+    towerPlan = 'advance'; level = towerFloor; combo.n = 0;
+    hold.active = false; XUI.cancelPointer();
+    spawnMonster(); saveGame();
+    XUI.toast('已结束温养，继续闯关第 ' + towerFloor + ' 层 · 气血沿用当前值');
+    return true;
   }
   function leaveTower() {
     if (mode !== 'tower') return;
@@ -1438,7 +1450,7 @@
     titleSave = d ? {
       hasSave: true,
       S: Math.min(XB.MAX_STAGE, Math.max(0, Number(d.S) || 0)),
-      level: Math.max(1, Number(d.level) || 1)
+      level: Math.max(1, Number(d.towerFloor) || Number(d.level) || 1)
     } : { hasSave: false };
     titleSave.hasRawSave = !!XP.storageGet(STORE_KEY);
     titleSave.hasRecovery = titleSave.hasRawSave || !!XP.storageGet(STORE_KEY + '_backup') || !!XP.storageGet(STORE_KEY + '_previous');
@@ -1537,7 +1549,7 @@
 
     /* 场景 pill */
     var lvlTxt = mode === 'tower'
-      ? (towerPlan === 'temper' ? '温养第 ' : '魔窟第 ') + level + ' 层' + (XB.isBoss(level) ? ' · 大妖' : '')
+      ? (towerPlan === 'temper' ? '温养循环第 ' : '魔窟第 ') + level + ' 层' + (XB.isBoss(level) ? ' · 大妖' : '')
       : (injured() ? '山门 · 将养' : '山门 · 闭关');
     var lw = XUI.textW(lvlTxt, 24, false, 700) + 44;
     XUI.panel(20, y, lw, 48, { r: 24, flat: true });
@@ -1752,7 +1764,7 @@
     var y = hudTopL, need = expNeed(), hp = playerHpMax(), ready = canBreakthrough(), gate = atRealmGate();
     XUI.panel(16, y, 718, 44, {flat: true, r: 12});
     XUI.panel(16, y + 244, 718, 76, {flat: true, r: 12});
-    mobileText(mode === 'tower' ? (towerPlan === 'temper' ? '温养' : '魔窟') + ' · ' + level + '层' : '山门 · ' + (injured() ? '将养' : '闭关'), 24, y + 22, {weight: 700});
+    mobileText(mode === 'tower' ? (towerPlan === 'temper' ? '温养循环' : '魔窟') + ' · ' + level + '层' : '山门 · ' + (injured() ? '将养' : '闭关'), 24, y + 22, {weight: 700});
     mobileText('灵石 ' + XB.fmt(stones), 726, y + 22, {align: 'right', color: '#8a6a30', weight: 700});
     XUI.panel(16, y + 50, 718, 186, {flat: true, r: 16});
     mobileText(XB.realmName(S) + (rb ? ' · ' + rb + '世' : ''), 36, y + 78, {weight: 700});
@@ -1820,18 +1832,26 @@
       });
     } else if (activeTab === 'tower') {
       mobileScroll('tower-info', px + 4, py + 4, pw - 8, ph - 8, 588, function () {
-        mobileText('魔窟妖塔 · 以战养道', left, py + 36, {weight: 700, color: IC.cinnabar});
-        mobileText('当前 ' + level + ' 层 · 纪录 ' + towerBest + ' 层', left, py + 82, {color: IC.ink55});
-        mobileText(injured() ? '重伤 ' + Math.ceil(injuryT) + '秒 · 战力与打坐 -30%' : '闭关回复气血，归山保留血量', left, py + 130, {size: 27, color: IC.indigo});
-        mobileText('推进争取装备与新机缘；卡关可温养，积累领悟和贡献。灵石主产线在坊市。', left, py + 190,
+        var farming = mode === 'tower' && towerPlan === 'temper';
+        mobileText(farming ? '温养积累 · 循环 ' + temperRange() + ' 层' : '魔窟闯关 · 挑战新层', left, py + 36, {weight: 700, color: IC.cinnabar});
+        mobileText('闯关进度：第 ' + towerFloor + ' 层' + (farming ? '（温养不推进）' : ' · 纪录 ' + towerBest), left, py + 82, {color: IC.ink55});
+        mobileText(injured() ? '重伤 ' + Math.ceil(injuryT) + '秒 · 战力与打坐 -30%' : farming ? '返回闯关会沿用当前气血；也可先归山养息' : '闭关回复气血，归山保留血量', left, py + 130, {size: 27, color: IC.indigo});
+        mobileText(farming ? '温养只刷已通关的五层，积累领悟与贡献。想挑战新层，点“返回闯关”。' : '闯关挑战新层；温养只循环已通关的五层，不会自动推进。灵石主产线在坊市。', left, py + 190,
           {size: 29, maxW: pw - 40, lineH: 42, color: IC.ink55});
         mobileText('斩妖 ' + XB.fmt(totalKills) + ' · 顿悟 ' + epip + ' · 贡献 ' + XB.fmt(contrib), left, py + 304, {size: 28});
         if (mode === 'tower') {
-          if (mobileButton('tw-leave', left, py + 354, pw - 40, '归山养息', {style: 'ghost'})) leaveTower();
+          var aw = (pw - 56) / 2;
+          if (mobileButton('tw-leave', left, py + 354, aw, '归山养息', {style: 'ghost'})) leaveTower();
+          if (farming) {
+            if (mobileButton('tw-resume', left + aw + 16, py + 354, aw, '返回闯关', {sub: '从第' + towerFloor + '层继续', style: 'primary'})) resumeAdvance();
+          } else {
+            mobileText('闯关进行中', left + aw + 16 + aw / 2, py + 387, {align: 'center', weight: 700, color: IC.cinnabar});
+            mobileText('击败后推进下一层', left + aw + 16 + aw / 2, py + 424, {align: 'center', size: 26, color: IC.ink55});
+          }
         } else {
           var w = (pw - 56) / 2;
           if (mobileButton('tw-enter', left, py + 354, w, '闯关 · 第' + towerFloor + '层', {style: 'primary', disabled: injured()})) enterTower('advance');
-          if (mobileButton('tw-temper', left + w + 16, py + 354, w, towerBest >= 6 ? '温养 · 积累' : '6层解锁温养', {style: 'gold', disabled: injured() || towerBest < 6})) enterTower('temper');
+          if (mobileButton('tw-temper', left + w + 16, py + 354, w, towerBest >= 6 ? '温养 · 循环刷取' : '6层解锁温养', {sub: towerBest >= 6 ? temperRange() + '层 · 不推进' : '', style: 'gold', disabled: injured() || towerBest < 6})) enterTower('temper');
         }
         if (mobileButton('hunt-open', left, py + 470, pw - 40, towerBest < XB.SHANXIAO.unlockFloor ? '推进6层 · 解锁猎妖见闻' : huntStage === 2 ? '猎妖人 · 破招后复命' : huntStage === 3 ? '猎妖见闻已完成 · 护符' + wardCharges : huntStage === 1 ? '待破招 · 山魈举拳时挥剑3次' : '猎妖见闻 · 备战与破招', {style: 'gold', disabled: towerBest < XB.SHANXIAO.unlockFloor})) openHuntEvent();
       });
@@ -2014,10 +2034,10 @@
 
   /* ---------- 魔窟面板 ---------- */
   function drawTowerPanel(px, py, pw, pnlH) {
-    var inT = mode === 'tower';
-    XUI.text('魔窟妖塔 · 以战养道', px + 18, py + 24,
+    var inT = mode === 'tower', farming = inT && towerPlan === 'temper';
+    XUI.text(farming ? '温养循环 ' + temperRange() + ' 层' : '魔窟闯关 · 挑战新层', px + 18, py + 24,
              { size: 23, color: IC.cinnabar, align: 'left', weight: 700 });
-    XUI.text('当前第 ' + level + ' 层 · 纪录 ' + towerBest + ' 层',
+    XUI.text('闯关进度第 ' + towerFloor + ' 层 · 纪录 ' + towerBest + ' 层',
              px + pw - 18, py + 24, { size: 19, color: IC.ink55, align: 'right', serif: false });
     var hpMax = playerHpMax();
     XUI.bar(px + 16, py + 44, pw - 32, 26, Math.min(1, Math.max(0, ph) / hpMax), {
@@ -2029,23 +2049,28 @@
     var iy = py + 84;
     XUI.text('层产出：修为·领悟·贡献为主，灵石仅少量补贴；第 ' + XB.TOWER_MILESTONE +
              ' 层里程碑必掉装备', px + 16, iy, { size: 18, color: IC.ink55, align: 'left', serif: false });
-    XUI.text('血尽重伤 · 每推进5层有一次生死顿悟机会；卡关可温养积累贡献与领悟',
+    XUI.text(farming ? '温养不推进新层；返回闯关沿用当前气血，也可先归山养息' : '闯关推进新层；温养只循环已通关的五层，不会自动切回闯关',
              px + 16, iy + 26, { size: 18, color: IC.ink55, align: 'left', serif: false });
     XUI.text('累计斩妖 ' + XB.fmt(totalKills) + ' · 顿悟 x' + epip +
              ' · 贡献 ' + XB.fmt(contrib),
              px + 16, iy + 52, { size: 18, color: IC.indigo, align: 'left', serif: false });
     if (XUI.button('hunt-open', px + 20, py + pnlH - 140, pw - 40, 50, {label: huntStage === 2 ? '猎妖人 · 破招后复命' : '猎妖见闻 · 护山符 ' + wardCharges, size: 23, disabled: towerBest < XB.SHANXIAO.unlockFloor})) openHuntEvent();
     if (inT) {
-      if (XUI.button('tw-leave', px + pw / 2 - 150, py + pnlH - 74, 300, 58, {
+      var aw = (pw - 52) / 2;
+      var ax = px + 20;
+      if (XUI.button('tw-leave', ax, py + pnlH - 74, aw, 58, {
         label: '归山（保留血量）', style: 'ghost', size: 24
       })) leaveTower();
+      if (farming && XUI.button('tw-resume', px + pw / 2 + 6, py + pnlH - 74, aw, 58,
+        {label: '返回闯关 · 第' + towerFloor + '层', style: 'primary', size: 23})) resumeAdvance();
+      if (!farming) XUI.text('闯关进行中 · 击败后推进', px + pw * 0.75, py + pnlH - 45, {size: 20, color: IC.cinnabar});
     } else {
       if (XUI.button('tw-enter', px + 20, py + pnlH - 74, (pw - 52) / 2, 58, {
         label: injured() ? ('重伤未愈 ' + Math.ceil(injuryT) + 's') : '闯关 · 第 ' + towerFloor + ' 层',
         style: 'primary', size: 22, disabled: injured()
       })) enterTower('advance');
       if (XUI.button('tw-temper', px + pw / 2 + 6, py + pnlH - 74, (pw - 52) / 2, 58, {
-        label: towerBest >= 6 ? '温养 · 积累贡献' : '推进6层解锁温养',
+        label: towerBest >= 6 ? '温养循环 ' + temperRange() + '层' : '推进6层解锁温养',
         style: 'gold', size: 21, disabled: injured() || towerBest < 6
       })) enterTower('temper');
     }
@@ -2147,7 +2172,7 @@
       { id: 'first-blood', title: '初入山门', desc: '斩妖 10 只',
         progress: totalKills, goal: 10, reward: 180, unlocked: true },
       { id: 'ten-thousand', title: '小试牛刀', desc: '魔窟推进到第 10 层（首个大妖）',
-        progress: Math.min(Math.max(0, level - 1), 10), goal: 10, reward: 500, unlocked: true },
+        progress: Math.min(Math.max(0, towerFloor - 1), 10), goal: 10, reward: 500, unlocked: true },
       { id: 'steady-heart', title: '静心悟道', desc: '吐纳术达到 5 级',
         progress: tn, goal: 5, reward: 420, unlocked: !!questClaimed['first-blood'] },
       { id: 'merchant', title: '坊市立足', desc: '坊市拥有 8 间店铺',
@@ -3117,7 +3142,7 @@
           sj: sj, ss: ss, ls: ls, tn: tn, gf: gf.slice(),
           dj: dj, rb: rb, bond: bond, sgn: sgn, best: best,
           mk: mk.slice(), accStones: accStones,
-          mode: mode, towerPlan: towerPlan, epipFrontier: epipFrontier, ph: Math.round(ph), phMax: playerHpMax(),
+          mode: mode, towerPlan: towerPlan, towerFloor: towerFloor, temperFloor: temperFloor, epipFrontier: epipFrontier, ph: Math.round(ph), phMax: playerHpMax(),
           towerBest: towerBest, injuryT: injuryT, epip: epip,
           contrib: contrib, sectId: sectId, sectLv: JSON.parse(JSON.stringify(sectLv || {})),
           cmp: cmp.slice(), mp: mp.slice(),
@@ -3177,6 +3202,7 @@
       triggerTide: function () { tide.left = XB.TIDE_DUR; },
       enterTower: function (plan) { enterTower(plan); return mode; },
       leaveTower: function () { leaveTower(); return mode; },
+      resumeAdvance: resumeAdvance,
       hurtPlayer: function (n) { ph -= n; if (ph <= 0) severeInjury(); return ph; },
       joinSect: joinSect, learnArt: learnArt, claimMission: claimMission,
       buyMarketProfit: buyMarketProfit,
