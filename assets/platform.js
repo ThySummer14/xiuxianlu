@@ -103,13 +103,61 @@ var XP = (function () {
     try {
       if (isWx) wx.setStorageSync(key, val);
       else localStorage.setItem(key, val);
-    } catch (e) { /* 存储不可用时静默 */ }
+      return true;
+    } catch (e) { return false; }
   }
   function storageRemove(key) {
     try {
       if (isWx) wx.removeStorageSync(key);
       else localStorage.removeItem(key);
     } catch (e) { /* 忽略 */ }
+  }
+
+  /* Browser export is a download request, not proof that the user saved the file. */
+  function canExportText() {
+    return !isWx && typeof document !== 'undefined' && typeof Blob !== 'undefined' &&
+      typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function';
+  }
+  function exportText(name, text, cb) {
+    if (!canExportText()) { cb(new Error('unsupported')); return; }
+    var url = null, link = null;
+    try {
+      url = URL.createObjectURL(new Blob([text], {type: 'application/json;charset=utf-8'}));
+      link = document.createElement('a');
+      link.href = url; link.download = name; link.style.display = 'none';
+      document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      cb(null);
+    } catch (e) {
+      if (link && link.remove) link.remove();
+      if (url) URL.revokeObjectURL(url);
+      cb(e);
+    }
+  }
+
+  var activeSavePicker = null;
+  function canImportText() {
+    return !isWx && typeof document !== 'undefined' && typeof FileReader !== 'undefined';
+  }
+  function readSaveFile(cb) {
+    if (!canImportText()) { cb(new Error('unsupported')); return; }
+    if (activeSavePicker) activeSavePicker.remove();
+    var input = document.createElement('input');
+    input.type = 'file'; input.accept = '.json,application/json'; input.style.display = 'none';
+    activeSavePicker = input;
+    function cleanup() { input.remove(); if (activeSavePicker === input) activeSavePicker = null; }
+    input.oncancel = function () { cleanup(); cb(null, null); };
+    input.onchange = function () {
+      var file = input.files && input.files[0]; cleanup();
+      if (!file) { cb(null, null); return; }
+      if (file.size > 1024 * 1024) { cb(new Error('too-large')); return; }
+      var reader = new FileReader();
+      reader.onload = function () { cb(null, String(reader.result)); };
+      reader.onerror = function () { cb(new Error('read-failed')); };
+      reader.readAsText(file, 'UTF-8');
+    };
+    document.body.appendChild(input);
+    try { input.click(); } catch (e) { cleanup(); cb(e); }
   }
 
   /* ---------- 离屏 canvas（境界卡用） ---------- */
@@ -176,6 +224,8 @@ var XP = (function () {
     storageGet: storageGet,
     storageSet: storageSet,
     storageRemove: storageRemove,
+    canExportText: canExportText, exportText: exportText,
+    canImportText: canImportText, readSaveFile: readSaveFile,
     createCanvas: createCanvas,
     createAudioContext: createAudioContext,
     vibrate: vibrate,

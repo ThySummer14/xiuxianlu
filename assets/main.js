@@ -121,6 +121,8 @@
   var bgTrans = 1;
 
   var autosaveT = 0;
+  var saveError = false, backupError = false, lastSavedAt = 0;
+  var vaultEntries = [], pendingRestore = null, vaultMessage = '', importToken = 0;
   var offlineResumeModal = null;
   var offlineInfo = null;    /* 离线结算弹窗数据 */
   var activeTab = 'cult';
@@ -280,11 +282,8 @@
   function marketUnlocked() { return towerBest >= XB.MARKET_UNLOCK_LEVEL || S >= 4; }
 
   /* ---------- 存档 ---------- */
-  function saveGame() {
-    // The title screen has not loaded the saved character yet. Never overwrite it.
-    if (scene !== SCENE_PLAY) return;
-    try {
-      XP.storageSet(STORE_KEY, JSON.stringify({
+  function serializedState() {
+    return {
         v: 3, balanceVersion: XB.BALANCE_VERSION, stones: stones, exp: exp, S: S, level: level,
         sj: sj, ss: ss, ls: ls, tn: tn, gf: gf,
         eq: eq, mk: mk, mp: mp, dj: dj, rb: rb, best: best,
@@ -294,8 +293,21 @@
         epip: epip, cmp: cmp, sectId: sectId, sectLv: sectLv,
         contrib: contrib, missions: missions, accStones: accStones,
         kills: totalKills, muted: muted, questClaimed: questClaimed, ts: Date.now()
-      }));
-    } catch (e) { /* 静默 */ }
+    };
+  }
+  function saveFailure(message) {
+    if (!saveError) XUI.toast(message || '本地保存失败，请到设置导出备份');
+    saveError = true;
+    return false;
+  }
+  function saveGame() {
+    if (scene !== SCENE_PLAY) return false;
+    try {
+      var state = serializedState();
+      if (!XP.storageSet(STORE_KEY, JSON.stringify(state))) return saveFailure();
+      saveError = false; lastSavedAt = state.ts;
+      return true;
+    } catch (e) { return saveFailure(); }
   }
 
   function safeNumber(value, fallback, max, integer) {
@@ -309,8 +321,8 @@
     var key = STORE_KEY + '_backup';
     var previous = XP.storageGet(key);
     if (previous === raw) return;
-    if (previous) XP.storageSet(STORE_KEY + '_previous', previous);
-    XP.storageSet(key, raw);
+    if (previous && !XP.storageSet(STORE_KEY + '_previous', previous)) { backupError = true; return; }
+    if (!XP.storageSet(key, raw)) backupError = true;
   }
   // Only impossible/corrupt values are repaired; ordinary earned progress is retained.
   function normalizeSave(d) {
@@ -411,6 +423,114 @@
       dj: 0, rb: 0, best: 0, kills: 0,
       muted: false, ts: o.ts
     };
+  }
+
+  function parseBackup(raw) {
+    if (!raw) return null;
+    try {
+      var value = JSON.parse(raw);
+      if (!value || typeof value !== 'object' || Array.isArray(value) ||
+          !isFinite(Number(value.ts)) || Number(value.ts) <= 0 || !isFinite(new Date(Number(value.ts)).getTime())) return null;
+      if (value.v === 3) return normalizeSave(value);
+      if (value.v === 1 || value.v === 2 ||
+          (value.v == null && value.realm != null && value.sjLv != null)) return normalizeSave(migrateLegacy(value));
+    } catch (e) { /* Preserve unreadable raw data for export, never execute it. */ }
+    return null;
+  }
+  function readVault() {
+    var slots = [['_backup', '最近启动备份'], ['_previous', '更早的启动备份'], ['_before_restore', '恢复前的进度']];
+    return slots.map(function (slot) {
+      var raw = XP.storageGet(STORE_KEY + slot[0]);
+      return {key: STORE_KEY + slot[0], label: slot[1], raw: raw, data: parseBackup(raw)};
+    });
+  }
+  function openVault() {
+    importToken += 1;
+    pendingRestore = null; vaultMessage = '';
+    vaultEntries = readVault(); modal = 'vault';
+    hold.active = false; XUI.cancelPointer();
+  }
+  function previewBackup(index) {
+    var entry = vaultEntries[index];
+    if (!entry || !entry.data) return false;
+    pendingRestore = {raw: entry.raw, label: entry.label};
+    modal = 'restore'; vaultMessage = '';
+    return true;
+  }
+  function cancelBackupRestore() { openVault(); }
+  function confirmBackupRestore() {
+    if (!pendingRestore) return false;
+    var target = parseBackup(pendingRestore.raw);
+    if (!target) { pendingRestore = null; vaultMessage = '备份无法读取，未改变当前进度'; return false; }
+    var rescue = scene === SCENE_PLAY ? JSON.stringify(serializedState()) : XP.storageGet(STORE_KEY);
+    if (rescue && !XP.storageSet(STORE_KEY + '_before_restore', rescue)) {
+      vaultMessage = '无法保留当前进度，恢复已中止；请先导出';
+      return saveFailure(vaultMessage);
+    }
+    if (!target.balanceVersion) target.exp *= XB.expNeed(target.S) / XB.legacyExpNeed(target.S);
+    target.balanceVersion = XB.BALANCE_VERSION; target.ts = Date.now();
+    if (!XP.storageSet(STORE_KEY, JSON.stringify(target))) {
+      vaultMessage = '无法写入恢复存档，当前修行未改变';
+      return saveFailure(vaultMessage);
+    }
+    // Recovery is a rollback, not another offline reward claim.
+    applySave(target); scene = SCENE_PLAY;
+    bt = null; monster = null; mode = 'home'; level = towerFloor;
+    bgPrevBand = XD.bandOf(XB.realmIdx(S)); bgTrans = 1;
+    slashes.length = smokes.length = floats.length = storyQueue.length = 0;
+    fateEvent = null; offlineInfo = null; offlineResumeModal = null;
+    combo.n = 0; hold.active = false; XUI.cancelPointer();
+    tide.left = 0; scheduleTide(); homeFateT = 55; fateCd = nowSec + 30;
+    autosaveT = 0; lastSavedAt = target.ts; saveError = false;
+    pendingRestore = null; vaultMessage = ''; modal = null;
+    XUI.toast('备份已恢复，原进度保留在「恢复前的进度」');
+    return true;
+  }
+  function previewImportedSave(raw) {
+    if (typeof raw !== 'string' || raw.length > 1024 * 1024) return false;
+    try {
+      var value = JSON.parse(raw);
+      var v3 = value && value.v === 3 && ['S', 'stones', 'exp'].every(function (key) {
+        return Object.prototype.hasOwnProperty.call(value, key) && isFinite(Number(value[key])) && Number(value[key]) >= 0;
+      });
+      var legacy = value && (value.v == null || value.v === 1 || value.v === 2) && value.realm != null && value.sjLv != null;
+      if ((!v3 && !legacy) || !parseBackup(raw)) return false;
+      pendingRestore = {raw: raw, label: '导入的备份文件'};
+      vaultMessage = ''; modal = 'restore';
+      return true;
+    } catch (e) { return false; }
+  }
+  function importSaveFile() {
+    var token = ++importToken;
+    XP.readSaveFile(function (err, raw) {
+      if (token !== importToken || modal !== 'vault') return;
+      if (err) { XUI.toast(err.message === 'too-large' ? '文件过大，请选择小于1MB的存档' : '未能读取文件，当前进度未改变'); return; }
+      if (raw == null) return;
+      if (!previewImportedSave(raw)) XUI.toast('不是可识别的修仙存档，当前进度未改变');
+    });
+  }
+
+  function exportRawSave(raw, label) {
+    if (!raw) return false;
+    try {
+      XP.exportText('xiuxianlu-' + label + '-' + Date.now() + '.json', raw, function (err) {
+        XUI.toast(err ? '导出未完成；请保留此页面与现有备份' : '已请求下载，请确认备份文件已保存');
+      });
+      return true;
+    } catch (e) { XUI.toast('导出未完成；请保留此页面'); return false; }
+  }
+  function exportCurrentSave() {
+    return exportRawSave(scene === SCENE_PLAY ? JSON.stringify(serializedState(), null, 2) : XP.storageGet(STORE_KEY), 'save');
+  }
+  function exportVaultBackup(index) {
+    var entry = vaultEntries[index];
+    return !!entry && exportRawSave(entry.raw, 'backup');
+  }
+  function vaultDate(data) {
+    if (!data) return '';
+    var date = new Date(Number(data.ts));
+    return date.getFullYear() + '/' + (date.getMonth() + 1) + '/' + date.getDate() + ' ' +
+      ('0' + date.getHours()).slice(-2) + ':' + ('0' + date.getMinutes()).slice(-2);
   }
 
   function clearSave() {
@@ -1247,6 +1367,8 @@
       S: Math.min(XB.MAX_STAGE, Math.max(0, Number(d.S) || 0)),
       level: Math.max(1, Number(d.level) || 1)
     } : { hasSave: false };
+    titleSave.hasRawSave = !!XP.storageGet(STORE_KEY);
+    titleSave.hasRecovery = titleSave.hasRawSave || !!XP.storageGet(STORE_KEY + '_backup') || !!XP.storageGet(STORE_KEY + '_previous');
   }
 
   function enterPlay(fromSave) {
@@ -1313,10 +1435,11 @@
       375, 640 + ts, { size: 27, color: IC.ink55 });
 
     if (XUI.button('start', 375 - 195, 716 + ts, 390, 102, {
-      label: hasSave ? '继 续 修 行' : '开 始 修 行',
+      label: hasSave ? '继 续 修 行' : (titleSave.hasRawSave ? '存档需要恢复' : '开 始 修 行'),
       style: 'primary', size: 36
     })) {
       XAudio.init();
+      if (titleSave.hasRawSave && !hasSave) { openVault(); return; }
       var sv = loadGame();
       if (sv) {
         applySave(sv);
@@ -1327,7 +1450,8 @@
       enterPlay(!!sv);
       if (offlineInfo) saveGame();   /* 结算后立即存新时间戳 */
     }
-    XUI.text('平日打坐修行 · 魔窟历练证剑 · 宗门求得道', 375, 884 + ts, { size: 23, color: '#c9a05a' });
+    if (titleSave.hasRecovery && XUI.button('title-vault', 235, 826 + ts, 280, 48, {label: '存档保险箱', size: 21})) openVault();
+    XUI.text('平日打坐修行 · 魔窟历练证剑 · 宗门求得道', 375, (titleSave.hasRecovery ? 906 : 884) + ts, { size: 23, color: '#c9a05a' });
   }
 
   /* ---------- 顶部 HUD ---------- */
@@ -1395,6 +1519,7 @@
     /* 行3：状态 chip + 右侧战报（chip 预留右侧空间，超宽则收略） */
     var chy = cy0 + chh + 8, chx = 20;
     var chipDefs = [];
+    if (saveError) chipDefs.push({t: '保存失败 · 请导出备份', o: {color: IC.cinnabar}});
     if (tide.left > 0)
       chipDefs.push({ t: '灵气潮汐 ' + Math.ceil(tide.left) + 's',
         o: { fill: 'rgba(201,160,90,0.22)', color: '#8a6a30', stroke: 'rgba(138,106,48,0.5)' } });
@@ -1907,9 +2032,56 @@
       return;
     }
 
+    if (modal === 'vault') {
+      XUI.modalBackdrop('vault-bg', VIEW_W, VIEW_H);
+      var vault = drawModalCard(650, 720);
+      XUI.text('存 档 保 险 箱', 375, vault.y + 46, {size: 30, weight: 800});
+      XUI.text(saveError || backupError ? '本地写入有异常，请先导出再离开' : '仅保存在此浏览器，清理网站数据会删除进度',
+        375, vault.y + 86, {size: 19, color: saveError || backupError ? IC.cinnabar : IC.ink55});
+      if (XUI.button('vault-export', vault.x + 45, vault.y + 116, 268, 58,
+        {label: scene === SCENE_PLAY ? '导出当前存档' : '导出原始存档', size: 23,
+          disabled: !XP.canExportText() || (scene !== SCENE_PLAY && !XP.storageGet(STORE_KEY))})) exportCurrentSave();
+      if (XUI.button('vault-import', vault.x + 337, vault.y + 116, 268, 58,
+        {label: '导入备份文件', size: 23, disabled: !XP.canImportText()})) importSaveFile();
+      XUI.text(XP.canExportText() ? '导出请确认下载；导入会先预览，不会直接覆盖' : '此平台可恢复本机备份；文件操作请使用网页版',
+        375, vault.y + 193, {size: 17, color: IC.ink55});
+      for (var vi = 0; vi < vaultEntries.length; vi++) {
+        var entry = vaultEntries[vi], vy = vault.y + 226 + vi * 116;
+        XUI.panel(vault.x + 28, vy, vault.w - 56, 104, {r: 12, flat: true});
+        XUI.text(entry.label, vault.x + 46, vy + 23, {size: 22, weight: 700, align: 'left'});
+        XUI.text(entry.data ? XB.realmName(entry.data.S) + ' · 灵石 ' + XB.fmt(entry.data.stones) : (entry.raw ? '当前无法读取，可导出留存' : '尚无备份'),
+          vault.x + 46, vy + 51, {size: 18, align: 'left', color: IC.ink55});
+        XUI.text(vaultDate(entry.data), vault.x + 46, vy + 80, {size: 16, align: 'left', color: IC.ink30});
+        if (XUI.button('vault-restore-' + vi, vault.x + vault.w - 150, vy + 14, 106, 42,
+          {label: '查看恢复', size: 18, style: 'gold', disabled: !entry.data})) { previewBackup(vi); return; }
+        if (XUI.button('vault-export-' + vi, vault.x + vault.w - 150, vy + 60, 106, 32,
+          {label: '导出', size: 17, disabled: !entry.raw || !XP.canExportText()})) exportVaultBackup(vi);
+      }
+      XUI.text('恢复前先保留当前进度；恢复后从现在计时', 375, vault.y + 604, {size: 18, color: IC.ink55});
+      if (XUI.button('vault-close', 265, vault.y + vault.h - 78, 220, 54, {label: '关闭', size: 23})) modal = null;
+      return;
+    }
+    if (modal === 'restore' && pendingRestore) {
+      XUI.modalBackdrop('restore-bg', VIEW_W, VIEW_H);
+      var restore = drawModalCard(610, 500), selected = parseBackup(pendingRestore.raw);
+      XUI.text('确认恢复备份', 375, restore.y + 54, {size: 30, weight: 800});
+      XUI.text(pendingRestore.label, 375, restore.y + 105, {size: 23, color: IC.indigo});
+      XUI.text(selected ? XB.realmName(selected.S) + ' · 灵石 ' + XB.fmt(selected.stones) : '备份已不可读取',
+        375, restore.y + 154, {size: 26, color: IC.cinnabar});
+      XUI.text(vaultDate(selected), 375, restore.y + 196, {size: 19, color: IC.ink55});
+      XUI.text('这会替换当前修行。当前进度会先留存，\n之后可从「恢复前的进度」撤回。\n不会重复领取这份旧档的离线收益。',
+        375, restore.y + 247, {size: 20, maxW: restore.w - 70, lineH: 30, color: IC.ink55});
+      if (vaultMessage) XUI.text(vaultMessage, 375, restore.y + 360, {size: 18, color: IC.cinnabar});
+      if (XUI.button('restore-confirm', restore.x + 40, restore.y + 410, 250, 56,
+        {label: '确认恢复', style: 'danger', size: 23, disabled: !selected})) confirmBackupRestore();
+      if (XUI.button('restore-cancel', restore.x + 320, restore.y + 410, 250, 56,
+        {label: '返回', size: 23})) cancelBackupRestore();
+      return;
+    }
+
     if (modal === 'settings') {
       XUI.modalBackdrop('dismiss', VIEW_W, VIEW_H);
-      var m = drawModalCard(520, 560);
+      var m = drawModalCard(520, 640);
       XUI.text('设 置', 375, m.y + 52, { size: 32, weight: 800 });
       var bx = m.x + 40, bw = m.w - 80, by = m.y + 96, bh = 64, gap = 14;
       if (XUI.button('mute', bx, by, bw, bh, {
@@ -1924,6 +2096,8 @@
         modal = 'realm';
       }
       by += bh + gap;
+      if (XUI.button('vault', bx, by, bw, bh, {label: '存档保险箱 · 导出与恢复', size: 22})) openVault();
+      by += bh + gap;
       if (XUI.button('reset', bx, by, bw, bh, {
         label: resetArmed ? '再点一次，清除全部进度' : '重修（清档重开）',
         style: resetArmed ? 'danger' : 'ghost', size: 22
@@ -1935,7 +2109,7 @@
       if (XUI.button('close', bx, by, bw, bh, { label: '关闭', size: 24 })) {
         modal = null;
       }
-      XUI.text('进度每 3 秒自动保存 · v4 宗门魔窟版',
+      XUI.text(saveError ? '保存失败，请先导出本次修行' : '仅此浏览器保存 · 建议定期导出备份',
                375, m.y + m.h - 26, { size: 17, color: IC.ink30, serif: false });
       return;
     }
@@ -2445,7 +2619,7 @@
       },
       state: function () {
         return {
-          scene: scene,
+          scene: scene, saveError: saveError, lastSavedAt: lastSavedAt,
           stones: stones, exp: exp, S: S, level: level,
           sj: sj, ss: ss, ls: ls, tn: tn, gf: gf.slice(),
           dj: dj, rb: rb, bond: bond, sgn: sgn, best: best,
@@ -2518,6 +2692,10 @@
       fateReward: fateExpReward,
       fateStoneReward: fateStoneReward,
       persist: saveGame,
+      openVault: openVault, previewBackup: previewBackup, confirmBackupRestore: confirmBackupRestore,
+      cancelBackupRestore: cancelBackupRestore, exportCurrentSave: exportCurrentSave, exportVaultBackup: exportVaultBackup,
+      previewImportedSave: previewImportedSave, importSaveFile: importSaveFile,
+      vaultEntries: function () { return vaultEntries.map(function (e) { return {label:e.label,valid:!!e.data}; }); },
       rollMissions: function () { rollMissions(true); },
       openFateEvent: function (i) { return openFateEvent(i != null ? XB.FATE_EVENTS[i] : null); },
       fateOption: function (i) { resolveFateOption(i); },

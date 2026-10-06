@@ -14,7 +14,7 @@ python3 -m http.server 8000
 需要 Node.js 20+，没有第三方测试依赖：
 
 ```sh
-node scripts/check.cjs # 所有生产脚本语法检查 + 62项单进程回归测试
+node scripts/check.cjs # 所有生产脚本语法检查 + 80项单进程回归测试
 node scripts/characterize.cjs
 node scripts/simulate.cjs --seconds=3600 --policy=active
 node scripts/balance-matrix.cjs # 40次模拟，单进程，可能需要数分钟
@@ -30,3 +30,7 @@ node scripts/session-study.cjs # 渲染节奏、24小时上限和重复归来测
 - 数值基线：[`docs/balance-baseline.json`](docs/balance-baseline.json)
 - 调研与设计依据：[`docs/progression-research.md`](docs/progression-research.md)
 - 存档仍使用 `xiuxian_idle_v3`，保留 v1/v2 迁移；本次更新不清档
+
+## 存档保护
+
+设置里的「存档保险箱」可导出/导入JSON文件、预览本机备份，并在明确确认后恢复。恢复前会保留当前进度，允许撤回；写入失败会提示且不覆盖修行。损坏存档可从标题页进入保险箱。见[恢复说明](docs/save-recovery.md)。
