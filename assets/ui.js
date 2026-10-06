@@ -280,14 +280,14 @@ var XUI = (function () {
     ctx.translate(-cx, -cy);
 
     var fills = {
-      primary: ['#c04a3e', '#a83428'],
+      primary: ['#b23e33', '#a83428'],
       gold: ['#d8b97e', '#c9a05a'],
       ghost: ['rgba(255,255,255,0.55)', 'rgba(255,255,255,0.55)'],
       danger: ['#b03a30', '#8f2b23'],
       dark: ['rgba(47,42,36,0.9)', 'rgba(47,42,36,0.9)']
     };
     var pair = fills[style] || fills.ghost;
-    var txtCol = (style === 'ghost') ? C.ink : C.paper;
+    var txtCol = (style === 'ghost' || style === 'gold') ? C.ink : C.paper;
 
     ctx.shadowColor = 'rgba(47,42,36,0.22)';
     ctx.shadowBlur = pressed ? 3 : 8;
@@ -314,10 +314,10 @@ var XUI = (function () {
 
     var mainSize = opt.size || Math.min(26, h * 0.44);
     if (opt.sub) {
-      text(opt.label, cx, cy - h * 0.16, { size: mainSize, color: dis ? C.ink30 : txtCol, weight: 700 });
-      text(opt.sub, cx, cy + h * 0.22, { size: opt.subSize || Math.max(16, mainSize * 0.62), color: dis ? C.ink30 : txtCol, serif: false });
+      text(opt.label, cx, cy - h * 0.16, { size: mainSize, color: dis ? '#56514b' : txtCol, weight: 700 });
+      text(opt.sub, cx, cy + h * 0.22, { size: opt.subSize || Math.max(16, mainSize * 0.62), color: dis ? '#56514b' : txtCol, serif: false });
     } else {
-      text(opt.label, cx, cy, { size: mainSize, color: dis ? C.ink30 : txtCol, weight: 700 });
+      text(opt.label, cx, cy, { size: mainSize, color: dis ? '#56514b' : txtCol, weight: 700 });
     }
     ctx.restore();
 

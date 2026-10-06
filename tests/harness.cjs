@@ -12,7 +12,7 @@ function createGame(options = {}) {
   let now = options.now || 1800000000000;
   let seed = options.seed || 42;
   let frameCallback=null,rafTime=1;
-  const downloads=[],objectUrls=new Map(),timers=[];
+  const downloads=[],objectUrls=new Map(),timers=[],images=[],imageDraws=[];
   const listeners={},canvasListeners={},viewportListeners={};
   const listen = target => (name,fn) => { (target[name] ||= []).push(fn); };
   const math = Object.create(Math);
@@ -20,6 +20,7 @@ function createGame(options = {}) {
   const noop = () => {};
   const gradient = { addColorStop: noop };
   const context = new Proxy({
+    drawImage: (...args)=>imageDraws.push(args),
     measureText: function (text) { const size = parseFloat(String(this.font || '24px').match(/([\d.]+)px/)[1]); return {width: Array.from(String(text)).reduce((n,c)=>n+(c.charCodeAt(0)>255?1:.55)*size,0)}; },
     createLinearGradient: () => gradient, createRadialGradient: () => gradient,
   }, { get: (o, k) => k in o ? o[k] : noop });
@@ -39,6 +40,7 @@ function createGame(options = {}) {
     sandbox.document.body={appendChild:noop};
     sandbox.document.createElement=tag=>tag==='a'?{style:{},click(){downloads.push({name:this.download,blob:objectUrls.get(this.href)});},remove:noop}:canvas;
   }
+  if (options.images) sandbox.Image=class { constructor(){images.push(this);this.width=1024;this.height=1536;this.naturalWidth=1024;this.naturalHeight=1536;} set src(value){this.url=value;} };
   if (options.visualViewport) sandbox.visualViewport={width:options.width||375,height:options.height||667,addEventListener:listen(viewportListeners)};
   sandbox.window = sandbox;
   if (options.save) storage.set(KEY, JSON.stringify({ v: 3, balanceVersion: 1, ts: now, ...options.save }));
@@ -69,6 +71,7 @@ function createGame(options = {}) {
   sandbox.XUI.scrollArea=(id,x,y,w,h,contentH)=>{const state=originalScroll(id,x,y,w,h,contentH);scrollViews.set(id,{x,y,w,h,state});return state;};
   const api = sandbox.__test;
   return {
+    images, imageDraws,
     downloads, flushTimers: () => {while(timers.length)timers.shift()();}, objectUrls,
     failWrites: predicate => {storageFailure=predicate;},
     api, XB: sandbox.XB, sandbox, storage, uiControls, scrollViews, uiTexts,

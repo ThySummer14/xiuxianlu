@@ -33,3 +33,12 @@ Canvas测试使用近似中文字体测量和无绘图上下文。它证明布�
 An actual reported regression exposed a gap in the first test matrix: touch release emits `pointerup` and then `pointerleave` before the next render. The mobile pointerleave handler incorrectly cleared the already-completed tap queue, so the Start and other buttons could appear inert on touch devices even while direct logical-coordinate tests passed.
 
 The hotfix only cancels pointerleave/pointercancel when its pointer ID still belongs to an active press. Completed taps survive; a held finger leaving, canceled touch, drag, outside release and secondary fingers still cannot purchase. Six full event-path regressions cover start/settings/close at360/390/430px, one purchase, held leave, secondary pointer cancellation, and an explicit old-code counterexample. All106 tests pass. Save format/economy and artwork are unchanged; no cache clearing or save reset is required.
+
+## Published checkpoint
+
+Phone layout and recovery reached main `eb2d6d0199571a19a9fe25eda3ec433f4889a020`. Pages run37407385615 completed successfully; its deploy logs identify https://thysummer14.github.io/xiuxianlu/ . HTTP200 responses for index/main/platform/ui matched that commit byte-for-byte. After the Android fix, cloud Chromium narrow-window mouse checks passed Start, Settings, Close, reload/Continue with retained realm and cultivation, and scrolling to lower cards. Device emulation was unavailable by browser policy; these checks are not physical-phone or touch-device validation.
+
+
+## Hotfix deployment verified
+
+Main `43d8e9be0f0daa4ec0d47c3b852b29e3ace8171b` deployed successfully in Pages run37408244445. Its index and main script returned HTTP200 and matched the tested commit byte-for-byte. The art integration preserves these pointer handlers unchanged and adds explicit image-load/error-during-touch checks, rather than relying on direct logical clicks alone.

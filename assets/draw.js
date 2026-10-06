@@ -17,6 +17,33 @@ var XD = (function () {
     gold: '#c9a05a'
   };
 
+  /* One optional environment illustration. Loading never blocks gameplay. */
+  var sanctuaryArt = null, sanctuaryReady = false, sanctuaryFailed = false;
+  try {
+    if (typeof wx !== 'undefined' && wx.createImage) sanctuaryArt = wx.createImage();
+    else if (typeof Image !== 'undefined') sanctuaryArt = new Image();
+    if (sanctuaryArt) {
+      sanctuaryArt.decoding = 'async';
+      sanctuaryArt.onload = function () { sanctuaryReady = (sanctuaryArt.naturalWidth || sanctuaryArt.width) > 0; };
+      sanctuaryArt.onerror = function () { sanctuaryReady = false; sanctuaryFailed = true; };
+      sanctuaryArt.src = 'assets/art/sanctuary-dawn-v1.webp';
+    }
+  } catch (e) { sanctuaryFailed = true; }
+  function drawSanctuaryArt(ctx, baseY) {
+    if (!sanctuaryReady || !sanctuaryArt) return false;
+    var iw = sanctuaryArt.naturalWidth || sanctuaryArt.width, ih = sanctuaryArt.naturalHeight || sanctuaryArt.height;
+    if (!(iw > 0 && ih > 0)) return false;
+    var h = Math.min(VIEW_H, Math.max(480, (baseY || 905) + 70));
+    var scale = Math.max(VIEW_W / iw, h / ih), dw = iw * scale, dh = ih * scale;
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, VIEW_W, h); ctx.clip();
+    // Aspect-preserving cover; keep the mountain ledges and open central mist.
+    ctx.drawImage(sanctuaryArt, (VIEW_W - dw) / 2, Math.min(0, (h - dh) * 0.28), dw, dh);
+    var fade = ctx.createLinearGradient(0, Math.max(0, h - 100), 0, h);
+    fade.addColorStop(0, 'rgba(244,236,220,0)'); fade.addColorStop(1, C.paper);
+    ctx.fillStyle = fade; ctx.fillRect(0, Math.max(0, h - 100), VIEW_W, 100);
+    ctx.restore(); return true;
+  }
+
   /* ---------- 伪随机 ---------- */
   function srand(seed) {
     var x = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
@@ -259,12 +286,12 @@ var XD = (function () {
     var by = baseY || 905;
     paintPaper(ctx);
     if (transT < 1 && prevRealm !== realm) {
-      drawBand(ctx, bandOf(prevRealm), t);
+      drawBand(ctx, bandOf(prevRealm), t, by);
       ctx.globalAlpha = 1 - transT;
-      drawBand(ctx, bandOf(realm), t);
+      drawBand(ctx, bandOf(realm), t, by);
       ctx.globalAlpha = 1;
     } else {
-      drawBand(ctx, bandOf(realm), t);
+      drawBand(ctx, bandOf(realm), t, by);
     }
     /* 妖兽脚下墨晕 */
     ctx.fillStyle = 'rgba(47,42,36,0.13)';
@@ -273,8 +300,8 @@ var XD = (function () {
     ctx.fill();
   }
 
-  function drawBand(ctx, band, t) {
-    if (band === 0) drawVillage(ctx, t);
+  function drawBand(ctx, band, t, baseY) {
+    if (band === 0) { if (!drawSanctuaryArt(ctx, baseY)) drawVillage(ctx, t); }
     else if (band === 1) drawCloudSea(ctx, t);
     else drawPalace(ctx, t);
   }
@@ -1216,6 +1243,7 @@ var XD = (function () {
     setView: setView,
     bandOf: bandOf,
     drawBackground: drawBackground,
+    artStatus: function () { return {ready: sanctuaryReady, failed: sanctuaryFailed}; },
     drawMonster: drawMonster,
     drawSlash: drawSlash,
     drawSmoke: drawSmoke,

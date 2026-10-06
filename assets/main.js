@@ -1664,6 +1664,8 @@
 
   function drawMobileHUD() {
     var y = hudTopL, need = expNeed(), hp = playerHpMax(), ready = canBreakthrough(), gate = atRealmGate();
+    XUI.panel(16, y, 718, 44, {flat: true, r: 12});
+    XUI.panel(16, y + 244, 718, 76, {flat: true, r: 12});
     mobileText(mode === 'tower' ? (towerPlan === 'temper' ? '温养' : '魔窟') + ' · ' + level + '层' : '山门 · ' + (injured() ? '将养' : '闭关'), 24, y + 22, {weight: 700});
     mobileText('灵石 ' + XB.fmt(stones), 726, y + 22, {align: 'right', color: '#8a6a30', weight: 700});
     XUI.panel(16, y + 50, 718, 186, {flat: true, r: 16});
