@@ -27,3 +27,9 @@ Canvas测试使用近似中文字体测量和无绘图上下文。它证明布�
 4. 打开画卷，滚到底再点轮回，确认归零/保留警告从顶部出现；取消应保留全部进度。
 5. 保险箱恢复预览→返回；确认恢复后再从「恢复前的进度」撤回，重启验证。
 6. 在短屏/浏览器工具栏展开、旋转、文件选择取消后回到页面；按下按钮后改变尺寸再抬起，不应购买。
+
+## Android touch-release hotfix
+
+An actual reported regression exposed a gap in the first test matrix: touch release emits `pointerup` and then `pointerleave` before the next render. The mobile pointerleave handler incorrectly cleared the already-completed tap queue, so the Start and other buttons could appear inert on touch devices even while direct logical-coordinate tests passed.
+
+The hotfix only cancels pointerleave/pointercancel when its pointer ID still belongs to an active press. Completed taps survive; a held finger leaving, canceled touch, drag, outside release and secondary fingers still cannot purchase. Six full event-path regressions cover start/settings/close at360/390/430px, one purchase, held leave, secondary pointer cancellation, and an explicit old-code counterexample. All106 tests pass. Save format/economy and artwork are unchanged; no cache clearing or save reset is required.

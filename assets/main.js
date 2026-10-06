@@ -2924,8 +2924,14 @@
       activePointerId = null;
       onUp(ev.clientX, ev.clientY);
     }, { passive: true });
-    cv.addEventListener('pointercancel', function () { activePointerId = null; XUI.cancelPointer(); hold.active = false; }, { passive: true });
-    cv.addEventListener('pointerleave', function () {
+    cv.addEventListener('pointercancel', function (ev) {
+      if (ev.pointerId !== activePointerId) return;
+      activePointerId = null; XUI.cancelPointer(); hold.active = false;
+    }, { passive: true });
+    cv.addEventListener('pointerleave', function (ev) {
+      // Touch browsers emit leave after pointerup. That completed tap is queued
+      // until the next frame and must survive; only abort a still-held gesture.
+      if (ev.pointerId !== activePointerId) return;
       activePointerId = null; XUI.cancelPointer(); hold.active = false;
     }, { passive: true });
     cv.addEventListener('wheel', function (ev) {
