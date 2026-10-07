@@ -42,3 +42,9 @@ Phone layout and recovery reached main `eb2d6d0199571a19a9fe25eda3ec433f4889a020
 ## Hotfix deployment verified
 
 Main `43d8e9be0f0daa4ec0d47c3b852b29e3ace8171b` deployed successfully in Pages run37408244445. Its index and main script returned HTTP200 and matched the tested commit byte-for-byte. The art integration preserves these pointer handlers unchanged and adds explicit image-load/error-during-touch checks, rather than relying on direct logical clicks alone.
+
+## 2026-10-07 横向拖动防误购
+
+已复现：从购买按钮横向滑出、再回到原处抬手，旧输入只记录纵向拖动，会错误购买一次。现在任何方向累计离开起点超过10逻辑像素都会取消本次点按；只有纵向移动才接管竖直列表。回到按钮不会恢复已取消的点按，下一次干净轻点正常。右/中键也不再触发购买或挥剑。
+
+新增390×844与844×390回归，覆盖滑出后返回、轻微手抖与下一次正常购买；保留原列表滚动、Android抬手离开、多指取消、存档及怪物测试。全量语法检查及184项测试通过。境界、温养循环、怪物数值与存档格式未改。手机真机触摸与性能仍未实测。

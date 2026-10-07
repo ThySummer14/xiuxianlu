@@ -96,9 +96,12 @@ var XUI = (function () {
   function pointerMove(x, y) {
     ptr.x = x; ptr.y = y;
     if (!ptr.down) return;
-    if (downPt && Math.abs(y - downPt.y) > 10) {
-      scrolled = true;
-      if (scrollCandidate && !downIsScroll) beginDrag(scrollCandidate, downPt.y, pressT);
+    if (downPt) {
+      var dx = x - downPt.x, dy = y - downPt.y;
+      // Remember a drag even if the finger returns to the starting button.
+      // Horizontal/diagonal gestures cancel taps without moving vertical lists.
+      if (dx * dx + dy * dy > 10 * 10) scrolled = true;
+      if (Math.abs(dy) > 10 && scrollCandidate && !downIsScroll) beginDrag(scrollCandidate, downPt.y, pressT);
     }
     if (downIsScroll && downId) {
       var st = scrollStates[downId];

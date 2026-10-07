@@ -68,3 +68,12 @@ test('scrolled purchases remain correct at short desktop and tall phone logical 
     pointerClick(g,row.x+row.w/2,row.y-off+row.h/2);assert.equal(g.state().gf[4],1);
   }
 });
+
+test('horizontal drag returning to purchase button must not count as a tap',()=>{
+ for(const [width,height] of [[390,844],[844,390]]){
+  const g=createGame({width,height,save:{S:8,stones:10000}});g.render();const row=g.uiControls.get('buy-sj'),u=g.sandbox.XUI;
+  const x=row.x+row.w/2,y=row.y+row.h/2;
+  u.pointerDown(x,y);u.pointerMove(x+80,y);u.pointerMove(x,y);u.pointerUp(x,y);g.render();assert.equal(g.state().sj,0);
+  u.pointerDown(x,y);u.pointerMove(x+3,y+3);u.pointerUp(x+3,y+3);g.render();assert.equal(g.state().sj,1);
+ }
+});

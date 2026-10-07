@@ -3238,7 +3238,7 @@
   if (!XP.isWx) {
     var activePointerId = null;
     cv.addEventListener('pointerdown', function (ev) {
-      if (ev.isPrimary === false || activePointerId !== null) return;
+      if (ev.isPrimary === false || (ev.button != null && ev.button !== 0) || activePointerId !== null) return;
       activePointerId = ev.pointerId;
       onDown(ev.clientX, ev.clientY);
       ev.preventDefault();

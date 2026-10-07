@@ -23,3 +23,9 @@ test('the previous release handler reproduces the reported dead start button',()
  const g=createGame({width:390,height:844,noStart:true,source:(name,src)=>name==='main'?src.replace("cv.addEventListener('pointerleave', function (ev) {", "cv.addEventListener('pointerleave', function (ev) { XUI.cancelPointer();"):src});
  g.render();touchTap(g,'start');assert.equal(g.state().scene,'title');
 });
+
+test('secondary mouse buttons cannot buy, and the next primary tap still works',()=>{
+ const g=createGame({width:390,height:844,save:{stones:10000}});g.render();
+ for(const button of [1,2]){const e={...event(g,'buy-sj'),pointerType:'mouse',button};g.canvasEvent('pointerdown',e);g.canvasEvent('pointerup',e);g.frame(16);assert.equal(g.state().sj,0);}
+ touchTap(g,'buy-sj');assert.equal(g.state().sj,1);
+});
